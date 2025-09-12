@@ -12,6 +12,6 @@ https://purdue0-my.sharepoint.com/:w:/g/personal/perez488_purdue_edu/Ebsa-0pXGcZ
 
 #Both of these need done by sunday
 #Phase 1.2
-https://docs.google.com/document/d/1R20EyE2a25CV6TDiZpVP8hA7RhG2InsHhyjAloJeE6Q/edit?usp=sharing
+https://docs.google.com/document/d/1e3Y-2kzAczyPW7ora8Sl-w-bzT-9iBA8P2vGitFHC80/edit?usp=sharing
 #Gen AI homeowrk
-https://docs.google.com/document/d/1eNBLsVxCtND1BASIU40k3qDWO7ZH754bWK6Z_atL45A/edit?tab=t.0
+https://docs.google.com/document/d/10llvsMJifntunvLlIqKC42hD93FFvTrudeqADbWXMSQ/edit?usp=sharing
