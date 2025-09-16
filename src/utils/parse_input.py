@@ -6,6 +6,8 @@ Reads an input file containing comma-separated URLs and parses them
 into structured dictionaries with category inference.
 """
 
+# To Do: Add concurrent fetching of URLs to validate them
+
 
 def parse_input_file(input_path: str) -> List[Dict[str, str]]:
 
@@ -41,11 +43,10 @@ def demo(input_file: str):
     parsed = parse_input_file(input_file)
 
     for item in parsed:
-        # Stub data – metrics team will replace these placeholders
         record = {
             "name": item.get("model", "unknown").split("/")[-1],
             "category": "MODEL" if "model" in item else "DATASET",
-            "net_score": None,  # placeholder
+            "net_score": None,
             "metrics": {
                 "license": None,
                 "size": None,
@@ -57,4 +58,4 @@ def demo(input_file: str):
             },
             "links": item,
         }
-        print(json.dumps(record))  # NDJSON line
+        print(json.dumps(record))
