@@ -1,0 +1,45 @@
+name: Lint_and_Test
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          pip install flake8 pre-commit black
+
+      - name: Run black (check only)
+        run: black --check --line-length 100 .
+
+      - name: Run flake8
+        run: flake8 .
+
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: --all-files
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-dev.txt || true
+          pip install pytest
+
+      - name: Run pytest
+        run: pytest -q --disable-warnings --maxfail=1

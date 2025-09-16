@@ -1,0 +1,60 @@
+#General .gitignore file for a Python project
+#Generated with ChatGPT, September 2025 
+
+# ----------------------------
+# Python cache / bytecode
+# ----------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ----------------------------
+# Virtual environments
+# ----------------------------
+.venv/
+venv/
+ENV/
+
+# ----------------------------
+# Packaging / build artifacts
+# ----------------------------
+build/
+dist/
+*.egg-info/
+*.whl
+
+# ----------------------------
+# Test / coverage outputs
+# ----------------------------
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# ----------------------------
+# Logs
+# ----------------------------
+*.log
+
+# ----------------------------
+# Linting / tooling
+# ----------------------------
+.mypy_cache/
+.dmypy.json
+flake8.log
+.pre-commit-config.yaml~
+.cache/
+
+# ----------------------------
+# IDE / editor files
+# ----------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ----------------------------
+# OS generated files
+# ----------------------------
+.DS_Store
+Thumbs.db
