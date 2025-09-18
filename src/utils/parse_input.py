@@ -1,16 +1,18 @@
 import json
-from typing import List, Dict
+import requests
+from typing import List, Dict, Any
 
 """
-Reads an input file containing comma-separated URLs and parses them
-into structured dictionaries with category inference.
+Parses input URLs, validates them, and fetches raw metadata.
+This file does not calculate metrics — it just collects data
 """
 
-# To Do: Add concurrent fetching of URLs to validate them
+HF_MODEL_API = "https://huggingface.co/api/models/"
+HF_DATASET_API = "https://huggingface.co/api/datasets/"
+GH_REPO_API = "https://api.github.com/repos/"
 
 
 def parse_input_file(input_path: str) -> List[Dict[str, str]]:
-
     parsed_entries = []
 
     with open(input_path, "r", encoding="utf-8") as f:
@@ -19,43 +21,90 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
             if not urls:
                 continue
 
-            entry = {}
             for url in urls:
                 if "huggingface.co/datasets" in url:
-                    entry["dataset"] = url
-                elif "huggingface.co" in url or "github.com" in url:
-                    # Could refine later with HuggingFace model API
-                    entry["model"] = url
+                    parsed_entries.append(
+                        {
+                            "category": "DATASET",
+                            "url": url,
+                            "name": url.split("/")[-1],
+                        }
+                    )
+                elif "huggingface.co" in url:
+                    parsed_entries.append(
+                        {
+                            "category": "MODEL",
+                            "url": url,
+                            "name": url.split("/")[-1],
+                        }
+                    )
+                elif "github.com" in url:
+                    parsed_entries.append(
+                        {
+                            "category": "CODE",
+                            "url": url,
+                            "name": url.split("/")[-1],
+                        }
+                    )
                 else:
-                    entry["code"] = url
-            parsed_entries.append(entry)
+                    parsed_entries.append(
+                        {
+                            "category": "UNKNOWN",
+                            "url": url,
+                            "name": url.split("/")[-1],
+                        }
+                    )
 
     return parsed_entries
 
 
-"""
-Demo: Parse the input file and print NDJSON-like records
-(stub metrics for now).
-"""
+def fetch_metadata(entry: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Given a parsed entry, validate the URL and fetch metadata
+    from HuggingFace or GitHub APIs.
+    Returns a dict with 'metadata' field added.
+    """
+    category = entry["category"]
+    url = entry["url"]
+
+    try:
+        if category == "MODEL":
+            model_id = "/".join(url.split("huggingface.co/")[-1].split("/")[:2])
+            resp = requests.get(HF_MODEL_API + model_id, timeout=10)
+            entry["metadata"] = resp.json() if resp.status_code == 200 else {}
+        elif category == "DATASET":
+            dataset_id = "/".join(url.split("huggingface.co/datasets/")[-1].split("/")[:2])
+            resp = requests.get(HF_DATASET_API + dataset_id, timeout=10)
+            entry["metadata"] = resp.json() if resp.status_code == 200 else {}
+        elif category == "CODE":
+            # Expect URLs like github.com/org/repo
+            parts = url.split("github.com/")[-1].split("/")
+            if len(parts) >= 2:
+                repo_path = "/".join(parts[:2])
+                resp = requests.get(GH_REPO_API + repo_path, timeout=10)
+                entry["metadata"] = resp.json() if resp.status_code == 200 else {}
+            else:
+                entry["metadata"] = {}
+        else:
+            entry["metadata"] = {}
+    except Exception as e:
+        entry["metadata"] = {"error": str(e)}
+
+    return entry
 
 
 def demo(input_file: str):
+    # Example output format
     parsed = parse_input_file(input_file)
 
     for item in parsed:
+        enriched = fetch_metadata(item)
         record = {
-            "name": item.get("model", "unknown").split("/")[-1],
-            "category": "MODEL" if "model" in item else "DATASET",
+            "name": enriched.get("name", "unknown"),
+            "category": enriched.get("category", "UNKNOWN"),
             "net_score": None,
-            "metrics": {
-                "license": None,
-                "size": None,
-                "bus_factor": None,
-                "ramp_up_time": None,
-                "dataset_quality": None,
-                "code_quality": None,
-                "performance_claims": None,
-            },
-            "links": item,
+            "metrics": {},
+            "links": {"url": enriched.get("url")},
+            "metadata_preview": str(enriched.get("metadata", {}))[:200],
         }
         print(json.dumps(record))
