@@ -58,11 +58,12 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     return parsed_entries
 
 
-def fetch_metadata(entry: Dict[str, Any]) -> Dict[str, Any]:
+def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]:
     """
     Given a parsed entry, validate the URL and fetch metadata
     from HuggingFace or GitHub APIs.
-    Returns a dict with 'metadata' field added.
+    Attaches a 'metadata' field to the entry.
+    If debug=True, prints the raw JSON (pretty formatted).
     """
     category = entry["category"]
     url = entry["url"]
@@ -72,12 +73,13 @@ def fetch_metadata(entry: Dict[str, Any]) -> Dict[str, Any]:
             model_id = "/".join(url.split("huggingface.co/")[-1].split("/")[:2])
             resp = requests.get(HF_MODEL_API + model_id, timeout=10)
             entry["metadata"] = resp.json() if resp.status_code == 200 else {}
+
         elif category == "DATASET":
             dataset_id = "/".join(url.split("huggingface.co/datasets/")[-1].split("/")[:2])
             resp = requests.get(HF_DATASET_API + dataset_id, timeout=10)
             entry["metadata"] = resp.json() if resp.status_code == 200 else {}
+
         elif category == "CODE":
-            # Expect URLs like github.com/org/repo
             parts = url.split("github.com/")[-1].split("/")
             if len(parts) >= 2:
                 repo_path = "/".join(parts[:2])
@@ -87,18 +89,32 @@ def fetch_metadata(entry: Dict[str, Any]) -> Dict[str, Any]:
                 entry["metadata"] = {}
         else:
             entry["metadata"] = {}
+
     except Exception as e:
         entry["metadata"] = {"error": str(e)}
+
+    if debug:
+        print(f"\n--- RAW METADATA for {entry['name']} ({entry['category']}) ---")
+        print(json.dumps(entry["metadata"], indent=2)[:2000])  # show first 2000 chars
+        print("--- END ---\n")
 
     return entry
 
 
-def demo(input_file: str):
-    # Example output format
+def demo(input_file: str, debug: bool = True):
     parsed = parse_input_file(input_file)
 
     for item in parsed:
         enriched = fetch_metadata(item)
+
+        # If debug mode, show full metadata for inspection
+        if debug:
+            print(
+                f"\n--{enriched.get('name', 'unknown')} ({enriched.get('category', 'UNKNOWN')}) --"
+            )
+            print(json.dumps(enriched.get("metadata", {}), indent=2)[:4000])
+            print("--- END ---\n")
+
         record = {
             "name": enriched.get("name", "unknown"),
             "category": enriched.get("category", "UNKNOWN"),
