@@ -1,7 +1,5 @@
 # Setup Guide
-
-This project uses **Python 3.13**, a **virtual environment** (`.venv`), and **pre-commit hooks** to ensure code consistency.  
-Follow these steps to set up your development environment.
+This is for setuping up visual studio for our project, please follow these steps persicely 
 
 ## 1. Clone the repo
 
