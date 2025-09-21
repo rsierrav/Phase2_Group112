@@ -125,5 +125,3 @@ class LicenseMetric(Metric):
         """
         return self.latency
 
-    def get_latency(self) -> float:
-        return self.latency
