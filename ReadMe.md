@@ -10,8 +10,8 @@ This project is part of our Software Engineering course. The goal is to design a
 
 # Current Assignments
 
-### [Phase 1.3](https://docs.google.com/document/d/1w-MNYgTO5lyI3V-Dj7k9GWXbzWvDAIBHkSlZ0XOMja8/edit?usp=sharing)
-### [Milestone](https://docs.google.com/document/d/11icraXRp68FXZBSqc29STvmYOKIHNEUMmamF5g42e7k/edit?usp=sharing)
+### [Requirement Engineeriing Homework](https://docs.google.com/document/d/1w-MNYgTO5lyI3V-Dj7k9GWXbzWvDAIBHkSlZ0XOMja8/edit?usp=sharing)
+### [Phase 1.3](https://docs.google.com/document/d/11icraXRp68FXZBSqc29STvmYOKIHNEUMmamF5g42e7k/edit?usp=sharing)
 
 ## Past Assignments (newest to oldest)
 
