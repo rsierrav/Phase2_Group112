@@ -63,7 +63,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
     Given a parsed entry, validate the URL and fetch metadata
     from HuggingFace or GitHub APIs.
     Attaches a 'metadata' field to the entry.
-    If debug=True, prints the raw JSON (pretty formatted).
+    If debug=True, prints the raw JSON.
     """
     category = entry["category"]
     url = entry["url"]
@@ -94,9 +94,9 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
         entry["metadata"] = {"error": str(e)}
 
     if debug:
-        print(f"\n--- RAW METADATA for {entry['name']} ({entry['category']}) ---")
-        print(json.dumps(entry["metadata"], indent=2)[:2000])  # show first 2000 chars
-        print("--- END ---\n")
+        print(f"\n RAW METADATA for {entry['name']} ({entry['category']})")
+        print(json.dumps(entry["metadata"], indent=2)[:2000])
+        print("END \n")
 
     return entry
 
@@ -109,11 +109,9 @@ def demo(input_file: str, debug: bool = True):
 
         # If debug mode, show full metadata for inspection
         if debug:
-            print(
-                f"\n--{enriched.get('name', 'unknown')} ({enriched.get('category', 'UNKNOWN')}) --"
-            )
+            print(f"\n{enriched.get('name', 'unknown')} ({enriched.get('category', 'UNKNOWN')})")
             print(json.dumps(enriched.get("metadata", {}), indent=2)[:4000])
-            print("--- END ---\n")
+            print("END\n")
 
         record = {
             "name": enriched.get("name", "unknown"),
