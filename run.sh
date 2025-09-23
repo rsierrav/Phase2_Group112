@@ -26,6 +26,7 @@ urllib3>=1.26.0
 GitPython>=3.1.0
 PyGithub>=1.55.0
 huggingface-hub>=0.10.0
+pytest
 EOL
     fi
 

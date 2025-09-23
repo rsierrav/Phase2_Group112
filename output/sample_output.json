@@ -1,0 +1,83 @@
+[
+  {
+    "name": "bert-base-uncased",
+    "category": "MODEL",
+    "net_score": 0.95,
+    "net_score_latency": 180,
+    "ramp_up_time": 0.9,
+    "ramp_up_time_latency": 45,
+    "bus_factor": 0.95,
+    "bus_factor_latency": 25,
+    "performance_claims": 0.92,
+    "performance_claims_latency": 35,
+    "license": 1.0,
+    "license_latency": 10,
+    "size_score": {
+      "raspberry_pi": 0.2,
+      "jetson_nano": 0.4,
+      "desktop_pc": 0.95,
+      "aws_server": 1.0
+    },
+    "size_score_latency": 50,
+    "dataset_and_code_score": 1.0,
+    "dataset_and_code_score_latency": 15,
+    "dataset_quality": 0.95,
+    "dataset_quality_latency": 20,
+    "code_quality": 0.93,
+    "code_quality_latency": 22
+  },
+  {
+    "name": "audience_classifier_model",
+    "category": "MODEL",
+    "net_score": 0.35,
+    "net_score_latency": 130,
+    "ramp_up_time": 0.25,
+    "ramp_up_time_latency": 42,
+    "bus_factor": 0.33,
+    "bus_factor_latency": 30,
+    "performance_claims": 0.15,
+    "performance_claims_latency": 28,
+    "license": 0.0,
+    "license_latency": 18,
+    "size_score": {
+      "raspberry_pi": 0.75,
+      "jetson_nano": 0.8,
+      "desktop_pc": 1.0,
+      "aws_server": 1.0
+    },
+    "size_score_latency": 40,
+    "dataset_and_code_score": 0.0,
+    "dataset_and_code_score_latency": 5,
+    "dataset_quality": 0.0,
+    "dataset_quality_latency": 0,
+    "code_quality": 0.1,
+    "code_quality_latency": 12
+  },
+  {
+    "name": "whisper-tiny",
+    "category": "MODEL",
+    "net_score": 0.7,
+    "net_score_latency": 110,
+    "ramp_up_time": 0.85,
+    "ramp_up_time_latency": 30,
+    "bus_factor": 0.9,
+    "bus_factor_latency": 20,
+    "performance_claims": 0.8,
+    "performance_claims_latency": 35,
+    "license": 1.0,
+    "license_latency": 10,
+    "size_score": {
+      "raspberry_pi": 0.9,
+      "jetson_nano": 0.95,
+      "desktop_pc": 1.0,
+      "aws_server": 1.0
+    },
+    "size_score_latency": 15,
+    "dataset_and_code_score": 0.0,
+    "dataset_and_code_score_latency": 40,
+    "dataset_quality": 0.0,
+    "dataset_quality_latency": 0,
+    "code_quality": 0.0,
+    "code_quality_latency": 0
+  }
+]

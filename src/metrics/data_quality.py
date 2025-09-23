@@ -87,7 +87,6 @@ class DatasetQualityMetric(Metric):
         dataset_info = card_data.get('dataset_info', {})
         metadata = parsed_data.get('metadata', {})
 
-        # --- Make sure example_count is calculated ---
         example_count = 0
         splits = dataset_info.get('splits', [])
         if isinstance(splits, list):
@@ -126,52 +125,6 @@ class DatasetQualityMetric(Metric):
         }
 
         return result
-
-    # def get_data(self, parsed_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    #     if not parsed_data or parsed_data.get('category') != 'DATASET':
-    #         return None
-        
-    #     card_data = parsed_data.get('cardData', {})
-    #     dataset_info = card_data.get('dataset_info', {})
-    #     metadata = parsed_data.get('metadata', {})
-        
-    #     example_count = 0
-    #     splits = dataset_info.get('splits', [])
-    #     for split in splits:
-    #         if isinstance(split, dict):
-    #             example_count += split.get('num_examples', 0)
-        
-    #     features = dataset_info.get('features', [])
-    #     has_features = len(features) > 0
-    #     has_splits = len(splits) > 0
-        
-    #     format_info = {
-    #         'has_features': has_features,
-    #         'has_splits': has_splits,
-    #         'feature_count': len(features),
-    #         'split_count': len(splits)
-    #     }
-        
-    #     description = parsed_data.get('description', '') or metadata.get('description', '')
-    #     citation = parsed_data.get('citation', '') or metadata.get('citation', '')
-    #     downloads = parsed_data.get('downloads', 0) or metadata.get('downloads', 0)
-    #     likes = parsed_data.get('likes', 0) or metadata.get('likes', 0)
-    #     tags = parsed_data.get('tags', []) or metadata.get('tags', [])
-        
-    #     result = {
-    #         'category': parsed_data.get('category', ''),
-    #         'description': description,
-    #         'example_count': example_count,
-    #         'metadata_completeness': self.get_metadata_completeness(parsed_data),
-    #         'has_citation': bool(citation and len(citation.strip()) > 20),
-    #         'format_info': format_info,
-    #         'card_data': card_data,
-    #         'downloads': downloads,
-    #         'likes': likes,
-    #         'tags': tags
-    #     }
-        
-    #     return result
 
     def calculate_score(self, data: Optional[Dict[str, Any]]) -> None:
         """

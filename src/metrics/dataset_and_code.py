@@ -200,7 +200,7 @@ class DatasetAndCodeMetric(Metric):
         engagement = data['engagement']
         score += min(engagement['downloads'] / 1000, 0.10)
         score += min(engagement['likes'] / 100, 0.05)
-        score += min(engagement['spaces'] / 10, 0.05)
+        #score += min(engagement['spaces'] / 10, 0.05)
 
         self.dataset_and_code_score = score
 
