@@ -42,4 +42,6 @@ jobs:
           pip install pytest
 
       - name: Run pytest
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
         run: pytest -q --disable-warnings --maxfail=1
