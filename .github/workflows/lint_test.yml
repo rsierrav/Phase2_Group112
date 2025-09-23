@@ -19,10 +19,14 @@ jobs:
       - name: Run black (check only)
         run: black --check --line-length 100 .
 
+      - name: Run flake8 on src only
+        run: flake8 src/
+
       - name: Run pre-commit hooks
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: --all-files
+          cache: false
 
   test:
     runs-on: ubuntu-latest

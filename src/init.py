@@ -66,7 +66,7 @@ def main():
     else:
         if input_file.startswith("http://") or input_file.startswith("https://"):
             parsed_data = parse_input_file(input_file)
-            process_category(parsed_data)
+            process(parsed_data)
         else:
             print("Error: Invalid input. Please provide a URL or 'dev' for local files.")
             sys.exit(1)

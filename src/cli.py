@@ -3,7 +3,7 @@ import os
 import sys
 from typing import List, Dict, Any
 from src.utils.parse_input import parse_input_file, fetch_metadata
-from src.scorer import score
+# from src.scorer import score
 
 INPUT_DIR = "input"
 OUTPUT_DIR = "output"  # NDJSON output folder
@@ -55,7 +55,7 @@ def process_and_score_input_file(input_file: str) -> None:
         fetch_metadata(entry)
 
     # Score each entry
-    results: List[Dict[str, Any]] = [score(entry) for entry in entries]
+    # results: List[Dict[str, Any]] = [score(entry) for entry in entries]
 
     # Output results
     # output_formate.function()
