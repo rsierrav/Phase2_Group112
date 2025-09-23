@@ -46,6 +46,6 @@ jobs:
 
       - name: Run pytest with PYTHONPATH
         env:
-          PYTHONPATH: ${{ github.workspace }}/src
+          PYTHONPATH: ${{ github.workspace }}
         run: pytest -q --disable-warnings --maxfail=1
 
