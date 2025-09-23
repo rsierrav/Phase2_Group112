@@ -23,6 +23,10 @@ urllib3>=1.26.0
 GitPython>=3.1.0
 PyGithub>=1.55.0
 huggingface-hub>=0.10.0
+flake8==7.0.0
+black==24.8.0
+pre-commit==3.6.2
+pytest==8.3.2
 "@
         $content | Out-File -FilePath $requirementsPath
     }

@@ -26,8 +26,8 @@ def score(entry: Dict[str, Any]) -> Dict[str, Any]:
 
     # List of metric objects and their output key names
     metrics: List = [
-        #("performance_claims", PerformanceClaimsMetric()),
-        #("license", LicenseMetric()),
+        # ("performance_claims", PerformanceClaimsMetric()),
+        # ("license", LicenseMetric()),
         # ("bus_factor", BusFactorMetric()),  # TODO: implement
         # ("ramp_up_time", RampUpTimeMetric()),  # TODO: implement
         # ("size_score", SizeScoreMetric()),  # TODO: implement
@@ -50,8 +50,7 @@ def score(entry: Dict[str, Any]) -> Dict[str, Any]:
 
     # Compute net score as average of scalar metrics
     scalar_scores = [
-        v for k, v in result.items()
-        if not k.endswith("_latency") and isinstance(v, (int, float))
+        v for k, v in result.items() if not k.endswith("_latency") and isinstance(v, (int, float))
     ]
     result["net_score"] = sum(scalar_scores) / len(scalar_scores) if scalar_scores else 0.0
 

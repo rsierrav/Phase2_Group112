@@ -59,7 +59,7 @@ def process_and_score_input_file(input_file: str) -> None:
     results: List[Dict[str, Any]] = [score(entry) for entry in entries]
 
     # Output results
-    #output_formate.function()
+    # output_formate.function()
 
 
 def run_cli() -> None:
