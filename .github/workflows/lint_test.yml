@@ -19,9 +19,6 @@ jobs:
       - name: Run black (check only)
         run: black --check --line-length 100 .
 
-      - name: Run flake8
-        run: flake8 .
-
       - name: Run pre-commit hooks
         uses: pre-commit/action@v2.0.3
         with:

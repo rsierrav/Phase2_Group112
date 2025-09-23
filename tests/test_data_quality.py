@@ -1,7 +1,4 @@
 import unittest
-import tempfile
-import os
-from unittest.mock import patch, MagicMock
 
 from src.metrics.data_quality import DatasetQualityMetric
 

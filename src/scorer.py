@@ -1,8 +1,6 @@
 # scorer.py
 from typing import List, Dict, Any
 import time
-from src.metrics.performance_claims import PerformanceClaimsMetric
-from src.metrics.license import LicenseMetric
 
 # Placeholder imports for other metrics (not implemented yet)
 # from src.metrics.bus_factor import BusFactorMetric

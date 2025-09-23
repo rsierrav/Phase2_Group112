@@ -14,7 +14,7 @@ def process(parsed_data):
     scorer = Scorer()
 
     ds = DatasetQualityMetric()
-    dc = DatasetAndCodeMetric()
+    DatasetAndCodeMetric()
 
     for entry in parsed_data:
         # IF WE DONT WANT TO HANDLE NULL CHECKS IN METRICS

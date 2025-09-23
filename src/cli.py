@@ -4,7 +4,6 @@ import sys
 from typing import List, Dict, Any
 from src.utils.parse_input import parse_input_file, fetch_metadata
 from src.scorer import score
-import src.utils.output_formater as output_formatter
 
 INPUT_DIR = "input"
 OUTPUT_DIR = "output"  # NDJSON output folder
