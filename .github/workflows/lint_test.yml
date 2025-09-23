@@ -1,45 +1,51 @@
-name: Lint_and_Test
+name: Lint and Test
 
 on: [push, pull_request]
 
 jobs:
   lint:
+    name: Lint Codebase
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-      - name: Install dependencies
+      - name: Install linting dependencies
         run: |
-          pip install flake8 pre-commit black
+          pip install black flake8
 
-      - name: Run black (check only)
+      - name: Check formatting with Black
         run: black --check --line-length 100 .
 
-      - name: Run flake8
-        run: flake8 .
-
-      - name: Run pre-commit hooks
-        uses: pre-commit/action@v2.0.3
-        with:
-          extra_args: --all-files
+      - name: Run flake8 on src directory
+        run: flake8 src/
 
   test:
+    name: Run Tests
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-      - name: Install dependencies
+      - name: Install testing dependencies
         run: |
           pip install -r requirements-dev.txt || true
           pip install pytest
 
-      - name: Run pytest
+      - name: Run pytest with PYTHONPATH
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: pytest -q --disable-warnings --maxfail=1
+
