@@ -3,6 +3,7 @@ import os
 import sys
 from typing import List, Dict, Any
 from src.utils.parse_input import parse_input_file, fetch_metadata
+
 # from src.scorer import score
 
 INPUT_DIR = "input"
