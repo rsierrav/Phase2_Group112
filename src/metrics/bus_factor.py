@@ -10,6 +10,7 @@ class bus_factor(Metric):
     def __init__(self):
         self.score: float = 0.0
         self.latency_ms: int = 0
+        self.weight: float = 0.0
 
     def get_data(self, parsed_data: Dict[str, Any]) -> List[str]:
         """

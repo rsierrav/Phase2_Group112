@@ -20,15 +20,9 @@ from .protocol import Metric
 # License scoring tiers
 # These can be easily extended or modified as industry needs evolve.
 # -------------------------------------------------------------------
-HIGH_QUALITY_LICENSES = {
-    "MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC"
-}
+HIGH_QUALITY_LICENSES = {"MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC"}
 
-MEDIUM_QUALITY_LICENSES = {
-    "GPL-3.0", "GPL-2.0",
-    "LGPL-2.1", "LGPL-3.0",
-    "MPL-2.0", "EPL-2.0"
-}
+MEDIUM_QUALITY_LICENSES = {"GPL-3.0", "GPL-2.0", "LGPL-2.1", "LGPL-3.0", "MPL-2.0", "EPL-2.0"}
 
 CUSTOM_LICENSE_KEYWORD = "Custom"
 UNKNOWN_LICENSE = "Unknown"
@@ -46,6 +40,7 @@ class LicenseMetric(Metric):
     def __init__(self) -> None:
         self.score: float = 0.0
         self.latency: float = 0.0
+        self.weight: float = 0.0
 
     def get_data(self, parsed_data: Dict[str, Any]) -> Optional[str]:
         """
@@ -124,4 +119,3 @@ class LicenseMetric(Metric):
             float: Latency in milliseconds.
         """
         return self.latency
-

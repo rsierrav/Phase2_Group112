@@ -12,6 +12,7 @@ class code_quality(Metric):
     def __init__(self):
         self.score: float = 0.0
         self.latency: float = 0.0
+        self.weight: float = 0.0
 
     def _make_headers(self) -> Dict[str, str]:
         """

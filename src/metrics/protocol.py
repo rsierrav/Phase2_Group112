@@ -14,6 +14,7 @@ class Metric(Protocol):
     # Each metric keeps an internal score
     score: float
     latency: float  # in milliseconds
+    weight: float  # default weight
 
     def get_data(self, parsed_data: Dict[str, Any]) -> Any:
         """
@@ -35,7 +36,7 @@ class Metric(Protocol):
         Process the metric: measure latency and compute score.
         Updates `score` and `latency` attributes.
         """
-        start_time = time.perf_counter()  # high-resolution timer
+        start_time = time.perf_counter()
         data = self.get_data(parsed_data)
         self.calculate_score(data)
         end_time = time.perf_counter()
@@ -54,4 +55,3 @@ class Metric(Protocol):
         Return the time taken to compute the score in milliseconds.
         """
         return getattr(self, "latency", 0.0)
-
