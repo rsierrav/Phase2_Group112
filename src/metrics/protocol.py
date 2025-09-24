@@ -1,5 +1,3 @@
-# src/metrics/protocol.py
-
 from typing import Protocol, Any, Dict
 import time
 
@@ -14,7 +12,6 @@ class Metric(Protocol):
     # Each metric keeps an internal score
     score: float
     latency: float  # in milliseconds
-    weight: float  # default weight
 
     def get_data(self, parsed_data: Dict[str, Any]) -> Any:
         """

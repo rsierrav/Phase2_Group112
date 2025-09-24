@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 function show_usage {
     echo "Usage:"
     echo "  ./run.sh install               - Install dependencies"
-    echo "  ./run.sh <URL_FILE>            - Process URLs from file"
+    echo "  ./run.sh score <URL_FILE>      - Score models from a file"
     echo "  ./run.sh dev                   - Run all input files"
     echo "  ./run.sh test                  - Run test suite"
     exit 1
@@ -105,12 +105,18 @@ case "$1" in
     dev)
         process_local_files
         ;;
+    score)
+        if [ $# -lt 2 ]; then
+            echo "Error: Missing URL_FILE argument for score command"
+            exit 1
+        fi
+        process_urls "$2"
+        ;;
     http://* | https://*)
         process_urls "$1"
         ;;
     *)
-        echo "Error: URL_FILE must be an absolute URL (starting with 'http://' or 'https://')"
+        echo "Error: Invalid argument. Use 'score <URL_FILE>' or a direct URL."
         exit 1
         ;;
 esac
-

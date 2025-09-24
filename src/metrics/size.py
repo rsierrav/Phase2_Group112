@@ -1,6 +1,3 @@
-# Tristan
-# src/metrics/size.py
-
 from typing import Any, Dict
 from .protocol import Metric
 
@@ -15,12 +12,8 @@ class SizeMetric(Metric):
         self.score: float = 0.0
         self.latency: float = 0.0
         self.size_score: Dict[str, float] = {}
-        self.weight: float = 0.0
 
     def get_data(self, parsed_data: Dict[str, Any]) -> int:
-        """
-        Expect parsed_data to include model size in megabytes (MB).
-        """
         return parsed_data.get("model_size_mb", 0)
 
     def calculate_score(self, size_mb: int) -> None:
@@ -29,9 +22,9 @@ class SizeMetric(Metric):
         Scores are between 0.0 and 1.0.
         """
 
-        # In MBs (approximate thresholds)
+        # In MBs (approximate thresholds), I made these up based on common hardware limits
         thresholds = {
-            "raspberry_pi": 50,  # above this, performance drops
+            "raspberry_pi": 50,
             "jetson_nano": 200,
             "desktop_pc": 2000,
             "aws_server": 10000,

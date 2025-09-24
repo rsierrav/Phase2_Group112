@@ -3,8 +3,8 @@ $SCRIPT_DIR = (Get-Location).Path
 function show_usage {
     Write-Host "Usage:"
     Write-Host "  .\run.ps1 install               - Install dependencies"
-    Write-Host "  .\run.ps1 <URL_FILE>            - Process URLs from file"
-    Write-Host "  .\run.ps1 dev                   - Run all input files"
+    Write-Host "  .\run.ps1 score <URL_FILE>      - Score models from a file"
+    Write-Host "  .\run.ps1 dev                   - Run all input files (dev mode)"
     Write-Host "  .\run.ps1 test                  - Run test suite"
     exit 1
 }
@@ -33,9 +33,11 @@ pytest==8.3.2
     
     if (Get-Command pip3 -ErrorAction SilentlyContinue) {
         pip3 install -r $requirementsPath
-    } elseif (Get-Command pip -ErrorAction SilentlyContinue) {
+    }
+    elseif (Get-Command pip -ErrorAction SilentlyContinue) {
         pip install -r $requirementsPath
-    } else {
+    }
+    else {
         Write-Host "Error: pip or pip3 not found"
         exit 1
     }
@@ -52,9 +54,11 @@ function run_tests {
     
     if (Test-Path $testSuitePath) {
         python $testSuitePath
-    } elseif (Test-Path $testsPath) {
+    }
+    elseif (Test-Path $testsPath) {
         python -m pytest $testsPath -v
-    } else {
+    }
+    else {
         Write-Host "Error: No test suite found"
         exit 1
     }
@@ -77,8 +81,6 @@ function process_urls {
 }
 
 function process_local_files {
-    param([string]$input_file)
-    
     $mainScriptPath = "$SCRIPT_DIR\src\init.py"
     if (-not (Test-Path $mainScriptPath)) {
         Write-Host "Error: init.py not found"
@@ -97,13 +99,21 @@ switch ($args[0]) {
     "install" { install_dependencies }
     "test" { run_tests }
     "dev" { process_local_files }
+    "score" {
+        if ($args.Count -lt 2) {
+            Write-Host "Error: Missing URL_FILE argument for score command"
+            exit 1
+        }
+        process_urls $args[1]
+    }
     default {
         $input = $args[0]
         
         if ($input -match "^https?://") {
             process_urls $input
-        } else {
-            Write-Host "Error: URL_FILE must be an absolute URL (starting with 'http:// or https://')"
+        }
+        else {
+            Write-Host "Error: Invalid argument. Use 'score <URL_FILE>' or a direct URL."
             exit 1
         }
     }

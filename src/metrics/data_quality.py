@@ -8,6 +8,7 @@ class DatasetQualityMetric(Metric):
     def __init__(self) -> None:
         self.dataset_quality: float = 0.0
         self.dataset_quality_latency: float = 0.0
+        self.score: float = 0.0
 
     def get_example_count(self, parsed_data: Dict[str, Any]) -> int:
         """Get number of examples/samples in dataset"""

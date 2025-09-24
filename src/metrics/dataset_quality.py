@@ -1,5 +1,3 @@
-# src/metrics/dataset_code.py
-
 import os
 import requests
 from typing import Any, Dict
@@ -15,7 +13,6 @@ class DatasetCodeMetric(Metric):
     def __init__(self):
         self.score: float = 0.0
         self.latency: float = 0.0
-        self.weight: float = 0.0
 
     def get_data(self, parsed_data: Dict[str, Any]) -> Dict[str, str]:
         """
