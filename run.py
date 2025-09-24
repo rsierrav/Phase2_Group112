@@ -19,10 +19,11 @@ def show_usage():
 
 
 def install_dependencies():
-    if not os.path.exists(REQUIREMENTS):
-        with open(REQUIREMENTS, "w") as f:
-            f.write(
-                """requests>=2.25.0
+    try:
+        if not os.path.exists(REQUIREMENTS):
+            with open(REQUIREMENTS, "w") as f:
+                f.write(
+                    """requests>=2.25.0
 beautifulsoup4>=4.9.0
 lxml>=4.6.0
 python-dateutil>=2.8.0
@@ -35,9 +36,15 @@ black==24.8.0
 pre-commit==3.6.2
 pytest==8.3.2
 """
-            )
-
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", REQUIREMENTS])
+                )
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", REQUIREMENTS])
+        print("Dependencies installed successfully")
+    except subprocess.CalledProcessError as e:
+        print(f"[ERROR] pip failed: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"[ERROR] Unexpected install error: {e}")
+        sys.exit(1)
 
 
 def run_tests():
