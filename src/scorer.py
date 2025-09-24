@@ -4,14 +4,14 @@ from typing import Dict, Any, List, Tuple
 import time
 
 # Import all metrics
-from metrics.data_quality import DatasetQualityMetric
-from metrics.dataset_and_code import DatasetAndCodeMetric
-from metrics.dataset_quality import DatasetCodeMetric
-from metrics.size import SizeMetric
-from metrics.license import LicenseMetric
-from metrics.bus_factor import bus_factor
-from metrics.code_quality import code_quality
-from metrics.security import SecurityMetric
+from src.metrics.data_quality import DatasetQualityMetric
+from src.metrics.dataset_and_code import DatasetAndCodeMetric
+from src.metrics.dataset_quality import DatasetCodeMetric
+from src.metrics.size import SizeMetric
+from src.metrics.license import LicenseMetric
+from src.metrics.bus_factor import bus_factor
+from src.metrics.code_quality import code_quality
+from src.metrics.security import SecurityMetric
 
 
 class Scorer:
