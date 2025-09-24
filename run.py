@@ -8,7 +8,6 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 MAIN_SCRIPT = os.path.join(SCRIPT_DIR, "src", "init.py")
 REQUIREMENTS = os.path.join(SCRIPT_DIR, "requirements.txt")
 
-
 def show_usage():
     print("Usage:")
     print("  ./run install               - Install dependencies")
@@ -16,7 +15,6 @@ def show_usage():
     print("  ./run dev                   - Run all input files (dev mode)")
     print("  ./run test                  - Run test suite")
     sys.exit(1)
-
 
 def install_dependencies():
     try:
@@ -46,18 +44,17 @@ pytest==8.3.2
         print(f"[ERROR] Unexpected install error: {e}")
         sys.exit(1)
 
-
 def run_tests():
     test_suite = os.path.join(SCRIPT_DIR, "test_suite.py")
     tests_dir = os.path.join(SCRIPT_DIR, "tests")
-
+    
     if os.path.exists(test_suite):
         subprocess.check_call([sys.executable, test_suite])
     elif os.path.isdir(tests_dir):
         subprocess.check_call([sys.executable, "-m", "pytest", tests_dir, "-v"])
     else:
-        sys.exit("Error: No test suite found")
-
+        print("Error: No test suite found")
+        sys.exit(1)
 
 def process_urls_with_cli(url_file: str):
     """Use the CLI pipeline for scoring (autograder safe)."""
@@ -66,7 +63,6 @@ def process_urls_with_cli(url_file: str):
         sys.exit(1)
     process_and_score_input_file(url_file)
 
-
 def process_local_files():
     """Keep dev mode pointing to init.py for now (prints tables)."""
     if not os.path.exists(MAIN_SCRIPT):
@@ -74,13 +70,12 @@ def process_local_files():
         sys.exit(1)
     subprocess.check_call([sys.executable, MAIN_SCRIPT, "dev"])
 
-
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         show_usage()
-
+    
     command = sys.argv[1]
-
+    
     if command == "install":
         install_dependencies()
     elif command == "test":
