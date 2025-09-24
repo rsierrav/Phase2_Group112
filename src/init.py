@@ -1,11 +1,11 @@
 import sys
 import os
 import json
-from metrics.data_quality import DatasetQualityMetric
-from utils.parse_input import fetch_metadata
-from utils.output_format import format_score_row
-from utils.parse_input import parse_input_file
-from scorer import Scorer
+from src.metrics.data_quality import DatasetQualityMetric
+from src.utils.parse_input import fetch_metadata
+from src.utils.output_format import format_score_row
+from src.utils.parse_input import parse_input_file
+from src.scorer import Scorer
 
 
 def process(parsed_data):
