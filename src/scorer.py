@@ -11,7 +11,6 @@ from src.metrics.size import SizeMetric
 from src.metrics.license import LicenseMetric
 from src.metrics.bus_factor import bus_factor
 from src.metrics.code_quality import code_quality
-from src.metrics.security import SecurityMetric
 
 
 class Scorer:
@@ -29,7 +28,6 @@ class Scorer:
         lic = LicenseMetric()
         bf = bus_factor()
         cq = code_quality()
-        sq = SecurityMetric()
 
         # Dynamic list of metrics (name, object)
         self.metrics: List[Tuple[str, Any]] = [
@@ -40,20 +38,18 @@ class Scorer:
             ("license", lic),
             ("bus_factor", bf),
             ("code_quality", cq),
-            ("security", sq),
         ]
 
         # Define weights for each metric (must sum ~1.0)
         self.weights: Dict[str, float] = {
-            "ramp_up_time": 0.08,  # not yet implemented
-            "bus_factor": 0.12,
-            "performance_claims": 0.10,  # not yet implemented
-            "license": 0.12,
-            "size_score": 0.10,
-            "dataset_and_code_score": 0.12,
-            "dataset_quality": 0.12,
-            "code_quality": 0.09,
-            "security": 0.15,
+            "ramp_up_time": 0.10,
+            "bus_factor": 0.13,
+            "performance_claims": 0.11,
+            "license": 0.14,
+            "size_score": 0.11,
+            "dataset_and_code_score": 0.14,
+            "dataset_quality": 0.14,
+            "code_quality": 0.13,
         }
 
     def score(self, metadata: Dict[str, Any]) -> Dict[str, Any]:

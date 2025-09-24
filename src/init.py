@@ -15,11 +15,15 @@ def process(parsed_data):
     scorer = Scorer()
     ds = DatasetQualityMetric()
 
+    # We only process MODEL entries here
     for entry in parsed_data:
-        metadata = fetch_metadata(entry)
-        ds.calculate_score(metadata)
-        row = format_score_row(metadata, scorer)
-        print(json.dumps(row))
+        if entry.get("category") != "MODEL":
+            continue
+
+    metadata = fetch_metadata(entry)
+    ds.calculate_score(metadata)
+    row = format_score_row(metadata, scorer)
+    print(json.dumps(row))
 
 
 def clean_and_split_line(line: str):
