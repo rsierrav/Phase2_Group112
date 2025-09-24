@@ -15,52 +15,34 @@ GH_REPO_API = "https://api.github.com/repos/"
 
 def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     """
-    Parses input file or URL, validates them, and returns structured entries.
-
-    Args:
-        input_path: Either a file path containing URLs (one per line) or a single URL
-
-    Returns:
-        List of dictionaries with category, url, and name fields
+    Parses input file or URL, validates them, and returns structured MODEL entries only.
     """
     parsed_entries = []
 
-    # Handle None or empty input
     if not input_path or not input_path.strip():
         print("Warning: Empty or None input provided")
         return []
 
     input_path = input_path.strip()
 
-    # Check if input_path is a file that exists
     if os.path.isfile(input_path):
-        # Read URLs from file
         try:
             with open(input_path, "r", encoding="utf-8") as f:
                 urls = [line.strip() for line in f if line.strip()]
-
-            if not urls:
-                print(f"Warning: No valid URLs found in file {input_path}")
-                return []
-
         except Exception as e:
             print(f"Error reading file {input_path}: {e}")
             return []
     else:
-        # Treat as a single URL
         urls = [input_path]
 
-    # Process each URL
     for url in urls:
         if not url or not url.strip():
-            print("Warning: Skipping empty URL")
             continue
 
         entry = categorize_url(url)
-        if entry:
+        # Only return entries that are models
+        if entry and entry["category"] == "MODEL":
             parsed_entries.append(entry)
-        else:
-            print(f"Warning: Could not categorize URL: {url}")
 
     return parsed_entries
 
@@ -68,72 +50,29 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
 # Added this to check for empty URLS https://piazza.com/class/mea7w9al5bg11j/post/104
 def categorize_url(url: str) -> Optional[Dict[str, str]]:
     """
-    Categorizes a single URL and returns structured entry.
-
-    Args:
-        url: The URL to categorize
-
-    Returns:
-        Dictionary with category, url, and name fields, or None if invalid
+    Categorizes a single URL, only caring about MODEL vs other types.
     """
     if not url or not isinstance(url, str):
-        print(f"Warning: Invalid URL type or empty: {url}")
         return None
 
     url = url.strip()
-
-    if not url:
-        print("Warning: Empty URL after stripping")
+    if not url or "." not in url:
         return None
 
-    # Basic URL validation - must contain at least a dot
-    if "." not in url:
-        print(f"Warning: URL appears malformed: {url}")
-        return None
-
-    # Extract name safely
     try:
         url_parts = url.rstrip("/").split("/")
         name = (
             url_parts[-1] if url_parts[-1] else (url_parts[-2] if len(url_parts) > 1 else "unknown")
         )
-    except Exception as e:
-        print(f"Warning: Could not extract name from URL {url}: {e}")
+    except Exception:
         name = "unknown"
 
-    if "huggingface.co/datasets" in url:
-        return {
-            "category": "DATASET",
-            "url": url,
-            "name": name,
-        }
-    elif "huggingface.co" in url and "/models/" in url:
-        return {
-            "category": "MODEL",
-            "url": url,
-            "name": name,
-        }
-    elif "huggingface.co" in url:
-        # Default HuggingFace URLs to MODEL if not explicitly datasets
-        return {
-            "category": "MODEL",
-            "url": url,
-            "name": name,
-        }
-    elif "github.com" in url:
-        return {
-            "category": "CODE",
-            "url": url,
-            "name": name,
-        }
-    else:
-        # Still return an entry for unknown URLs, but mark as UNKNOWN
-        print(f"Warning: Unknown URL type: {url}")
-        return {
-            "category": "UNKNOWN",
-            "url": url,
-            "name": name,
-        }
+    # Models on Hugging Face
+    if "huggingface.co" in url and "datasets" not in url:
+        return {"category": "MODEL", "url": url, "name": name}
+
+    # Everything else is ignored
+    return None
 
 
 def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]:

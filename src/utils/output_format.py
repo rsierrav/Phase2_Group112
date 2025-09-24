@@ -25,8 +25,6 @@ TABLE_COLUMNS = [
     "dataset_quality_latency",
     "code_quality",
     "code_quality_latency",
-    "security",
-    "security_latency",
 ]
 
 
@@ -74,8 +72,6 @@ def format_score_row(metadata: Dict[str, Any], scorer: Scorer) -> Dict[str, Any]
         "dataset_quality_latency": as_float(result.get("dataset_quality_latency"), 0),
         "code_quality": as_float(result.get("code_quality")),
         "code_quality_latency": as_float(result.get("code_quality_latency"), 0),
-        "security": as_float(result.get("security")),
-        "security_latency": as_float(result.get("security_latency"), 0),
     }
 
     # Guarantee all columns exist in case TABLE_COLUMNS changes
