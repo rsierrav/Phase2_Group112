@@ -2,7 +2,7 @@ import sys
 import os
 import json
 
-# Trying to fix import issues when running from root directory
+# Fix import issues when running from root directory
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # noqa: E402
 from src.metrics.data_quality import DatasetQualityMetric  # noqa: E402
 from src.utils.parse_input import fetch_metadata  # noqa: E402
@@ -12,18 +12,19 @@ from src.scorer import Scorer  # noqa: E402
 
 
 def process(parsed_data):
+    """Process parsed entries, but only output MODEL category rows."""
+    if not parsed_data:
+        return
     scorer = Scorer()
     ds = DatasetQualityMetric()
 
-    # We only process MODEL entries here
     for entry in parsed_data:
         if entry.get("category") != "MODEL":
             continue
-
-    metadata = fetch_metadata(entry)
-    ds.calculate_score(metadata)
-    row = format_score_row(metadata, scorer)
-    print(json.dumps(row))
+        metadata = fetch_metadata(entry)
+        ds.calculate_score(metadata)
+        row = format_score_row(metadata, scorer)
+        print(json.dumps(row))
 
 
 def clean_and_split_line(line: str):
@@ -39,54 +40,53 @@ def clean_and_split_line(line: str):
     return tokens
 
 
+def process_file_lines(file_path: str):
+    """Read a file and process its URLs line by line."""
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            for line in file:
+                if line.strip().startswith("{"):
+                    continue
+                urls = clean_and_split_line(line)
+                for url in urls:
+                    parsed_data = parse_input_file(url)
+                    if not parsed_data:
+                        continue
+                    process(parsed_data)
+    except Exception as e:
+        sys.stderr.write(f"Error processing file {file_path}: {e}\n")
+        sys.exit(1)
+
+
 def main():
     if len(sys.argv) != 2:
-        print("Usage: python src/init.py <URL | URL_FILE | 'dev'>")
+        sys.stderr.write("Usage: python src/init.py <URL | URL_FILE | 'dev'>\n")
         sys.exit(1)
 
     input_file = sys.argv[1]
 
     if input_file == "dev":
-        INPUT_DIR = "input"
-        files = [f for f in os.listdir(INPUT_DIR) if os.path.isfile(os.path.join(INPUT_DIR, f))]
-
+        input_dir = "input"
+        files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
         if not files:
-            print("No files found in the input directory.")
+            sys.stderr.write("No files found in the input directory.\n")
             sys.exit(1)
 
-        input_file_path = os.path.join(INPUT_DIR, files[0])
-
-        try:
-            with open(input_file_path, "r") as file:
-                for line in file:
-                    urls = clean_and_split_line(line)
-                    for url in urls:
-                        parsed_data = parse_input_file(url)
-                        process(parsed_data)
-        except Exception as e:
-            print(f"Error processing file {input_file_path}: {e}")
-            sys.exit(1)
+        input_file_path = os.path.join(input_dir, files[0])
+        process_file_lines(input_file_path)
 
     elif input_file.startswith("http://") or input_file.startswith("https://"):
         # Single URL provided directly
         parsed_data = parse_input_file(input_file)
-        process(parsed_data)
+        if parsed_data:
+            process(parsed_data)
 
     elif os.path.isfile(input_file):
         # Local file provided (like the autograder gives)
-        try:
-            with open(input_file, "r") as file:
-                for line in file:
-                    urls = clean_and_split_line(line)
-                    for url in urls:
-                        parsed_data = parse_input_file(url)
-                        process(parsed_data)
-        except Exception as e:
-            print(f"Error processing file {input_file}: {e}")
-            sys.exit(1)
+        process_file_lines(input_file)
 
     else:
-        print("Error: Invalid input. Please provide a URL, a file, or 'dev'.")
+        sys.stderr.write("Error: Invalid input. Please provide a URL, a file, or 'dev'.\n")
         sys.exit(1)
 
 
