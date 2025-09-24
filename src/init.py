@@ -107,6 +107,36 @@ def process_file_lines(file_path: str):
 
 
 def main():
+    # Validate environment variables at startup
+    github_token = os.getenv("GITHUB_TOKEN")
+    if not github_token:
+        sys.stderr.write("Error: GITHUB_TOKEN environment variable not set\n")
+        sys.exit(1)
+
+    # Validate GitHub token, this is a very basic check
+    if not github_token.strip() or len(github_token.strip()) < 10:
+        sys.stderr.write("Error: Invalid GITHUB_TOKEN\n")
+        sys.exit(1)
+
+    # Validate LOG_FILE path if provided
+    log_file = os.getenv("LOG_FILE")
+    if log_file:
+        # Check if parent directory exists
+        log_dir = os.path.dirname(log_file)
+        if log_dir and not os.path.exists(log_dir):
+            sys.stderr.write(f"Error: Log file directory does not exist: {log_dir}\n")
+            sys.exit(1)
+
+        # Check if parent directory is writable
+        if log_dir and not os.access(log_dir, os.W_OK):
+            sys.stderr.write(f"Error: Cannot write to log file directory: {log_dir}\n")
+            sys.exit(1)
+
+        # If file exists, check if it's writable
+        if os.path.exists(log_file) and not os.access(log_file, os.W_OK):
+            sys.stderr.write(f"Error: Cannot write to log file: {log_file}\n")
+            sys.exit(1)
+
     if len(sys.argv) < 2:
         sys.stderr.write("Usage: python src/init.py <URL | URL_FILE | 'dev'>\n")
         sys.exit(1)
