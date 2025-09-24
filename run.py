@@ -20,8 +20,6 @@ def show_usage():
 
 
 def install_dependencies():
-    print("Installing dependencies...")
-
     if not os.path.exists(REQUIREMENTS):
         with open(REQUIREMENTS, "w") as f:
             f.write(
@@ -41,7 +39,6 @@ pytest==8.3.2
             )
 
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", REQUIREMENTS])
-    print("Dependencies installed successfully")
 
 
 def run_tests():

@@ -16,7 +16,6 @@ def process(parsed_data):
         metadata = fetch_metadata(entry)
         ds.calculate_score(metadata)
         row = format_score_row(metadata, scorer)
-
         print(json.dumps(row))
 
 
