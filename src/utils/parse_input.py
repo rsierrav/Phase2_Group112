@@ -59,11 +59,25 @@ def categorize_url(url: str) -> Optional[Dict[str, str]]:
     if not url or "." not in url:
         return None
 
+    # Extract name with special handling for HuggingFace URLs
     try:
-        url_parts = url.rstrip("/").split("/")
-        name = (
-            url_parts[-1] if url_parts[-1] else (url_parts[-2] if len(url_parts) > 1 else "unknown")
-        )
+        if "huggingface.co" in url and "datasets" not in url:
+            # For HuggingFace model URLs, extract the model name properly
+            # Format: huggingface.co/owner/model-name[/tree/branch]
+            # Had issues with one naming itself main instead of the models name
+            parts = url.split("huggingface.co/")[-1].split("/")
+            if len(parts) >= 2:
+                name = parts[1]  # Get the model name (second part after owner)
+            else:
+                name = parts[0] if parts else "unknown"
+        else:
+            # For other URLs, use existing logic
+            url_parts = url.rstrip("/").split("/")
+            name = (
+                url_parts[-1]
+                if url_parts[-1]
+                else (url_parts[-2] if len(url_parts) > 1 else "unknown")
+            )
     except Exception:
         name = "unknown"
 
