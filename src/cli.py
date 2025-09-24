@@ -49,10 +49,19 @@ def validate_log_file() -> None:
         sys.stderr.write(f"Error: log file {log_path} does not exist\n")
         sys.exit(1)
 
-    # If all good, configure logging
+    # Forgot to handle log level
+    level_str = os.getenv("LOG_LEVEL", "1")
+    if level_str == "0":
+        logging.disable(logging.CRITICAL)
+        return
+    elif level_str == "2":
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.INFO
+
     logging.basicConfig(
         filename=log_path,
-        level=logging.INFO,
+        level=log_level,
         format="%(asctime)s %(levelname)s: %(message)s",
     )
     logging.info("Logging initialized successfully.")
