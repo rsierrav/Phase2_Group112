@@ -1,25 +1,23 @@
 import sys
 import os
+import json
 from metrics.data_quality import DatasetQualityMetric
 from utils.parse_input import fetch_metadata
-from utils.output_format import format_score_row, print_score_table
+from utils.output_format import format_score_row
 from utils.parse_input import parse_input_file
 from scorer import Scorer
 
 
 def process(parsed_data):
-    rows = []
     scorer = Scorer()
-
     ds = DatasetQualityMetric()
 
     for entry in parsed_data:
         metadata = fetch_metadata(entry)
         ds.calculate_score(metadata)
         row = format_score_row(metadata, scorer)
-        rows.append(row)
 
-    print_score_table(rows)
+        print(json.dumps(row))
 
 
 def clean_and_split_line(line: str):
