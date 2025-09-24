@@ -1,0 +1,139 @@
+09/24/25 06:24:24 PM : INFO : Testing Directory: /app
+09/24/25 06:24:24 PM : Test Start : Running Tests for: ECE461: Autograder Phase 1 CLI Checker
+09/24/25 06:24:24 PM : Test Start : Running Tests for: Basic Sanity
+09/24/25 06:24:24 PM : DEBUG : Running test: Basic Sanity
+09/24/25 06:24:24 PM : DEBUG : Running test: Install Test
+09/24/25 06:24:25 PM : Test Debug : Output Valid: True
+09/24/25 06:24:25 PM : Test Success : > Install command ran and exited successfully!
+09/24/25 06:24:25 PM : Run Stdout : Available input files:
+  1. sample_input.json
+  2. sample_input.txt
+[WARN] Metric dataset_code failed for bert-base-uncased: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7fb0223620a0>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "bert-base-uncased", "category": "MODEL", "net_score": 0.1628481012658228, "net_score_latency": 105.30760604888201, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.003718072548508644, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.0, "desktop_pc": 0.0, "aws_server": 0.86}, "size_score_latency": 0.027128029614686966, "dataset_and_code_score": 0.75, "dataset_and_code_score_latency": 0.06228499114513397, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+[WARN] Metric dataset_code failed for audience_classifier_model: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7fb022362a00>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "audience_classifier_model", "category": "MODEL", "net_score": 0.15659493670886077, "net_score_latency": 106.60786903463304, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.0034479890018701553, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.22, "desktop_pc": 0.87, "aws_server": 0.97}, "size_score_latency": 0.028611859306693077, "dataset_and_code_score": 0.47900000000000004, "dataset_and_code_score_latency": 0.037051038816571236, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+[WARN] Metric dataset_code failed for whisper-tiny: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7fb0222d6190>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "whisper-tiny", "category": "MODEL", "net_score": 0.1840822784810127, "net_score_latency": 79.9451710190624, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.003220047801733017, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.0, "desktop_pc": 0.56, "aws_server": 0.91}, "size_score_latency": 0.02646888606250286, "dataset_and_code_score": 0.75, "dataset_and_code_score_latency": 0.07017701864242554, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+
+09/24/25 06:24:25 PM : Run Stderr : 
+09/24/25 06:24:25 PM : DEBUG : Running test: Test Suite Test
+09/24/25 06:24:26 PM : Test Debug : Output Valid: True
+09/24/25 06:24:26 PM : Test Success : > Test Suite command ran and exited successfully!
+09/24/25 06:24:26 PM : Run Stdout : Available input files:
+  1. sample_input.json
+  2. sample_input.txt
+[WARN] Metric dataset_code failed for bert-base-uncased: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f17c715b130>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "bert-base-uncased", "category": "MODEL", "net_score": 0.1628481012658228, "net_score_latency": 91.16246900521219, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.0041800085455179214, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.0, "desktop_pc": 0.0, "aws_server": 0.86}, "size_score_latency": 0.028708018362522125, "dataset_and_code_score": 0.75, "dataset_and_code_score_latency": 0.06077880971133709, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+[WARN] Metric dataset_code failed for audience_classifier_model: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f17c715be80>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "audience_classifier_model", "category": "MODEL", "net_score": 0.15659493670886077, "net_score_latency": 80.71565604768693, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.004034955054521561, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.22, "desktop_pc": 0.87, "aws_server": 0.97}, "size_score_latency": 0.030240043997764587, "dataset_and_code_score": 0.47900000000000004, "dataset_and_code_score_latency": 0.03626290708780289, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+[WARN] Metric dataset_code failed for whisper-tiny: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f17c715bfa0>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "whisper-tiny", "category": "MODEL", "net_score": 0.1840822784810127, "net_score_latency": 62.37412919290364, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.0042689498513937, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.0, "desktop_pc": 0.56, "aws_server": 0.91}, "size_score_latency": 0.028034206479787827, "dataset_and_code_score": 0.75, "dataset_and_code_score_latency": 0.06970204412937164, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+
+09/24/25 06:24:26 PM : Run Stderr : 
+09/24/25 06:24:26 PM : DEBUG : Running test: URL File Test
+09/24/25 06:24:27 PM : Run Stderr : Output does not match the number of urls in the file
+09/24/25 06:24:27 PM : Test Debug : Output Valid: True
+09/24/25 06:24:27 PM : Test Success : > URL File command ran and exited successfully!
+09/24/25 06:24:27 PM : Run Stdout : Available input files:
+  1. sample_input.json
+  2. sample_input.txt
+[WARN] Metric dataset_code failed for bert-base-uncased: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7fcbc4ae9130>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "bert-base-uncased", "category": "MODEL", "net_score": 0.1628481012658228, "net_score_latency": 90.54984198883176, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.003493158146739006, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.0, "desktop_pc": 0.0, "aws_server": 0.86}, "size_score_latency": 0.027287984266877174, "dataset_and_code_score": 0.75, "dataset_and_code_score_latency": 0.05576806142926216, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+[WARN] Metric dataset_code failed for audience_classifier_model: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7fcbc4ae9e80>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "audience_classifier_model", "category": "MODEL", "net_score": 0.15659493670886077, "net_score_latency": 63.1690020672977, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.003519933670759201, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.22, "desktop_pc": 0.87, "aws_server": 0.97}, "size_score_latency": 0.029528047889471054, "dataset_and_code_score": 0.47900000000000004, "dataset_and_code_score_latency": 0.03496906720101833, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+[WARN] Metric dataset_code failed for whisper-tiny: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7fcbc4ae9fa0>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "whisper-tiny", "category": "MODEL", "net_score": 0.1840822784810127, "net_score_latency": 120.31731382012367, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.003322027623653412, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.0, "desktop_pc": 0.56, "aws_server": 0.91}, "size_score_latency": 0.026837922632694244, "dataset_and_code_score": 0.75, "dataset_and_code_score_latency": 0.06782612763345242, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+
+09/24/25 06:24:27 PM : Run Stderr : 
+09/24/25 06:24:27 PM : Test Result : Total score: 3 / 3 
+
+09/24/25 06:24:27 PM : Test Start : Running Tests for: Test Suite Basic Sanity
+09/24/25 06:24:27 PM : DEBUG : Running test: Test Suite Basic Sanity
+09/24/25 06:24:27 PM : DEBUG : Running test: Test Suite Test
+09/24/25 06:24:27 PM : Test Debug : Output Valid: True
+09/24/25 06:24:27 PM : Test Success : > Test Suite command ran and exited successfully!
+09/24/25 06:24:27 PM : Run Stdout : Available input files:
+  1. sample_input.json
+  2. sample_input.txt
+[WARN] Metric dataset_code failed for bert-base-uncased: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f17c715b130>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "bert-base-uncased", "category": "MODEL", "net_score": 0.1628481012658228, "net_score_latency": 91.16246900521219, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.0041800085455179214, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.0, "desktop_pc": 0.0, "aws_server": 0.86}, "size_score_latency": 0.028708018362522125, "dataset_and_code_score": 0.75, "dataset_and_code_score_latency": 0.06077880971133709, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+[WARN] Metric dataset_code failed for audience_classifier_model: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f17c715be80>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "audience_classifier_model", "category": "MODEL", "net_score": 0.15659493670886077, "net_score_latency": 80.71565604768693, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.004034955054521561, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.22, "desktop_pc": 0.87, "aws_server": 0.97}, "size_score_latency": 0.030240043997764587, "dataset_and_code_score": 0.47900000000000004, "dataset_and_code_score_latency": 0.03626290708780289, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+[WARN] Metric dataset_code failed for whisper-tiny: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f17c715bfa0>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "whisper-tiny", "category": "MODEL", "net_score": 0.1840822784810127, "net_score_latency": 62.37412919290364, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.0042689498513937, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.0, "desktop_pc": 0.56, "aws_server": 0.91}, "size_score_latency": 0.028034206479787827, "dataset_and_code_score": 0.75, "dataset_and_code_score_latency": 0.06970204412937164, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+
+09/24/25 06:24:27 PM : Run Stderr : None
+09/24/25 06:24:27 PM : DEBUG : Running test: Test Suite - Check output syntax
+09/24/25 06:24:27 PM : Test Debug : Output Valid: None
+09/24/25 06:24:27 PM : Test Fail : > Output syntax is incorrect.
+09/24/25 06:24:27 PM : Run Stdout : Available input files:
+  1. sample_input.json
+  2. sample_input.txt
+[WARN] Metric dataset_code failed for bert-base-uncased: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f17c715b130>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "bert-base-uncased", "category": "MODEL", "net_score": 0.1628481012658228, "net_score_latency": 91.16246900521219, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.0041800085455179214, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.0, "desktop_pc": 0.0, "aws_server": 0.86}, "size_score_latency": 0.028708018362522125, "dataset_and_code_score": 0.75, "dataset_and_code_score_latency": 0.06077880971133709, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+[WARN] Metric dataset_code failed for audience_classifier_model: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f17c715be80>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "audience_classifier_model", "category": "MODEL", "net_score": 0.15659493670886077, "net_score_latency": 80.71565604768693, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.004034955054521561, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.22, "desktop_pc": 0.87, "aws_server": 0.97}, "size_score_latency": 0.030240043997764587, "dataset_and_code_score": 0.47900000000000004, "dataset_and_code_score_latency": 0.03626290708780289, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+[WARN] Metric dataset_code failed for whisper-tiny: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7f17c715bfa0>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "whisper-tiny", "category": "MODEL", "net_score": 0.1840822784810127, "net_score_latency": 62.37412919290364, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.0042689498513937, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.0, "desktop_pc": 0.56, "aws_server": 0.91}, "size_score_latency": 0.028034206479787827, "dataset_and_code_score": 0.75, "dataset_and_code_score_latency": 0.06970204412937164, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+
+09/24/25 06:24:27 PM : Run Stderr : None
+09/24/25 06:24:27 PM : Test Result : Total score: 1 / 2 
+
+09/24/25 06:24:27 PM : Test Start : Running Tests for: URL File Basic Tests
+09/24/25 06:24:27 PM : DEBUG : Running test: URL File Basic Tests
+09/24/25 06:24:27 PM : DEBUG : Running test: URL File Test
+09/24/25 06:24:27 PM : Run Stderr : Output does not match the number of urls in the file
+09/24/25 06:24:27 PM : Test Debug : Output Valid: True
+09/24/25 06:24:27 PM : Test Success : > URL File command ran and exited successfully!
+09/24/25 06:24:27 PM : Run Stdout : 
+
+09/24/25 06:24:27 PM : Run Stderr : None
+09/24/25 06:24:27 PM : DEBUG : Running test: Valid JSON Output Test
+09/24/25 06:24:27 PM : Run Stderr : Output does not match the number of urls in the file
+09/24/25 06:24:27 PM : Run Stderr : Output does not match the number of urls in the file
+09/24/25 06:24:27 PM : Test Debug : Output Valid: False
+09/24/25 06:24:27 PM : Test Fail : > URL File is not valid NDJSON!
+09/24/25 06:24:27 PM : Run Stdout : 
+
+09/24/25 06:24:27 PM : Run Stderr : None
+09/24/25 06:24:27 PM : DEBUG : Running test: Valid Score Ranges Test
+09/24/25 06:24:27 PM : Test Fail : > URL File does not have valid field ranges! (Unstaisfied dependency 'Valid JSON Output Test')
+09/24/25 06:24:27 PM : Run Stdout : None
+09/24/25 06:24:27 PM : Run Stderr : None
+09/24/25 06:24:27 PM : DEBUG : Running test: Valid Net Score Test
+09/24/25 06:24:27 PM : Test Fail : > URL File does not have valid NET_SCORE! (Unstaisfied dependency 'Valid Score Ranges Test')
+09/24/25 06:24:27 PM : Run Stdout : None
+09/24/25 06:24:27 PM : Run Stderr : None
+09/24/25 06:24:27 PM : DEBUG : Running test: Valid Net Score Latency Test
+09/24/25 06:24:27 PM : Test Fail : > URL File does not have valid NET_SCORE and LATENCY! (Unstaisfied dependency 'Valid Score Ranges Test')
+09/24/25 06:24:27 PM : Run Stdout : None
+09/24/25 06:24:27 PM : Run Stderr : None
+09/24/25 06:24:27 PM : Test Result : Total score: 1 / 5 
+
+09/24/25 06:24:27 PM : Test Start : Running Tests for: Environment Variable Basic Sanity
+09/24/25 06:24:27 PM : DEBUG : Running test: Environment Variable Basic Sanity
+09/24/25 06:24:27 PM : DEBUG : Running test: Invalid GitHub Token Test
+09/24/25 06:24:27 PM : Test Debug : Output Valid: False
+09/24/25 06:24:27 PM : Test Fail : > Invalid GitHub Token Test failed!
+09/24/25 06:24:27 PM : Run Stdout : 
+09/24/25 06:24:27 PM : Run Stderr : 
+09/24/25 06:24:27 PM : DEBUG : Running test: Invalid Log File Path Test
+09/24/25 06:24:28 PM : Test Debug : Output Valid: False
+09/24/25 06:24:28 PM : Test Fail : > Invalid Log File Path Test failed!
+09/24/25 06:24:28 PM : Run Stdout : 
+09/24/25 06:24:28 PM : Run Stderr : 
+09/24/25 06:24:28 PM : DEBUG : Running test: Log Level Test
+09/24/25 06:24:29 PM : Test Debug : Output Valid: True
+09/24/25 06:24:29 PM : Test Success : > Blank Log file for Log Level 0 Test passed!
+09/24/25 06:24:29 PM : Run Stdout : [WARN] Metric dataset_code failed for bert-base-uncased: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7fd694644130>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "bert-base-uncased", "category": "MODEL", "net_score": 0.1628481012658228, "net_score_latency": 34.61085190065205, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.003949040547013283, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.0, "desktop_pc": 0.0, "aws_server": 0.86}, "size_score_latency": 0.026986002922058105, "dataset_and_code_score": 0.75, "dataset_and_code_score_latency": 0.05834689363837242, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+[WARN] Metric dataset_code failed for audience_classifier_model: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7fd694644e80>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "audience_classifier_model", "category": "MODEL", "net_score": 0.15659493670886077, "net_score_latency": 82.6690150424838, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.003742985427379608, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.22, "desktop_pc": 0.87, "aws_server": 0.97}, "size_score_latency": 0.03012898378074169, "dataset_and_code_score": 0.47900000000000004, "dataset_and_code_score_latency": 0.03834092058241367, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+[WARN] Metric dataset_code failed for whisper-tiny: HTTPSConnectionPool(host='genai.api.purdue.edu', port=443): Max retries exceeded with url: /v1/chat/completions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7fd694644fa0>: Failed to establish a new connection: [Errno -2] Name or service not known'))
+{"name": "whisper-tiny", "category": "MODEL", "net_score": 0.1840822784810127, "net_score_latency": 52.34729591757059, "ramp_up_time": 0.0, "ramp_up_time_latency": 0, "bus_factor": 0.0, "bus_factor_latency": 0.0, "performance_claims": 0.0, "performance_claims_latency": 0, "license": 0.0, "license_latency": 0.0034139957278966904, "size_score": {"raspberry_pi": 0.0, "jetson_nano": 0.0, "desktop_pc": 0.56, "aws_server": 0.91}, "size_score_latency": 0.027067959308624268, "dataset_and_code_score": 0.75, "dataset_and_code_score_latency": 0.07015210576355457, "dataset_quality": 0.0, "dataset_quality_latency": 0.0, "code_quality": 0.0, "code_quality_latency": 0.0}
+
+09/24/25 06:24:29 PM : Run Stderr : 
+09/24/25 06:24:29 PM : Test Result : Total score: 1 / 3 
+
+09/24/25 06:24:29 PM : Test Result : Total score: 6 / 13 
+
