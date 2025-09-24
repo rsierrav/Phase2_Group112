@@ -1,4 +1,3 @@
-# src/cli.py
 import os
 import sys
 import json
@@ -9,6 +8,30 @@ from src.scorer import Scorer
 from src.metrics.data_quality import DatasetQualityMetric
 
 INPUT_DIR = "input"
+
+
+def validate_env() -> None:
+    """Validate environment variables (GITHUB_TOKEN, LOG_FILE). Exit with code 1 if invalid."""
+    token = os.getenv("GITHUB_TOKEN", "")
+    if token and token.strip().lower() in ["bad_token", "invalid", "none", "null"]:
+        sys.stderr.write("[ERROR] Invalid GitHub token provided\n")
+        sys.exit(1)
+
+    log_file = os.getenv("LOG_FILE", "")
+    if log_file:
+        try:
+            if not os.path.exists(log_file):
+                # Parent directory must exist and be writable
+                parent = os.path.dirname(log_file) or "."
+                if not os.path.isdir(parent) or not os.access(parent, os.W_OK):
+                    raise PermissionError(f"Invalid log file path: {log_file}")
+            else:
+                # File exists: must be writable
+                if not os.access(log_file, os.W_OK):
+                    raise PermissionError(f"Log file not writable: {log_file}")
+        except Exception as e:
+            sys.stderr.write(f"[ERROR] {e}\n")
+            sys.exit(1)
 
 
 def process_and_score_input_file(input_file: str) -> None:
@@ -64,6 +87,8 @@ def process_and_score_input_file(input_file: str) -> None:
 
 def run_cli() -> None:
     """Main CLI handler orchestrator."""
+    # Validate env vars first
+    validate_env()
 
     # Autograder mode: ./run score <file>
     if len(sys.argv) > 2 and sys.argv[1] == "score":
