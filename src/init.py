@@ -1,11 +1,14 @@
 import sys
 import os
 import json
-from metrics.data_quality import DatasetQualityMetric
-from utils.parse_input import fetch_metadata
-from utils.output_format import format_score_row
-from utils.parse_input import parse_input_file
-from scorer import Scorer
+
+# Trying to fix import issues when running from root directory
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # noqa: E402
+from src.metrics.data_quality import DatasetQualityMetric  # noqa: E402
+from src.utils.parse_input import fetch_metadata  # noqa: E402
+from src.utils.output_format import format_score_row  # noqa: E402
+from src.utils.parse_input import parse_input_file  # noqa: E402
+from src.scorer import Scorer  # noqa: E402
 
 
 def process(parsed_data):

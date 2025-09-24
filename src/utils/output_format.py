@@ -2,7 +2,7 @@
 
 import json
 from typing import Dict, List, Any
-from scorer import Scorer  # unified Scorer
+from src.scorer import Scorer  # unified Scorer
 
 TABLE_COLUMNS = [
     "name",

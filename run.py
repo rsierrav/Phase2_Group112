@@ -2,7 +2,10 @@
 import sys
 import subprocess
 import os
-from src.cli import run_cli, process_and_score_input_file
+
+# Trying to fix import issues when running from root directory
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from src.cli import run_cli, process_and_score_input_file  # noqa: E402
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 MAIN_SCRIPT = os.path.join(SCRIPT_DIR, "src", "init.py")
@@ -68,11 +71,11 @@ def process_urls_with_cli(url_file: str):
 
 
 def process_local_files():
-    """Keep dev mode pointing to init.py for now (prints tables)."""
+    """Run dev mode using module execution."""
     if not os.path.exists(MAIN_SCRIPT):
         print("Error: init.py not found")
         sys.exit(1)
-    subprocess.check_call([sys.executable, MAIN_SCRIPT, "dev"])
+    subprocess.check_call([sys.executable, "-m", "src.init", "dev"], cwd=SCRIPT_DIR)
 
 
 if __name__ == "__main__":
