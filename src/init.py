@@ -1,11 +1,11 @@
 import sys
 import os
 import json
-from src.metrics.data_quality import DatasetQualityMetric
-from src.utils.parse_input import fetch_metadata
-from src.utils.output_format import format_score_row
-from src.utils.parse_input import parse_input_file
-from src.scorer import Scorer
+from metrics.data_quality import DatasetQualityMetric
+from utils.parse_input import fetch_metadata
+from utils.output_format import format_score_row
+from utils.parse_input import parse_input_file
+from scorer import Scorer
 
 
 def process(parsed_data):
@@ -34,7 +34,7 @@ def clean_and_split_line(line: str):
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: python src/init.py <URL | 'dev'>")
+        print("Usage: python src/init.py <URL | URL_FILE | 'dev'>")
         sys.exit(1)
 
     input_file = sys.argv[1]
@@ -60,13 +60,27 @@ def main():
             print(f"Error processing file {input_file_path}: {e}")
             sys.exit(1)
 
-    else:
-        if input_file.startswith("http://") or input_file.startswith("https://"):
-            parsed_data = parse_input_file(input_file)
-            process(parsed_data)
-        else:
-            print("Error: Invalid input. Please provide a URL or 'dev' for local files.")
+    elif input_file.startswith("http://") or input_file.startswith("https://"):
+        # Single URL provided directly
+        parsed_data = parse_input_file(input_file)
+        process(parsed_data)
+
+    elif os.path.isfile(input_file):
+        # Local file provided (like the autograder gives)
+        try:
+            with open(input_file, "r") as file:
+                for line in file:
+                    urls = clean_and_split_line(line)
+                    for url in urls:
+                        parsed_data = parse_input_file(url)
+                        process(parsed_data)
+        except Exception as e:
+            print(f"Error processing file {input_file}: {e}")
             sys.exit(1)
+
+    else:
+        print("Error: Invalid input. Please provide a URL, a file, or 'dev'.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
