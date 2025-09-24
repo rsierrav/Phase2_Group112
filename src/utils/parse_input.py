@@ -15,10 +15,10 @@ GH_REPO_API = "https://api.github.com/repos/"
 
 def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     """
-    Parses input file containing URLs (comma-separated or line-by-line).
+    Parses input file or URL, validates them, and returns structured entries.
     
     Args:
-        input_path: File path containing URLs
+        input_path: Either a file path containing URLs (one per line) or a single URL
     
     Returns:
         List of dictionaries with category, url, and name fields
@@ -37,39 +37,23 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
         # Read URLs from file
         try:
             with open(input_path, 'r', encoding='utf-8') as f:
-                content = f.read().strip()
+                urls = [line.strip() for line in f if line.strip()]
                 
-            if not content:
-                print(f"Warning: No content found in file {input_path}")
+            if not urls:
+                print(f"Warning: No valid URLs found in file {input_path}")
                 return []
-            
-            # Process the content to extract all URLs
-            all_urls = []
-            
-            # Split by lines first
-            lines = content.split('\n')
-            for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
                 
-                # Handle comma-separated URLs in each line
-                # Split by comma and clean each URL
-                urls_in_line = [url.strip().strip('"').strip("'") for url in line.split(',')]
-                for url in urls_in_line:
-                    if url and url != '':  # Skip empty strings
-                        all_urls.append(url)
-                        
         except Exception as e:
             print(f"Error reading file {input_path}: {e}")
             return []
     else:
         # Treat as a single URL
-        all_urls = [input_path]
+        urls = [input_path]
     
     # Process each URL
-    for url in all_urls:
+    for url in urls:
         if not url or not url.strip():
+            print("Warning: Skipping empty URL")
             continue
             
         entry = categorize_url(url)
@@ -80,7 +64,7 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     
     return parsed_entries
 
-
+# Added this to check for empty URLS https://piazza.com/class/mea7w9al5bg11j/post/104
 def categorize_url(url: str) -> Dict[str, str]:
     """
     Categorizes a single URL and returns structured entry.
@@ -106,30 +90,10 @@ def categorize_url(url: str) -> Dict[str, str]:
         print(f"Warning: URL appears malformed: {url}")
         return None
     
-    # Extract name based on URL structure and expected output format
-    name = "unknown"
+    # Extract name safely
     try:
-        if "huggingface.co" in url:
-            # For HuggingFace URLs, extract model/dataset name properly
-            parts = url.replace("https://", "").replace("http://", "").split("/")
-            if len(parts) >= 3:
-                if "datasets" in parts:
-                    # Skip "datasets" and get the next part
-                    dataset_idx = parts.index("datasets")
-                    if dataset_idx + 2 < len(parts):
-                        name = parts[dataset_idx + 2]  # bookcorpus from bookcorpus/bookcorpus
-                    elif dataset_idx + 1 < len(parts):
-                        name = parts[dataset_idx + 1]
-                else:
-                    # For models, get the model name
-                    # Handle cases like /google-bert/bert-base-uncased or /openai/whisper-tiny/tree/main
-                    if len(parts) >= 3:
-                        name = parts[2]  # bert-base-uncased, audience_classifier_model, whisper-tiny
-        elif "github.com" in url:
-            # For GitHub URLs, get repo name
-            parts = url.replace("https://", "").replace("http://", "").split("/")
-            if len(parts) >= 3:
-                name = parts[2]  # repo name
+        url_parts = url.rstrip('/').split('/')
+        name = url_parts[-1] if url_parts[-1] else (url_parts[-2] if len(url_parts) > 1 else "unknown")
     except Exception as e:
         print(f"Warning: Could not extract name from URL {url}: {e}")
         name = "unknown"
