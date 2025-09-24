@@ -10,6 +10,6 @@ huggingface-hub>=0.10.0
 
 # Dev/test tools
 flake8==7.0.0
-black==24.8.0
-pre-commit==3.6.2
+black==25.9.0
+pre-commit==4.3.0
 pytest==8.3.2

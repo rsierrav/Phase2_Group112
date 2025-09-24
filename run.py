@@ -2,8 +2,7 @@
 import sys
 import subprocess
 import os
-import json
-from src.cli import run_cli
+from src.cli import run_cli, process_and_score_input_file
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 MAIN_SCRIPT = os.path.join(SCRIPT_DIR, "src", "init.py")
@@ -13,7 +12,7 @@ REQUIREMENTS = os.path.join(SCRIPT_DIR, "requirements.txt")
 def show_usage():
     print("Usage:")
     print("  ./run install               - Install dependencies")
-    print("  ./run score <URL_FILE>      - Score models from a file")
+    print("  ./run score <URL_FILE>      - Score models from a file (NDJSON output)")
     print("  ./run dev                   - Run all input files (dev mode)")
     print("  ./run test                  - Run test suite")
     sys.exit(1)
@@ -53,53 +52,20 @@ def run_tests():
         sys.exit("Error: No test suite found")
 
 
-def process_and_stream(command: list):
-    """
-    Run a subprocess (init.py) and stream its stdout line by line.
-    Converts any JSON arrays into NDJSON (one object per line).
-    """
-    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-    # Collect stdout, parse if needed
-    if proc.stdout is None:
-        return
-
-    for line in proc.stdout:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            data = json.loads(line)
-            # If it's a list, break into objects
-            if isinstance(data, list):
-                for obj in data:
-                    print(json.dumps(obj))
-            elif isinstance(data, dict):
-                print(json.dumps(data))
-            else:
-                # Already NDJSON-safe
-                print(json.dumps({"output": data}))
-        except Exception:
-            # Just print raw if it's not JSON
-            print(line)
-
-    proc.wait()
-    if proc.returncode != 0:
-        sys.exit(proc.returncode)
-
-
-def process_urls(url_file: str):
-    if not os.path.exists(MAIN_SCRIPT):
-        print("Error: init.py not found")
+def process_urls_with_cli(url_file: str):
+    """Use the CLI pipeline for scoring (autograder safe)."""
+    if not os.path.exists(url_file):
+        print(f"Error: input file '{url_file}' not found")
         sys.exit(1)
-    process_and_stream([sys.executable, MAIN_SCRIPT, url_file])
+    process_and_score_input_file(url_file)
 
 
 def process_local_files():
+    """Keep dev mode pointing to init.py for now (prints tables)."""
     if not os.path.exists(MAIN_SCRIPT):
         print("Error: init.py not found")
         sys.exit(1)
-    process_and_stream([sys.executable, MAIN_SCRIPT, "dev"])
+    subprocess.check_call([sys.executable, MAIN_SCRIPT, "dev"])
 
 
 if __name__ == "__main__":
@@ -118,7 +84,7 @@ if __name__ == "__main__":
         if len(sys.argv) < 3:
             print("Error: Missing URL_FILE argument for score command")
             sys.exit(1)
-        process_urls(sys.argv[2])
+        process_urls_with_cli(sys.argv[2])
     else:
-        # fallback to run_cli (custom CLI handler)
+        # fallback to run_cli (interactive/local use)
         run_cli()
