@@ -24,20 +24,22 @@ def process_and_score_input_file(input_file: str) -> None:
             # Fetch metadata for each entry
             entry_with_metadata = fetch_metadata(entry)
             
-            # Score the complete entry (not just metadata)
+            # Score the complete entry
             result = scorer.score(entry_with_metadata)
             
-            # Always print as one JSON object per line (NDJSON)
-            print(json.dumps(result))
+            # Always output result
+            if result is not None:
+                print(json.dumps(result))
             
     except Exception as e:
         print(f"Error processing file {input_file}: {e}", file=sys.stderr)
         sys.exit(1)
 
 def run_cli() -> None:
+    """Main CLI handler orchestrator."""
     log_level = os.getenv("LOG_LEVEL", "1")
     
-    # If an argument is passed, use it directly (autograder mode)
+    # If an argument is passed, use it directly (for autograder)
     if len(sys.argv) > 2 and sys.argv[1] == "score":
         input_file = sys.argv[2]
         if not os.path.exists(input_file):
@@ -46,7 +48,6 @@ def run_cli() -> None:
         process_and_score_input_file(input_file)
         return
     
-    # Interactive fallback (local dev mode)
     if not os.path.isdir(INPUT_DIR):
         print(f"Error: input folder '{INPUT_DIR}' not found.")
         sys.exit(1)
@@ -61,7 +62,7 @@ def run_cli() -> None:
         for idx, fname in enumerate(files, start=1):
             print(f"  {idx}. {fname}")
     
-    # Default to first file for autograder (no prompt)
+    # Default to first file in autograder (no prompt)
     if not sys.stdin.isatty():
         input_file = os.path.join(INPUT_DIR, files[0])
     else:
