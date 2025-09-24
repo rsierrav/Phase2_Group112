@@ -1,7 +1,7 @@
 import json
 import requests
 import os
-from typing import List, Dict, Any
+from typing import Optional, List, Dict, Any
 
 """
 Parses input URLs, validates them, and fetches raw metadata.
@@ -16,88 +16,91 @@ GH_REPO_API = "https://api.github.com/repos/"
 def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     """
     Parses input file or URL, validates them, and returns structured entries.
-    
+
     Args:
         input_path: Either a file path containing URLs (one per line) or a single URL
-    
+
     Returns:
         List of dictionaries with category, url, and name fields
     """
     parsed_entries = []
-    
+
     # Handle None or empty input
     if not input_path or not input_path.strip():
         print("Warning: Empty or None input provided")
         return []
-    
+
     input_path = input_path.strip()
-    
+
     # Check if input_path is a file that exists
     if os.path.isfile(input_path):
         # Read URLs from file
         try:
-            with open(input_path, 'r', encoding='utf-8') as f:
+            with open(input_path, "r", encoding="utf-8") as f:
                 urls = [line.strip() for line in f if line.strip()]
-                
+
             if not urls:
                 print(f"Warning: No valid URLs found in file {input_path}")
                 return []
-                
+
         except Exception as e:
             print(f"Error reading file {input_path}: {e}")
             return []
     else:
         # Treat as a single URL
         urls = [input_path]
-    
+
     # Process each URL
     for url in urls:
         if not url or not url.strip():
             print("Warning: Skipping empty URL")
             continue
-            
+
         entry = categorize_url(url)
         if entry:
             parsed_entries.append(entry)
         else:
             print(f"Warning: Could not categorize URL: {url}")
-    
+
     return parsed_entries
 
+
 # Added this to check for empty URLS https://piazza.com/class/mea7w9al5bg11j/post/104
-def categorize_url(url: str) -> Dict[str, str]:
+def categorize_url(url: str) -> Optional[Dict[str, str]]:
     """
     Categorizes a single URL and returns structured entry.
-    
+
     Args:
         url: The URL to categorize
-        
+
     Returns:
         Dictionary with category, url, and name fields, or None if invalid
     """
     if not url or not isinstance(url, str):
         print(f"Warning: Invalid URL type or empty: {url}")
         return None
-        
+
     url = url.strip()
-    
+
     if not url:
         print("Warning: Empty URL after stripping")
         return None
-    
+
     # Basic URL validation - must contain at least a dot
-    if '.' not in url:
+    if "." not in url:
         print(f"Warning: URL appears malformed: {url}")
         return None
-    
+
     # Extract name safely
     try:
-        url_parts = url.rstrip('/').split('/')
-        name = url_parts[-1] if url_parts[-1] else (url_parts[-2] if len(url_parts) > 1 else "unknown")
+        url_parts = url.rstrip("/").split("/")
+        name = (
+            url_parts[-1] if url_parts[-1] else (url_parts[-2] if len(url_parts) > 1 else "unknown")
+        )
     except Exception as e:
         print(f"Warning: Could not extract name from URL {url}: {e}")
         name = "unknown"
-    
+
     if "huggingface.co/datasets" in url:
         return {
             "category": "DATASET",
@@ -106,7 +109,7 @@ def categorize_url(url: str) -> Dict[str, str]:
         }
     elif "huggingface.co" in url and "/models/" in url:
         return {
-            "category": "MODEL", 
+            "category": "MODEL",
             "url": url,
             "name": name,
         }
@@ -114,7 +117,7 @@ def categorize_url(url: str) -> Dict[str, str]:
         # Default HuggingFace URLs to MODEL if not explicitly datasets
         return {
             "category": "MODEL",
-            "url": url, 
+            "url": url,
             "name": name,
         }
     elif "github.com" in url:
@@ -141,10 +144,10 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
     # Use .get() with default to prevent KeyError
     category = entry.get("category", "UNKNOWN")
     url = entry.get("url", "")
-    
+
     # Initialize metadata as empty dict
     entry["metadata"] = {}
-    
+
     if not url or not isinstance(url, str):
         entry["metadata"] = {"error": "Invalid or missing URL"}
         return entry
@@ -160,7 +163,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                 entry["metadata"] = {"error": f"Invalid model URL format: {str(e)}"}
                 entry["model_size_mb"] = 0.0
                 return entry
-                
+
             try:
                 resp = requests.get(HF_MODEL_API + model_id, timeout=10)
                 if resp.status_code == 200:
@@ -181,7 +184,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
             # Calculate model size safely
             size_bytes = 0
             md = entry["metadata"]
-            
+
             if not isinstance(md, dict) or "error" in md:
                 entry["model_size_mb"] = 0.0
             else:
@@ -193,10 +196,16 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                     # sum sizes of files in siblings
                     elif "siblings" in md and isinstance(md["siblings"], list):
                         for s in md["siblings"]:
-                            if isinstance(s, dict) and "size" in s and isinstance(s["size"], (int, float)):
+                            if (
+                                isinstance(s, dict)
+                                and "size" in s
+                                and isinstance(s["size"], (int, float))
+                            ):
                                 size_bytes += s["size"]
 
-                    entry["model_size_mb"] = round(size_bytes / (1024 * 1024), 2) if size_bytes > 0 else 0.0
+                    entry["model_size_mb"] = (
+                        round(size_bytes / (1024 * 1024), 2) if size_bytes > 0 else 0.0
+                    )
                 except Exception as e:
                     entry["model_size_mb"] = 0.0
                     if debug:
@@ -212,7 +221,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                 entry["metadata"] = {"error": f"Invalid dataset URL format: {str(e)}"}
                 entry["dataset_size_mb"] = 0.0
                 return entry
-                
+
             try:
                 resp = requests.get(HF_DATASET_API + dataset_id, timeout=10)
                 if resp.status_code == 200:
@@ -229,11 +238,11 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                 entry["metadata"] = {"error": "Connection error"}
             except requests.exceptions.RequestException as e:
                 entry["metadata"] = {"error": f"Request failed: {str(e)}"}
-            
+
             # Calculate dataset size safely
             size_bytes = 0
             md = entry["metadata"]
-            
+
             if not isinstance(md, dict) or "error" in md:
                 entry["dataset_size_mb"] = 0.0
             else:
@@ -242,10 +251,16 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                         size_bytes = md["usedStorage"]
                     elif "siblings" in md and isinstance(md["siblings"], list):
                         for s in md["siblings"]:
-                            if isinstance(s, dict) and "size" in s and isinstance(s["size"], (int, float)):
+                            if (
+                                isinstance(s, dict)
+                                and "size" in s
+                                and isinstance(s["size"], (int, float))
+                            ):
                                 size_bytes += s["size"]
-                    
-                    entry["dataset_size_mb"] = round(size_bytes / (1024 * 1024), 2) if size_bytes > 0 else 0.0
+
+                    entry["dataset_size_mb"] = (
+                        round(size_bytes / (1024 * 1024), 2) if size_bytes > 0 else 0.0
+                    )
                 except Exception as e:
                     entry["dataset_size_mb"] = 0.0
                     if debug:
@@ -264,7 +279,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                 entry["metadata"] = {"error": f"Invalid GitHub URL format: {str(e)}"}
                 entry["repo_size_kb"] = 0
                 return entry
-                
+
             try:
                 resp = requests.get(GH_REPO_API + repo_path, timeout=10)
                 if resp.status_code == 200:
@@ -294,7 +309,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                     entry["repo_size_kb"] = 0
             else:
                 entry["repo_size_kb"] = 0
-                
+
         else:
             # UNKNOWN category
             entry["metadata"] = {"error": f"Unknown category: {category}"}
