@@ -45,8 +45,6 @@ pytest==8.3.2
 
 
 def run_tests():
-    print("Running test suite...")
-
     test_suite = os.path.join(SCRIPT_DIR, "test_suite.py")
     tests_dir = os.path.join(SCRIPT_DIR, "tests")
 
@@ -55,10 +53,7 @@ def run_tests():
     elif os.path.isdir(tests_dir):
         subprocess.check_call([sys.executable, "-m", "pytest", tests_dir, "-v"])
     else:
-        print("Error: No test suite found")
-        sys.exit(1)
-
-    print("All tests passed")
+        sys.exit("Error: No test suite found")
 
 
 def process_and_stream(command: list):
