@@ -42,7 +42,7 @@ def format_score_row(metadata: Dict[str, Any], scorer: Scorer) -> Dict[str, Any]
     # Helper to coerce values to floats, with fallback
     def as_float(val, default=0.0):
         try:
-            return float(val)
+            return round(float(val), 2)
         except (TypeError, ValueError):
             return default
 
