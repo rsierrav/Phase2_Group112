@@ -116,7 +116,7 @@ class bus_factor(Metric):
         """
         data: expected to be List[str] of author identifiers.
         Sets self.score in [0,1] and sets self.latency in milliseconds.
-        Heuristic: score = min(1.0, unique_author_count / 5.0)
+        Heuristic: score = min(1.0, unique_author_count / 50.0)
         """
         authors = []
         if isinstance(data, list):
@@ -130,11 +130,11 @@ class bus_factor(Metric):
 
         unique_count = len(set(authors))
 
-        # Simple linear scaling: 0 authors -> 0.0, 5+ -> 1.0
+        # Simple linear scaling: 0 authors -> 0.0, 50+ -> 1.0
         if unique_count <= 0:
             self.score = 0.0
         else:
-            self.score = min(1.0, unique_count / 5.0)
+            self.score = min(1.0, unique_count / 50.0)
 
     def process_score(self, parsed_data: Dict[str, Any]) -> None:
         """
