@@ -10,6 +10,7 @@ from src.metrics.size import SizeMetric
 from src.metrics.license import LicenseMetric
 from src.metrics.bus_factor import bus_factor
 from src.metrics.code_quality import code_quality
+from src.metrics.ramp_up_time import RampUpTime
 
 # from src.metrics.ramp_up_time import RampUpTimeMetric
 # from src.metrics.performance_claims import PerformanceClaimsMetric
@@ -29,6 +30,7 @@ class Scorer:
         lic = LicenseMetric()
         bf = bus_factor()
         cq = code_quality()
+        rut = RampUpTime()
         # rtime = RampUpTimeMetric()
         # pc = PerformanceClaimsMetric()
 
@@ -42,6 +44,7 @@ class Scorer:
             ("dataset_and_code_score", dac),
             ("dataset_quality", dq),
             ("code_quality", cq),
+            ("ramp_up_time", rut),
         ]
 
         # Define weights for each metric (should sum to ~1.0)
