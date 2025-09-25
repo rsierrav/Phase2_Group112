@@ -4,8 +4,8 @@ from .protocol import Metric
 
 class RampUpTime(Metric):
     def __init__(self) -> None:
-        self.ramp_up_time: float = 0.0
-        self.ramp_up_time_latency: float = 0.0
+        self.score: float = 0.0
+        self.latency: float = 0.0
 
     def get_description(self, parsed_data: Dict[str, Any]) -> str:
         description = parsed_data.get("description", "")
@@ -255,7 +255,7 @@ class RampUpTime(Metric):
 
     def calculate_score(self, data: Optional[Dict[str, Any]]) -> None:
         if not data:
-            self.ramp_up_time = 0.0
+            self.score = 0.0
             return
 
         score = 0.0
@@ -316,10 +316,10 @@ class RampUpTime(Metric):
                 score -= 0.05
                 debug_info.append("code_penalty: -0.05")
 
-        self.ramp_up_time = min(score, 1.0)
+        self.score = min(score, 1.0)
 
     def get_score(self) -> float:
-        return self.ramp_up_time
+        return self.score
 
-    def get_score_latency(self) -> float:
-        return self.ramp_up_time_latency
+    def get_latency(self) -> float:
+        return self.latency

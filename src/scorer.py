@@ -31,12 +31,10 @@ class Scorer:
         bf = bus_factor()
         cq = code_quality()
         rut = RampUpTime()
-        # rtime = RampUpTimeMetric()
         # pc = PerformanceClaimsMetric()
 
         # Dynamic list of metrics (name, object)
         self.metrics: List[Tuple[str, Any]] = [
-            # ("ramp_up_time", rtime),
             ("bus_factor", bf),
             # ("performance_claims", pc),
             ("license", lic),
