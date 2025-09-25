@@ -9,8 +9,8 @@ class TestDatasetAndCodeMetric(unittest.TestCase):
         self.metric = DatasetAndCodeMetric()
 
     def test_initialization(self):
-        self.assertEqual(self.metric.score, 0.0)
-        self.assertEqual(self.metric.latency, 0.0)
+        self.assertEqual(self.metric.score, -1.0)
+        self.assertEqual(self.metric.latency, -1.0)
 
     def test_get_description(self):
         test_data = {"description": "Test description"}
