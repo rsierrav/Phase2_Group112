@@ -63,7 +63,6 @@ def run_tests():
 
 
 def process_urls_with_cli(url_file: str):
-    """Use the CLI pipeline for scoring (autograder safe)."""
     if not os.path.exists(url_file):
         print(f"Error: input file '{url_file}' not found")
         sys.exit(1)
@@ -71,7 +70,6 @@ def process_urls_with_cli(url_file: str):
 
 
 def process_local_files():
-    """Run dev mode using module execution."""
     if not os.path.exists(MAIN_SCRIPT):
         print("Error: init.py not found")
         sys.exit(1)
