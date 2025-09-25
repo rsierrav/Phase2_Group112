@@ -10,8 +10,8 @@ GH_TREE_API = "https://api.github.com/repos/{repo}/git/trees/{branch}?recursive=
 
 class code_quality(Metric):
     def __init__(self):
-        self.score: float = 0.0
-        self.latency: float = 0.0
+        self.score: float = -1.0
+        self.latency: float = -1.0
 
     def _make_headers(self) -> Dict[str, str]:
         """

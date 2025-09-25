@@ -13,11 +13,16 @@ HF_DATASET_API = "https://huggingface.co/api/datasets/"
 GH_REPO_API = "https://api.github.com/repos/"
 
 
+seen_datasets: set[str] = set()  # global dataset registry
+
+
 def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     """
-    Parses input file or URL, validates them, and returns structured MODEL entries only.
+    Parses input file or URL, validates them, and returns structured MODEL entries.
+    Each entry always has fields: url, name, category, dataset_url, code_url.
+    Empty string "" means missing dataset/code.
     """
-    parsed_entries = []
+    parsed_entries: List[Dict[str, str]] = []
 
     if not input_path or not input_path.strip():
         print("Warning: Empty or None input provided")
@@ -25,24 +30,44 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
 
     input_path = input_path.strip()
 
+    # If it's a file, read lines; else treat input_path as single line
     if os.path.isfile(input_path):
         try:
             with open(input_path, "r", encoding="utf-8") as f:
-                urls = [line.strip() for line in f if line.strip()]
+                lines = [line.strip() for line in f if line.strip()]
         except Exception as e:
             print(f"Error reading file {input_path}: {e}")
             return []
     else:
-        urls = [input_path]
+        lines = [input_path]
 
-    for url in urls:
-        if not url or not url.strip():
+    for line in lines:
+        # Split into [code, dataset, model] — may contain blanks
+        parts = [p.strip() for p in line.split(",")]
+        while len(parts) < 3:
+            parts.insert(0, "")
+
+        code_url, dataset_url, model_url = parts[-3:]
+
+        if not model_url:
+            continue  # must have a model
+
+        model_entry = categorize_url(model_url)
+        if not (model_entry and model_entry["category"] == "MODEL"):
             continue
 
-        entry = categorize_url(url)
-        # Only return entries that are models
-        if entry and entry["category"] == "MODEL":
-            parsed_entries.append(entry)
+        # Normalize dataset_url
+        if dataset_url:
+            if dataset_url not in seen_datasets:
+                seen_datasets.add(dataset_url)
+            model_entry["dataset_url"] = dataset_url
+        else:
+            model_entry["dataset_url"] = ""  # always str
+
+        # Normalize code_url
+        model_entry["code_url"] = code_url if code_url else ""
+
+        parsed_entries.append(model_entry)
 
     return parsed_entries
 

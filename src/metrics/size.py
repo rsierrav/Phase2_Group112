@@ -9,8 +9,8 @@ class SizeMetric(Metric):
     """
 
     def __init__(self):
-        self.score: float = 0.0
-        self.latency: float = 0.0
+        self.score: float = -1.0
+        self.latency: float = -1.0
         self.size_score: Dict[str, float] = {}
 
     def get_data(self, parsed_data: Dict[str, Any]) -> int:

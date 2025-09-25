@@ -8,8 +8,8 @@ GH_COMMITS_API = "https://api.github.com/repos/{repo}/commits"
 
 class bus_factor(Metric):
     def __init__(self):
-        self.score: float = 0.0
-        self.latency_ms: int = 0
+        self.score: float = -1.0
+        self.latency: float = -1.0
 
     def get_data(self, parsed_data: Dict[str, Any]) -> List[str]:
         """
@@ -66,6 +66,6 @@ class bus_factor(Metric):
     def get_score(self) -> float:
         return self.score
 
-    def get_latency(self) -> int:
+    def get_latency(self) -> float:
         # return latency in milliseconds
-        return self.latency_ms
+        return self.latency

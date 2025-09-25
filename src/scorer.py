@@ -3,48 +3,52 @@
 from typing import Dict, Any, List, Tuple
 import time
 
-# Import all metrics
-from src.metrics.data_quality import DatasetQualityMetric
+# Import implemented metrics
 from src.metrics.dataset_and_code import DatasetAndCodeMetric
-from src.metrics.dataset_quality import DatasetCodeMetric
+from src.metrics.dataset_quality import DatasetQualityMetric
 from src.metrics.size import SizeMetric
 from src.metrics.license import LicenseMetric
 from src.metrics.bus_factor import bus_factor
 from src.metrics.code_quality import code_quality
 
+# from src.metrics.ramp_up_time import RampUpTimeMetric
+# from src.metrics.performance_claims import PerformanceClaimsMetric
+
 
 class Scorer:
     """
-    runs all metrics and returns a flat dict of results.
+    Runs all metrics and returns a flat dict of results.
     Handles both scalar and structured metrics (e.g., size_score dict).
     """
 
     def __init__(self):
         # Initialize metric objects
-        dq = DatasetQualityMetric()
-        dac = DatasetAndCodeMetric()
-        dcode = DatasetCodeMetric()
+        dq = DatasetQualityMetric()  # LLM-based
+        dac = DatasetAndCodeMetric()  # Heuristic
         sz = SizeMetric()
         lic = LicenseMetric()
         bf = bus_factor()
         cq = code_quality()
+        # rtime = RampUpTimeMetric()
+        # pc = PerformanceClaimsMetric()
 
         # Dynamic list of metrics (name, object)
         self.metrics: List[Tuple[str, Any]] = [
-            ("dataset_quality", dq),
-            ("dataset_and_code_score", dac),
-            ("dataset_code", dcode),
-            ("size_score", sz),
-            ("license", lic),
+            # ("ramp_up_time", rtime),
             ("bus_factor", bf),
+            # ("performance_claims", pc),
+            ("license", lic),
+            ("size_score", sz),
+            ("dataset_and_code_score", dac),
+            ("dataset_quality", dq),
             ("code_quality", cq),
         ]
 
-        # Define weights for each metric (must sum ~1.0)
+        # Define weights for each metric (should sum to ~1.0)
         self.weights: Dict[str, float] = {
-            "ramp_up_time": 0.10,
+            "ramp_up_time": 0.10,  # not yet implemented
             "bus_factor": 0.13,
-            "performance_claims": 0.11,
+            "performance_claims": 0.11,  # not yet implemented
             "license": 0.14,
             "size_score": 0.11,
             "dataset_and_code_score": 0.14,
@@ -56,7 +60,6 @@ class Scorer:
         """
         Run all metrics on metadata and return a flat dict with scores + latencies.
         """
-
         result: Dict[str, Any] = {
             "name": metadata.get("name", "Unknown"),
             "category": metadata.get("category", "UNKNOWN"),
@@ -78,8 +81,8 @@ class Scorer:
                 result[f"{key}_latency"] = metric.get_latency()
 
             except Exception as e:
-                result[key] = {} if key == "size_score" else 0.0
-                result[f"{key}_latency"] = 0.0
+                result[key] = {} if key == "size_score" else -1.0
+                result[f"{key}_latency"] = -1.0
                 print(f"[WARN] Metric {key} failed for {metadata.get('name', 'unknown')}: {e}")
 
         # Weighted net score calculation
@@ -90,18 +93,19 @@ class Scorer:
             val = result.get(metric)
 
             if isinstance(val, (int, float)):
-                weighted_sum += val * weight
-                total_weight += weight
+                if val >= 0:  # ignore -1 placeholders
+                    weighted_sum += val * weight
+                    total_weight += weight
             elif isinstance(val, dict):  # e.g., size_score
                 if val:
                     avg_size = sum(val.values()) / len(val)
                     weighted_sum += avg_size * weight
                     total_weight += weight
 
-        result["net_score"] = weighted_sum / total_weight if total_weight > 0 else 0.0
+        result["net_score"] = weighted_sum / total_weight if total_weight > 0 else -1.0
 
-        # Net score latency = total elapsed time
+        # Net score latency = total elapsed time (ms)
         end_time = time.perf_counter()
-        result["net_score_latency"] = (end_time - start_time) * 1000  # ms
+        result["net_score_latency"] = (end_time - start_time) * 1000
 
         return result
