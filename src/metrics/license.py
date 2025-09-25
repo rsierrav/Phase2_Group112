@@ -1,4 +1,6 @@
-# src/metrics/license.py
+import base64
+import requests
+import os
 
 """
 LicenseMetric module
@@ -42,18 +44,49 @@ class LicenseMetric(Metric):
         self.latency: float = -1.0
 
     def get_data(self, parsed_data: Dict[str, Any]) -> Optional[str]:
-        """
-        Extract license information from parsed repository metadata.
-
-        Args:
-            parsed_data (Dict[str, Any]): The parsed metadata from the repo.
-
-        Returns:
-            Optional[str]: The license string if present, otherwise None.
-        """
+        # Direct license field (Hugging Face or metadata)
         license_value = parsed_data.get("license")
-        if isinstance(license_value, str):
+        if isinstance(license_value, str) and license_value.strip():
             return license_value.strip()
+
+        url = parsed_data.get("url", "")
+        if "github.com" in url:
+            # Extract owner/repo
+            parts = url.split("github.com/")[-1].split("/")
+            if len(parts) >= 2:
+                owner, repo = parts[0], parts[1]
+                headers = {}
+                token = os.getenv("GITHUB_TOKEN")
+                if token:
+                    headers["Authorization"] = f"token {token}"
+
+                # Try license API
+                resp = requests.get(
+                    f"https://api.github.com/repos/{owner}/{repo}/license",
+                    headers=headers,
+                    timeout=5,
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    spdx = data.get("license", {}).get("spdx_id")
+                    if spdx and spdx != "NOASSERTION":
+                        return spdx
+
+                # Fallback: README scan
+                resp = requests.get(
+                    f"https://api.github.com/repos/{owner}/{repo}/readme",
+                    headers=headers,
+                    timeout=5,
+                )
+                if resp.status_code == 200:
+                    readme_data = resp.json()
+                    content = base64.b64decode(readme_data.get("content", "")).decode(
+                        "utf-8", errors="ignore"
+                    )
+                    for lic in HIGH_QUALITY_LICENSES | MEDIUM_QUALITY_LICENSES:
+                        if lic.lower().replace("-", " ") in content.lower():
+                            return lic
+
         return None
 
     def calculate_score(self, data: Optional[str]) -> None:

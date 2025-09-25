@@ -1,0 +1,1009 @@
+     "nikigoli/countgd",
+      "Yuliang/ECON",
+      "THUdyh/Oryx",
+      "IDEA-Research/Grounded-SAM",
+      "merve/Grounding_DINO_demo",
+      "OpenSound/CapSpeech-TTS",
+      "Awiny/Image2Paragraph",
+      "ShilongLiu/Grounding_DINO_demo",
+      "yangheng/Super-Resolution-Anime-Diffusion",
+      "liuyuan-pal/SyncDreamer",
+      "XiangJinYu/SPO",
+      "sam-hq-team/sam-hq",
+      "haotiz/glip-zeroshot-demo",
+      "Nick088/Audio-SR",
+      "TencentARC/BrushEdit",
+      "nateraw/lavila",
+      "abyildirim/inst-inpaint",
+      "Yiwen-ntu/MeshAnythingV2",
+      "Pinwheel/GLIP-BLIP-Object-Detection-VQA",
+      "Junfeng5/GLEE_demo",
+      "shi-labs/Matting-Anything",
+      "fffiloni/Video-Matting-Anything",
+      "burtenshaw/autotrain-mcp",
+      "Vision-CAIR/MiniGPT4-video",
+      "linfanluntan/Grounded-SAM",
+      "magicr/BuboGPT",
+      "WensongSong/Insert-Anything",
+      "nvidia/audio-flamingo-2",
+      "clip-italian/clip-italian-demo",
+      "OpenGVLab/InternGPT",
+      "mteb/leaderboard_legacy",
+      "3DTopia/3DTopia",
+      "yenniejun/tokenizers-languages",
+      "mmlab-ntu/relate-anything-model",
+      "amphion/PicoAudio",
+      "byeongjun-park/HarmonyView",
+      "keras-io/bert-semantic-similarity",
+      "MirageML/sjc",
+      "fffiloni/vta-ldm",
+      "NAACL2022/CLIP-Caption-Reward",
+      "society-ethics/model-card-regulatory-check",
+      "fffiloni/miniGPT4-Video-Zero",
+      "AIGC-Audio/AudioLCM",
+      "Gladiator/Text-Summarizer",
+      "SVGRender/DiffSketcher",
+      "ethanchern/Anole",
+      "zakaria-narjis/photo-enhancer",
+      "LittleFrog/IntrinsicAnything",
+      "milyiyo/reimagine-it",
+      "ysharma/text-to-image-to-video",
+      "acmc/whatsapp-chats-finetuning-formatter",
+      "OpenGVLab/VideoChatGPT",
+      "ZebangCheng/Emotion-LLaMA",
+      "sonalkum/GAMA",
+      "topdu/OpenOCR-Demo",
+      "kaushalya/medclip-roco",
+      "AIGC-Audio/Make_An_Audio",
+      "avid-ml/bias-detection",
+      "RitaParadaRamos/SmallCapDemo",
+      "llizhx/TinyGPT-V",
+      "codelion/Grounding_DINO_demo",
+      "flosstradamus/FluxMusicGUI",
+      "kevinwang676/E2-F5-TTS",
+      "bartar/tokenizers",
+      "Tinkering/Pytorch-day-prez",
+      "sasha/BiasDetection",
+      "Pusheen/LoCo",
+      "Jingkang/EgoGPT-7B",
+      "flax-community/koclip",
+      "TencentARC/VLog",
+      "ynhe/AskAnything",
+      "Volkopat/SegmentAnythingxGroundingDINO"
+    ],
+    "createdAt": "2022-03-02T23:29:04.000Z",
+    "safetensors": {
+      "parameters": {
+        "F32": 110106428
+      },
+      "total": 110106428
+    },
+    "inference": "warm",
+    "usedStorage": 13397387509
+  },
+  "model_size_mb": 12776.74
+}
+===================
+
+
+--- RAW METADATA for audience_classifier_model (MODEL) ---
+{
+  "_id": "680b142fdcaaa11198e4b6fc",
+  "id": "parvk11/audience_classifier_model",
+  "private": false,
+  "pipeline_tag": "text-classification",
+  "library_name": "transformers",
+  "tags": [
+    "transformers",
+    "pytorch",
+    "distilbert",
+    "text-classification",
+    "arxiv:1910.09700",
+    "autotrain_compatible",
+    "endpoints_compatible",
+    "region:us"
+  ],
+  "downloads": 47,
+  "likes": 0,
+  "modelId": "parvk11/audience_classifier_model",
+  "author": "parvk11",
+  "sha": "210023808352e2c7a1ef73025ca6d96b89f20fbe",
+  "lastModified": "2025-04-25T04:49:24.000Z",
+  "gated": false,
+  "disabled": false,
+  "mask_token": "[MASK]",
+  "widgetData": [
+    {
+      "text": "I like you. I love you"
+    }
+  ],
+  "model-index": null,
+  "config": {
+    "architectures": [
+      "DistilBertForSequenceClassification"
+    ],
+    "model_type": "distilbert",
+    "tokenizer_config": {
+      "cls_token": "[CLS]",
+      "mask_token": "[MASK]",
+      "pad_token": "[PAD]",
+      "sep_token": "[SEP]",
+      "unk_token": "[UNK]"
+    },
+    "additional_chat_templates": {}
+  },
+  "cardData": {
+    "library_name": "transformers",
+    "tags": []
+  },
+  "transformersInfo": {
+    "auto_model": "AutoModelForSequenceClassification",
+    "pipeline_tag": "text-classification",
+    "processor": "AutoTokenizer"
+  },
+  "siblings": [
+    {
+      "rfilename": ".gitattributes"
+    },
+    {
+      "rfilename": "README.md"
+    },
+    {
+      "rfilename": "config.json"
+    },
+    {
+      "rfilename": "pytorch_model.bin"
+    },
+    {
+      "rfilename": "special_tokens_map.json"
+    },
+    {
+      "rfilename": "tokenizer_config.json"
+    },
+    {
+      "rfilename": "vocab.txt"
+    }
+  ],
+  "spaces": [],
+  "createdAt": "2025-04-25T04:48:47.000Z",
+  "usedStorage": 535693286
+}
+--- END ---
+
+
+=== ENTRY DEBUG ===
+{
+  "category": "MODEL",
+  "url": "https://huggingface.co/parvk11/audience_classifier_model",
+  "name": "audience_classifier_model",
+  "dataset_url": "",
+  "code_url": "",
+  "metadata": {
+    "_id": "680b142fdcaaa11198e4b6fc",
+    "id": "parvk11/audience_classifier_model",
+    "private": false,
+    "pipeline_tag": "text-classification",
+    "library_name": "transformers",
+    "tags": [
+      "transformers",
+      "pytorch",
+      "distilbert",
+      "text-classification",
+      "arxiv:1910.09700",
+      "autotrain_compatible",
+      "endpoints_compatible",
+      "region:us"
+    ],
+    "downloads": 47,
+    "likes": 0,
+    "modelId": "parvk11/audience_classifier_model",
+    "author": "parvk11",
+    "sha": "210023808352e2c7a1ef73025ca6d96b89f20fbe",
+    "lastModified": "2025-04-25T04:49:24.000Z",
+    "gated": false,
+    "disabled": false,
+    "mask_token": "[MASK]",
+    "widgetData": [
+      {
+        "text": "I like you. I love you"
+      }
+    ],
+    "model-index": null,
+    "config": {
+      "architectures": [
+        "DistilBertForSequenceClassification"
+      ],
+      "model_type": "distilbert",
+      "tokenizer_config": {
+        "cls_token": "[CLS]",
+        "mask_token": "[MASK]",
+        "pad_token": "[PAD]",
+        "sep_token": "[SEP]",
+        "unk_token": "[UNK]"
+      },
+      "additional_chat_templates": {}
+    },
+    "cardData": {
+      "library_name": "transformers",
+      "tags": []
+    },
+    "transformersInfo": {
+      "auto_model": "AutoModelForSequenceClassification",
+      "pipeline_tag": "text-classification",
+      "processor": "AutoTokenizer"
+    },
+    "siblings": [
+      {
+        "rfilename": ".gitattributes"
+      },
+      {
+        "rfilename": "README.md"
+      },
+      {
+        "rfilename": "config.json"
+      },
+      {
+        "rfilename": "pytorch_model.bin"
+      },
+      {
+        "rfilename": "special_tokens_map.json"
+      },
+      {
+        "rfilename": "tokenizer_config.json"
+      },
+      {
+        "rfilename": "vocab.txt"
+      }
+    ],
+    "spaces": [],
+    "createdAt": "2025-04-25T04:48:47.000Z",
+    "usedStorage": 535693286
+  },
+  "model_size_mb": 510.88
+}
+===================
+
+
+--- RAW METADATA for whisper-tiny (MODEL) ---
+{
+  "_id": "63314bb6acb6472115aa55a9",
+  "id": "openai/whisper-tiny",
+  "private": false,
+  "pipeline_tag": "automatic-speech-recognition",
+  "library_name": "transformers",
+  "tags": [
+    "transformers",
+    "pytorch",
+    "tf",
+    "jax",
+    "safetensors",
+    "whisper",
+    "automatic-speech-recognition",
+    "audio",
+    "hf-asr-leaderboard",
+    "en",
+    "zh",
+    "de",
+    "es",
+    "ru",
+    "ko",
+    "fr",
+    "ja",
+    "pt",
+    "tr",
+    "pl",
+    "ca",
+    "nl",
+    "ar",
+    "sv",
+    "it",
+    "id",
+    "hi",
+    "fi",
+    "vi",
+    "he",
+    "uk",
+    "el",
+    "ms",
+    "cs",
+    "ro",
+    "da",
+    "hu",
+    "ta",
+    "no",
+    "th",
+    "ur",
+    "hr",
+    "bg",
+    "lt",
+    "la",
+    "mi",
+    "ml",
+    "cy",
+    "sk",
+    "te",
+    "fa",
+    "lv",
+    "bn",
+    "sr",
+    "az",
+    "sl",
+    "kn",
+    "et",
+    "mk",
+    "br",
+    "eu",
+    "is",
+    "hy",
+    "ne",
+    "mn",
+    "bs",
+    "kk",
+    "sq",
+    "sw",
+    "gl",
+    "mr",
+    "pa",
+    "si",
+    "km",
+    "sn",
+    "yo",
+    "so",
+    "af",
+    "oc",
+    "ka",
+    "be",
+    "tg",
+    "sd",
+    "gu",
+    "am",
+    "yi",
+    "lo",
+    "uz",
+    "fo",
+    "ht",
+    "ps",
+    "tk",
+    "nn",
+    "mt",
+    "sa",
+    "lb",
+    "my",
+    "bo",
+    "tl",
+    "mg",
+    "as",
+    "tt",
+    "haw",
+    "ln",
+    "ha",
+    "ba",
+    "jw",
+    "su",
+    "arxiv:2212.04356",
+    "license:apache-2.0",
+    "model-index",
+    "endpoints_compatible",
+    "region:us"
+  ],
+  "downloads": 524202,
+  "likes": 366,
+  "modelId": "openai/whisper-tiny",
+  "author": "openai",
+  "sha": "169d4a4341b33bc18d8881c4b69c2e104e1cc0af",
+  "lastModified": "2024-02-29T10:57:33.000Z",
+  "gated": false,
+  "disabled": false,
+  "widgetData": [
+    {
+      "example_title": "Librispeech sample 1",
+      "src": "https://cdn-media.huggingface.co/speech_samples/sample1.flac"
+    },
+    {
+      "example_title": "Librispeech sample 2",
+      "src": "https://cdn-media.huggingface.co/speech_samples/sample2.flac"
+    }
+  ],
+  "model-in
+--- END ---
+
+
+=== ENTRY DEBUG ===
+{
+  "category": "MODEL",
+  "url": "https://huggingface.co/openai/whisper-tiny/tree/main",
+  "name": "whisper-tiny",
+  "dataset_url": "",
+  "code_url": "",
+  "metadata": {
+    "_id": "63314bb6acb6472115aa55a9",
+    "id": "openai/whisper-tiny",
+    "private": false,
+    "pipeline_tag": "automatic-speech-recognition",
+    "library_name": "transformers",
+    "tags": [
+      "transformers",
+      "pytorch",
+      "tf",
+      "jax",
+      "safetensors",
+      "whisper",
+      "automatic-speech-recognition",
+      "audio",
+      "hf-asr-leaderboard",
+      "en",
+      "zh",
+      "de",
+      "es",
+      "ru",
+      "ko",
+      "fr",
+      "ja",
+      "pt",
+      "tr",
+      "pl",
+      "ca",
+      "nl",
+      "ar",
+      "sv",
+      "it",
+      "id",
+      "hi",
+      "fi",
+      "vi",
+      "he",
+      "uk",
+      "el",
+      "ms",
+      "cs",
+      "ro",
+      "da",
+      "hu",
+      "ta",
+      "no",
+      "th",
+      "ur",
+      "hr",
+      "bg",
+      "lt",
+      "la",
+      "mi",
+      "ml",
+      "cy",
+      "sk",
+      "te",
+      "fa",
+      "lv",
+      "bn",
+      "sr",
+      "az",
+      "sl",
+      "kn",
+      "et",
+      "mk",
+      "br",
+      "eu",
+      "is",
+      "hy",
+      "ne",
+      "mn",
+      "bs",
+      "kk",
+      "sq",
+      "sw",
+      "gl",
+      "mr",
+      "pa",
+      "si",
+      "km",
+      "sn",
+      "yo",
+      "so",
+      "af",
+      "oc",
+      "ka",
+      "be",
+      "tg",
+      "sd",
+      "gu",
+      "am",
+      "yi",
+      "lo",
+      "uz",
+      "fo",
+      "ht",
+      "ps",
+      "tk",
+      "nn",
+      "mt",
+      "sa",
+      "lb",
+      "my",
+      "bo",
+      "tl",
+      "mg",
+      "as",
+      "tt",
+      "haw",
+      "ln",
+      "ha",
+      "ba",
+      "jw",
+      "su",
+      "arxiv:2212.04356",
+      "license:apache-2.0",
+      "model-index",
+      "endpoints_compatible",
+      "region:us"
+    ],
+    "downloads": 524202,
+    "likes": 366,
+    "modelId": "openai/whisper-tiny",
+    "author": "openai",
+    "sha": "169d4a4341b33bc18d8881c4b69c2e104e1cc0af",
+    "lastModified": "2024-02-29T10:57:33.000Z",
+    "gated": false,
+    "disabled": false,
+    "widgetData": [
+      {
+        "example_title": "Librispeech sample 1",
+        "src": "https://cdn-media.huggingface.co/speech_samples/sample1.flac"
+      },
+      {
+        "example_title": "Librispeech sample 2",
+        "src": "https://cdn-media.huggingface.co/speech_samples/sample2.flac"
+      }
+    ],
+    "model-index": [
+      {
+        "name": "whisper-tiny",
+        "results": [
+          {
+            "task": {
+              "name": "Automatic Speech Recognition",
+              "type": "automatic-speech-recognition"
+            },
+            "dataset": {
+              "name": "LibriSpeech (clean)",
+              "type": "librispeech_asr",
+              "config": "clean",
+              "split": "test",
+              "args": {
+                "language": "en"
+              }
+            },
+            "metrics": [
+              {
+                "name": "Test WER",
+                "type": "wer",
+                "value": 7.54,
+                "verified": false
+              }
+            ]
+          },
+          {
+            "task": {
+              "name": "Automatic Speech Recognition",
+              "type": "automatic-speech-recognition"
+            },
+            "dataset": {
+              "name": "LibriSpeech (other)",
+              "type": "librispeech_asr",
+              "config": "other",
+              "split": "test",
+              "args": {
+                "language": "en"
+              }
+            },
+            "metrics": [
+              {
+                "name": "Test WER",
+                "type": "wer",
+                "value": 17.15,
+                "verified": false
+              }
+            ]
+          },
+          {
+            "task": {
+              "name": "Automatic Speech Recognition",
+              "type": "automatic-speech-recognition"
+            },
+            "dataset": {
+              "name": "Common Voice 11.0",
+              "type": "mozilla-foundation/common_voice_11_0",
+              "config": "hi",
+              "split": "test",
+              "args": {
+                "language": "hi"
+              }
+            },
+            "metrics": [
+              {
+                "name": "Test WER",
+                "type": "wer",
+                "value": 141,
+                "verified": false
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "config": {
+      "architectures": [
+        "WhisperForConditionalGeneration"
+      ],
+      "model_type": "whisper",
+      "tokenizer_config": {
+        "bos_token": "<|endoftext|>",
+        "eos_token": "<|endoftext|>",
+        "pad_token": "<|endoftext|>",
+        "unk_token": "<|endoftext|>"
+      }
+    },
+    "cardData": {
+      "language": [
+        "en",
+        "zh",
+        "de",
+        "es",
+        "ru",
+        "ko",
+        "fr",
+        "ja",
+        "pt",
+        "tr",
+        "pl",
+        "ca",
+        "nl",
+        "ar",
+        "sv",
+        "it",
+        "id",
+        "hi",
+        "fi",
+        "vi",
+        "he",
+        "uk",
+        "el",
+        "ms",
+        "cs",
+        "ro",
+        "da",
+        "hu",
+        "ta",
+        "no",
+        "th",
+        "ur",
+        "hr",
+        "bg",
+        "lt",
+        "la",
+        "mi",
+        "ml",
+        "cy",
+        "sk",
+        "te",
+        "fa",
+        "lv",
+        "bn",
+        "sr",
+        "az",
+        "sl",
+        "kn",
+        "et",
+        "mk",
+        "br",
+        "eu",
+        "is",
+        "hy",
+        "ne",
+        "mn",
+        "bs",
+        "kk",
+        "sq",
+        "sw",
+        "gl",
+        "mr",
+        "pa",
+        "si",
+        "km",
+        "sn",
+        "yo",
+        "so",
+        "af",
+        "oc",
+        "ka",
+        "be",
+        "tg",
+        "sd",
+        "gu",
+        "am",
+        "yi",
+        "lo",
+        "uz",
+        "fo",
+        "ht",
+        "ps",
+        "tk",
+        "nn",
+        "mt",
+        "sa",
+        "lb",
+        "my",
+        "bo",
+        "tl",
+        "mg",
+        "as",
+        "tt",
+        "haw",
+        "ln",
+        "ha",
+        "ba",
+        "jw",
+        "su"
+      ],
+      "tags": [
+        "audio",
+        "automatic-speech-recognition",
+        "hf-asr-leaderboard"
+      ],
+      "widget": [
+        {
+          "example_title": "Librispeech sample 1",
+          "src": "https://cdn-media.huggingface.co/speech_samples/sample1.flac"
+        },
+        {
+          "example_title": "Librispeech sample 2",
+          "src": "https://cdn-media.huggingface.co/speech_samples/sample2.flac"
+        }
+      ],
+      "model-index": [
+        {
+          "name": "whisper-tiny",
+          "results": [
+            {
+              "task": {
+                "name": "Automatic Speech Recognition",
+                "type": "automatic-speech-recognition"
+              },
+              "dataset": {
+                "name": "LibriSpeech (clean)",
+                "type": "librispeech_asr",
+                "config": "clean",
+                "split": "test",
+                "args": {
+                  "language": "en"
+                }
+              },
+              "metrics": [
+                {
+                  "name": "Test WER",
+                  "type": "wer",
+                  "value": 7.54,
+                  "verified": false
+                }
+              ]
+            },
+            {
+              "task": {
+                "name": "Automatic Speech Recognition",
+                "type": "automatic-speech-recognition"
+              },
+              "dataset": {
+                "name": "LibriSpeech (other)",
+                "type": "librispeech_asr",
+                "config": "other",
+                "split": "test",
+                "args": {
+                  "language": "en"
+                }
+              },
+              "metrics": [
+                {
+                  "name": "Test WER",
+                  "type": "wer",
+                  "value": 17.15,
+                  "verified": false
+                }
+              ]
+            },
+            {
+              "task": {
+                "name": "Automatic Speech Recognition",
+                "type": "automatic-speech-recognition"
+              },
+              "dataset": {
+                "name": "Common Voice 11.0",
+                "type": "mozilla-foundation/common_voice_11_0",
+                "config": "hi",
+                "split": "test",
+                "args": {
+                  "language": "hi"
+                }
+              },
+              "metrics": [
+                {
+                  "name": "Test WER",
+                  "type": "wer",
+                  "value": 141,
+                  "verified": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "pipeline_tag": "automatic-speech-recognition",
+      "license": "apache-2.0"
+    },
+    "transformersInfo": {
+      "auto_model": "AutoModelForSpeechSeq2Seq",
+      "pipeline_tag": "automatic-speech-recognition",
+      "processor": "AutoProcessor"
+    },
+    "siblings": [
+      {
+        "rfilename": ".gitattributes"
+      },
+      {
+        "rfilename": "README.md"
+      },
+      {
+        "rfilename": "added_tokens.json"
+      },
+      {
+        "rfilename": "config.json"
+      },
+      {
+        "rfilename": "flax_model.msgpack"
+      },
+      {
+        "rfilename": "generation_config.json"
+      },
+      {
+        "rfilename": "merges.txt"
+      },
+      {
+        "rfilename": "model.safetensors"
+      },
+      {
+        "rfilename": "normalizer.json"
+      },
+      {
+        "rfilename": "preprocessor_config.json"
+      },
+      {
+        "rfilename": "pytorch_model.bin"
+      },
+      {
+        "rfilename": "special_tokens_map.json"
+      },
+      {
+        "rfilename": "tf_model.h5"
+      },
+      {
+        "rfilename": "tokenizer.json"
+      },
+      {
+        "rfilename": "tokenizer_config.json"
+      },
+      {
+        "rfilename": "vocab.json"
+      }
+    ],
+    "spaces": [
+      "Ailyth/Multi-voice-TTS-GPT-SoVITS",
+      "sanchit-gandhi/whisper-jax-spaces",
+      "Matthijs/whisper_word_timestamps",
+      "OpenSound/CapSpeech-TTS",
+      "radames/whisper-word-level-trim",
+      "lmz/candle-whisper",
+      "VIDraft/Portrait-Animation",
+      "gobeldan/insanely-fast-whisper-webui",
+      "devilent2/whisper-v3-zero",
+      "kadirnar/Whisper_M2M100_BioGpt",
+      "speechbox/whisper-speaker-diarization",
+      "nvidia/audio-flamingo-2",
+      "Splend1dchan/BreezyVoice-Playground",
+      "souljoy/ChatPDF",
+      "ardha27/Youtube-AI-Summarizer",
+      "mozilla-ai/transcribe",
+      "innev/whisper-Base",
+      "JacobLinCool/BreezyVoice",
+      "joaogante/assisted_generation_benchmarks",
+      "aetheris-ai/aibom-generator",
+      "eustlb/whisper-vs-distil-whisper-fr",
+      "RaviNaik/MultiModal-Phi2",
+      "kevinwang676/GPT-SoVITS-Trilingual",
+      "TaiYouWeb/whisper-multi-model",
+      "hchcsuim/Automatic-Speech-Recognition-Speech-to-Text",
+      "ghostai1/Audio-Translator",
+      "CeibalUY/transcribir_audio",
+      "devilent2/whisper-v3-zero-dev",
+      "ardha27/VideoAnalyzer",
+      "Anupam007/Automated-Meeting-Minutes",
+      "Johnyquest7/medical-transcription-notes",
+      "renatotn7/editarVideoAtravesDeTexto",
+      "radames/candle-whisper",
+      "vakodiya/streamlit-gpt2",
+      "sampsontan/llama3-rag",
+      "invincible-jha/MentalHealthVocalBiomarkers",
+      "lele1894/dubbing",
+      "Ericboi229-gmx-co-uk/insanely-fast-whisper-webui",
+      "ranialahassn/languagedetectorWhisper",
+      "Hamam12/Hoama",
+      "yolloo/VoiceQ",
+      "renatotn7/EspacoTeste",
+      "IstvanPeter/openai-whisper-tiny",
+      "joaogabriellima/openai-whisper-tiny",
+      "abrar-adnan/speech-analyzer",
+      "ahmedghani/Inference-Endpoint-Deployment",
+      "GiorgiSekhniashvili/geo-whisper",
+      "reach-vb/whisper_word_timestamps",
+      "jamesyoung999/whisper_word_timestamps",
+      "OdiaGenAI/Olive_Whisper_ASR",
+      "Aryan619348/google-calendar-agent",
+      "seiching/ainotes",
+      "filben/transcrever_audio_pt",
+      "Tonic/WhisperFusionTest",
+      "sdlc/Multi-Voice",
+      "ricardo-lsantos/openai-whisper-tiny",
+      "demomodels/lyrics",
+      "Tohidichi/Semantic-chunker-yt-vid",
+      "devilent2/whisper-v3-zero-canary",
+      "MikeTangoEcho/asrnersbx",
+      "GatinhoEducado/speech-to-speech-translation",
+      "RenanOF/AudioTexto",
+      "Anupam251272/Real-Time-Language-Translator-AI",
+      "garyd1/AI_Mock_Interview",
+      "Jwrockon/ArtemisAIWhisper",
+      "ZealAI/Zeal-AI",
+      "abdullahbilal-y/ML_Playground_Dashboard",
+      "Anupam007/RealTime-Meeting-Notes",
+      "chakchakAI/CrossTalk-Translation-AI",
+      "Mohammed-Islem/Speech-Processing-Lab-Project-App",
+      "anushka027/Whispr.ai",
+      "Draxgabe/acuspeak-demo",
+      "sebibibaba/Transcripteur-Vocal",
+      "pareek-joshtalksai/test-hindi-2",
+      "amurienne/sambot",
+      "dwitee/ai-powered-symptom-triage",
+      "KNipun/Whisper-AI-Psychiatric",
+      "notojasv/voice-assistant-demo",
+      "yoshcn/openai-whisper-tiny",
+      "natandiasm/openai-whisper-tiny",
+      "Bertievidgen/openai-whisper-tiny",
+      "masterkill888/openai-whisper-tiny",
+      "awacke1/ASR-openai-whisper-tiny",
+      "beyond/speech2text",
+      "KaliJerry/openai-whisper-tiny",
+      "youngseo/whisper",
+      "Stevross/openai-whisper-tiny",
+      "ericckfeng/whisper-Base-Clone",
+      "ysoheil/whisper_word_timestamps",
+      "Korla/hsb_stt_demo",
+      "mackaber/whisper-word-level-trim",
+      "kevinwang676/whisper_word_timestamps_1",
+      "mg5812/tuning-whisper",
+      "mg5812/whisper-tuning",
+      "futranbg/S2T",
+      "hiwei/asr-hf-api",
+      "pablocst/asr-hf-api",
+      "Auxiliarytrinket/my-speech-to-speech-translation",
+      "Photon08/summarzation_test",
+      "Indranil08/test"
+    ],
+    "createdAt": "2022-09-26T06:50:30.000Z",
+    "safetensors": {
+      "parameters": {
+        "F32": 37760640
+      },
+      "total": 37760640
+    },
+    "usedStorage": 1831289730
+  },
+  "model_size_mb": 1746.45
+}
+===================

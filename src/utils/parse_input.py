@@ -117,9 +117,8 @@ def categorize_url(url: str) -> Optional[Dict[str, str]]:
 def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]:
     """
     Given a parsed entry, validate the URL and fetch metadata from HuggingFace or GitHub APIs.
-    Attaches a 'metadata' field to the entry.
+    Attaches a 'metadata' field to the entry and promotes useful fields like license and size.
     """
-    # Use .get() with default to prevent KeyError
     category = entry.get("category", "UNKNOWN")
     url = entry.get("url", "")
 
@@ -132,7 +131,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
 
     try:
         if category == "MODEL":
-            # Extract model ID more safely
+            # Extract model ID safely
             try:
                 model_id = "/".join(url.split("huggingface.co/")[-1].split("/")[:2])
                 if not model_id or model_id == "/":
@@ -167,11 +166,8 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                 entry["model_size_mb"] = 0.0
             else:
                 try:
-                    # usedStorage field
                     if "usedStorage" in md and isinstance(md["usedStorage"], (int, float)):
                         size_bytes = md["usedStorage"]
-
-                    # sum sizes of files in siblings
                     elif "siblings" in md and isinstance(md["siblings"], list):
                         for s in md["siblings"]:
                             if (
@@ -189,8 +185,18 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                     if debug:
                         print(f"Warning: Error calculating model size: {e}")
 
+                # Extract license from Hugging Face metadata
+                if "license" in md and isinstance(md["license"], str):
+                    entry["license"] = md["license"]
+                elif "cardData" in md and isinstance(md["cardData"], dict):
+                    if "license" in md["cardData"]:
+                        entry["license"] = md["cardData"]["license"]
+                if "tags" in md and isinstance(md["tags"], list):
+                    for t in md["tags"]:
+                        if isinstance(t, str) and t.lower().startswith("license:"):
+                            entry["license"] = t.split(":", 1)[1].strip()
+
         elif category == "DATASET":
-            # Extract dataset ID more safely
             try:
                 dataset_id = "/".join(url.split("huggingface.co/datasets/")[-1].split("/")[:2])
                 if not dataset_id or dataset_id == "/":
@@ -245,7 +251,6 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                         print(f"Warning: Error calculating dataset size: {e}")
 
         elif category == "CODE":
-            # Extract repo path more safely
             try:
                 parts = url.split("github.com/")[-1].split("/")
                 if len(parts) < 2:
@@ -275,26 +280,33 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
             except requests.exceptions.RequestException as e:
                 entry["metadata"] = {"error": f"Request failed: {str(e)}"}
 
-            # Extract repo size safely
-            if isinstance(entry["metadata"], dict) and "size" in entry["metadata"]:
-                try:
-                    size_val = entry["metadata"]["size"]
-                    if isinstance(size_val, (int, float)):
-                        entry["repo_size_kb"] = int(size_val)
-                    else:
+            # Extract license and size from GitHub metadata
+            if isinstance(entry["metadata"], dict):
+                md = entry["metadata"]
+                if "license" in md and isinstance(md["license"], dict):
+                    spdx = md["license"].get("spdx_id")
+                    if spdx and spdx != "NOASSERTION":
+                        entry["license"] = spdx
+                    elif "name" in md["license"]:
+                        entry["license"] = md["license"]["name"]
+                # Extract repo size
+                if "size" in md:
+                    try:
+                        size_val = md["size"]
+                        if isinstance(size_val, (int, float)):
+                            entry["repo_size_kb"] = int(size_val)
+                        else:
+                            entry["repo_size_kb"] = 0
+                    except Exception:
                         entry["repo_size_kb"] = 0
-                except Exception:
+                else:
                     entry["repo_size_kb"] = 0
-            else:
-                entry["repo_size_kb"] = 0
 
         else:
-            # UNKNOWN category
             entry["metadata"] = {"error": f"Unknown category: {category}"}
 
     except Exception as e:
         entry["metadata"] = {"error": f"Unexpected error: {str(e)}"}
-        # Set default size values
         if category == "MODEL":
             entry["model_size_mb"] = 0.0
         elif category == "DATASET":
@@ -305,7 +317,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
     if debug:
         print(f"\n--- RAW METADATA for {entry.get('name', 'unknown')} ({category}) ---")
         if isinstance(entry.get("metadata"), dict):
-            print(json.dumps(entry["metadata"], indent=2)[:2000])  # show first 2000 chars
+            print(json.dumps(entry["metadata"], indent=2)[:2000])
         else:
             print("Invalid metadata format")
         print("--- END ---\n")
