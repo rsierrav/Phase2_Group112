@@ -11,6 +11,7 @@ from src.metrics.license import LicenseMetric
 from src.metrics.bus_factor import bus_factor
 from src.metrics.code_quality import code_quality
 from src.metrics.ramp_up_time import RampUpTime
+from src.metrics.performance_claims import PerformanceClaims
 
 # from src.metrics.ramp_up_time import RampUpTimeMetric
 # from src.metrics.performance_claims import PerformanceClaimsMetric
@@ -31,12 +32,12 @@ class Scorer:
         bf = bus_factor()
         cq = code_quality()
         rut = RampUpTime()
-        # pc = PerformanceClaimsMetric()
+        pc = PerformanceClaims()
 
         # Dynamic list of metrics (name, object)
         self.metrics: List[Tuple[str, Any]] = [
             ("bus_factor", bf),
-            # ("performance_claims", pc),
+            ("performance_claims", pc),
             ("license", lic),
             ("size_score", sz),
             ("dataset_and_code_score", dac),
@@ -47,9 +48,9 @@ class Scorer:
 
         # Define weights for each metric (should sum to ~1.0)
         self.weights: Dict[str, float] = {
-            "ramp_up_time": 0.10,  # not yet implemented
+            "ramp_up_time": 0.10,
             "bus_factor": 0.13,
-            "performance_claims": 0.11,  # not yet implemented
+            "performance_claims": 0.11,
             "license": 0.14,
             "size_score": 0.11,
             "dataset_and_code_score": 0.14,
