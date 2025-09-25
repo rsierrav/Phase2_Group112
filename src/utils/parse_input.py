@@ -185,7 +185,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                     if debug:
                         print(f"Warning: Error calculating model size: {e}")
 
-                # Extract license from Hugging Face metadata
+                        # Extract license from Hugging Face metadata
                 if "license" in md and isinstance(md["license"], str):
                     entry["license"] = md["license"]
                 elif "cardData" in md and isinstance(md["cardData"], dict):
@@ -195,6 +195,29 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                     for t in md["tags"]:
                         if isinstance(t, str) and t.lower().startswith("license:"):
                             entry["license"] = t.split(":", 1)[1].strip()
+
+                # Attempt to scrap the readme as a last resort
+                # Having issues with audience classifier not finding its liscence
+                if "license" not in entry:
+                    try:
+                        readme_url = f"https://huggingface.co/{model_id}/raw/main/README.md"
+                        r2 = requests.get(readme_url, timeout=5)
+                        if r2.status_code == 200:
+                            text = r2.text.lower()
+                            if "mit license" in text:
+                                entry["license"] = "MIT"
+                            elif "apache" in text:
+                                entry["license"] = "Apache-2.0"
+                            elif "gpl" in text:
+                                entry["license"] = "GPL-3.0"
+                            elif "bsd" in text:
+                                entry["license"] = "BSD"
+                            elif "lgpl" in text:
+                                entry["license"] = "LGPL"
+                            elif "eclipse public license" in text:
+                                entry["license"] = "EPL-2.0"
+                    except Exception:
+                        pass
 
         elif category == "DATASET":
             try:
