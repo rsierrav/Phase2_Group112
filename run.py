@@ -86,13 +86,10 @@ if __name__ == "__main__":
         install_dependencies()
     elif command == "test":
         run_tests()
-    elif command == "dev":
-        process_local_files()
     elif command == "score":
         if len(sys.argv) < 3:
             print("Error: Missing URL_FILE argument for score command")
             sys.exit(1)
         process_urls_with_cli(sys.argv[2])
     else:
-        # fallback to run_cli (interactive/local use)
         run_cli()

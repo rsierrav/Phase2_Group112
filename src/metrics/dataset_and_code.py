@@ -4,9 +4,8 @@ from .protocol import Metric
 
 class DatasetAndCodeMetric(Metric):
     def __init__(self) -> None:
-        self.dataset_and_code_score: float = -1.0
-        self.dataset_and_code_score_latency: float = -1.0
         self.score: float = -1.0
+        self.latency: float = -1.0
 
     def get_description(self, parsed_data: Dict[str, Any]) -> str:
         description = parsed_data.get("description", "")
@@ -234,4 +233,4 @@ class DatasetAndCodeMetric(Metric):
         return self.dataset_and_code_score
 
     def get_score_latency(self) -> float:
-        return self.dataset_and_code_score_latency
+        return self.latency

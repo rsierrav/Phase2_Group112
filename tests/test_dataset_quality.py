@@ -1,6 +1,6 @@
 import unittest
 
-from src.metrics.data_quality import DatasetQualityMetric
+from src.metrics.dataset_quality import DatasetQualityMetric
 
 
 class TestDatasetQualityMetric(unittest.TestCase):
@@ -8,8 +8,8 @@ class TestDatasetQualityMetric(unittest.TestCase):
         self.metric = DatasetQualityMetric()
 
     def test_initialization(self):
-        self.assertEqual(self.metric.dataset_quality, 0.0)
-        self.assertEqual(self.metric.dataset_quality_latency, 0.0)
+        self.assertEqual(self.metric.score, 0.0)
+        self.assertEqual(self.metric.latency, 0.0)
 
     def test_example_count_extraction(self):
         test_data = {

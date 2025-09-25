@@ -1,6 +1,6 @@
 # src/scorer.py
 
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Union
 import time
 
 # Import implemented metrics
@@ -61,7 +61,7 @@ class Scorer:
         """
         Run all metrics on metadata and return a flat dict with scores + latencies.
         """
-        result: Dict[str, Any] = {
+        result: Dict[str, Union[float, Dict[str, float], str]] = {
             "name": metadata.get("name", "Unknown"),
             "category": metadata.get("category", "UNKNOWN"),
         }

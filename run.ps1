@@ -107,10 +107,10 @@ switch ($args[0]) {
         process_urls $args[1]
     }
     default {
-        $input = $args[0]
+        $userInput = $args[0]
         
-        if ($input -match "^https?://") {
-            process_urls $input
+        if ($userInput -match "^https?://") {
+            process_urls $userInput
         }
         else {
             Write-Host "Error: Invalid argument. Use 'score <URL_FILE>' or a direct URL."

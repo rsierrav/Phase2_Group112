@@ -4,7 +4,7 @@ import sys
 import json
 import logging
 import requests
-from typing import Dict, Any, List
+from typing import Dict, Any
 from src.utils.parse_input import parse_input_file, fetch_metadata
 from src.utils.output_format import format_score_row
 from src.scorer import Scorer
@@ -71,44 +71,14 @@ def process_and_score_input_file(input_file: str) -> None:
     """Parse, fetch metadata, score entries, and output results in NDJSON."""
 
     scorer = Scorer()
+    parsed_entries = parse_input_file(input_file)
 
-    # Detect .json vs .txt
-    try:
-        if input_file.endswith(".json"):
-            with open(input_file, "r", encoding="utf-8") as f:
-                try:
-                    data = json.load(f)
-                except json.JSONDecodeError:
-                    sys.stderr.write(f"Error: invalid JSON in {input_file}\n")
-                    sys.exit(1)
-
-            if isinstance(data, list):
-                url_lines: List[str] = data
-            else:
-                sys.stderr.write(f"Error: unsupported JSON format in {input_file}\n")
-                sys.exit(1)
-
-        else:  # assume .txt or csv-like
-            with open(input_file, "r", encoding="utf-8") as f:
-                url_lines = [line.strip() for line in f if line.strip()]
-    except Exception as e:
-        sys.stderr.write(f"Error reading {input_file}: {e}\n")
-        sys.exit(1)
-
-    # Process each URL line
-    for raw in url_lines:
-        urls = [u.strip().strip('"').strip("'") for u in raw.split(",") if u.strip()]
-        if not urls:
+    for entry in parsed_entries:
+        if entry.get("category") != "MODEL":
             continue
-
-        for url in urls:
-            parsed_entries = parse_input_file(url)
-            for entry in parsed_entries:
-                if entry.get("category") != "MODEL":
-                    continue
-                metadata: Dict[str, Any] = fetch_metadata(entry)
-                row: Dict[str, Any] = format_score_row(metadata, scorer)
-                print(json.dumps(row))
+        metadata: Dict[str, Any] = fetch_metadata(entry)
+        row: Dict[str, Any] = format_score_row(metadata, scorer)
+        print(json.dumps(row))
 
 
 def run_cli() -> None:
@@ -126,7 +96,6 @@ def run_cli() -> None:
         process_and_score_input_file(input_file)
         return
 
-    # Dev mode
     if not os.path.isdir(INPUT_DIR):
         print(f"Error: input folder '{INPUT_DIR}' not found.", file=sys.stderr)
         sys.exit(1)

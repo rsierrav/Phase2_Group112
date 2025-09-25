@@ -9,8 +9,8 @@ class TestDatasetAndCodeMetric(unittest.TestCase):
         self.metric = DatasetAndCodeMetric()
 
     def test_initialization(self):
-        self.assertEqual(self.metric.dataset_and_code_score, 0.0)
-        self.assertEqual(self.metric.dataset_and_code_score_latency, 0.0)
+        self.assertEqual(self.metric.score, 0.0)
+        self.assertEqual(self.metric.latency, 0.0)
 
     def test_get_description(self):
         test_data = {"description": "Test description"}
@@ -36,7 +36,9 @@ class TestDatasetAndCodeMetric(unittest.TestCase):
     def test_score_calculation(self):
         test_data = {
             "category": "MODEL",
-            "description": "A comprehensive description that is long enough to get good documentation score",
+            "description": (
+                "A comprehensive description that is long enough to get good " "documentation score"
+            ),
             "example_count": 0,
             "licenses": "apache-2.0",
             "ml_integration": True,
