@@ -25,8 +25,8 @@ class Scorer:
 
     def __init__(self):
         # Initialize metric objects
-        dq = DatasetQualityMetric()  # LLM-based
-        dac = DatasetAndCodeMetric()  # Heuristic
+        dq = DatasetQualityMetric()
+        dac = DatasetAndCodeMetric()
         sz = SizeMetric()
         lic = LicenseMetric()
         bf = bus_factor()

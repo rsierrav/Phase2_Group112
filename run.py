@@ -50,16 +50,74 @@ pytest==8.3.2
         sys.exit(1)
 
 
+# Run tests and output according to spec
 def run_tests():
-    test_suite = os.path.join(SCRIPT_DIR, "test_suite.py")
     tests_dir = os.path.join(SCRIPT_DIR, "tests")
 
-    if os.path.exists(test_suite):
-        subprocess.check_call([sys.executable, test_suite])
-    elif os.path.isdir(tests_dir):
-        subprocess.check_call([sys.executable, "-m", "pytest", tests_dir, "-v"])
-    else:
-        sys.exit("Error: No test suite found")
+    if not os.path.isdir(tests_dir):
+        print("Error: No test suite found")
+        sys.exit(1)
+
+    try:
+        # Run pytest with coverage
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                tests_dir,
+                "--maxfail=1",
+                "--disable-warnings",
+                "-q",
+                "--tb=short",
+                "--cov=src",
+                "--cov-report=term",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        # Extract number of tests run and passed
+        stdout = result.stdout.splitlines()
+        summary_line = next((line for line in stdout if "passed" in line or "failed" in line), "")
+
+        passed = failed = total = 0
+        if "passed" in summary_line or "failed" in summary_line:
+            parts = summary_line.split(",")
+            for part in parts:
+                part = part.strip()
+                if part.endswith("passed"):
+                    passed = int(part.split()[0])
+                elif part.endswith("failed"):
+                    failed = int(part.split()[0])
+            total = passed + failed
+
+        # Get coverage % using coverage report
+        cov_result = subprocess.run(
+            [sys.executable, "-m", "coverage", "report"], capture_output=True, text=True
+        )
+        cov_lines = cov_result.stdout.splitlines()
+        coverage_percent = 0
+        if cov_lines:
+            last_line = cov_lines[-1]
+            if "%" in last_line:
+                try:
+                    coverage_percent = int(last_line.strip().split()[-1].replace("%", ""))
+                except Exception:
+                    coverage_percent = 0
+
+        # Print in required format
+        print(f"{passed}/{total} test cases passed. {coverage_percent}% line coverage achieved.")
+
+        # Exit code: 0 if all passed and coverage >= 80%
+        if failed == 0 and coverage_percent >= 80:
+            sys.exit(0)
+        else:
+            sys.exit(1)
+
+    except subprocess.CalledProcessError as e:
+        print(f"Tests failed with exit code {e.returncode}")
+        sys.exit(1)
 
 
 def process_urls_with_cli(url_file: str):
