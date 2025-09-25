@@ -78,7 +78,7 @@ def process_and_score_input_file(input_file: str) -> None:
             continue
         metadata: Dict[str, Any] = fetch_metadata(entry)
         row: Dict[str, Any] = format_score_row(metadata, scorer)
-        print(json.dumps(row))
+        print(json.dumps(row, separators=(",", ":")))
 
 
 def run_cli() -> None:

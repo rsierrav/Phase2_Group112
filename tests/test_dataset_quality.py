@@ -8,8 +8,8 @@ class TestDatasetQualityMetric(unittest.TestCase):
         self.metric = DatasetQualityMetric()
 
     def test_initialization(self):
-        self.assertEqual(self.metric.score, 0.0)
-        self.assertEqual(self.metric.latency, 0.0)
+        self.assertEqual(self.metric.score, -1.0)
+        self.assertEqual(self.metric.latency, -1.0)
 
     def test_example_count_extraction(self):
         test_data = {
@@ -43,4 +43,4 @@ class TestDatasetQualityMetric(unittest.TestCase):
     def test_non_dataset_returns_zero(self):
         test_data = {"category": "MODEL"}
         data = self.metric.get_data(test_data)
-        self.assertIsNone(data)
+        self.assertEqual(data, {"dataset_url": "", "code_url": ""})

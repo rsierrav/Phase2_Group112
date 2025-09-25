@@ -85,6 +85,55 @@ class DatasetQualityMetric(Metric):
         finally:
             self.latency = int((time.time() - start) * 1000)  # ms
 
+    def get_example_count(self, parsed_data: Dict[str, Any]) -> int:
+        """Get number of examples/samples in dataset"""
+        if parsed_data.get("category") == "DATASET":
+            card_data = parsed_data.get("cardData", {})
+            dataset_info = card_data.get("dataset_info", {})
+
+            if isinstance(dataset_info, dict):
+                splits = dataset_info.get("splits", [])
+                total_examples = 0
+                for split in splits:
+                    if isinstance(split, dict):
+                        total_examples += split.get("num_examples", 0)
+                return total_examples
+            elif isinstance(dataset_info, list) and dataset_info:
+                total_examples = 0
+                for info in dataset_info:
+                    splits = info.get("splits", [])
+                    for split in splits:
+                        if isinstance(split, dict):
+                            total_examples += split.get("num_examples", 0)
+                return total_examples
+        return 0
+
+    def get_description(self, parsed_data: Dict[str, Any]) -> str:
+        return parsed_data.get("description", "")
+
+    def get_metadata_completeness(self, parsed_data: Dict[str, Any]) -> float:
+        card_data = parsed_data.get("cardData", {})
+
+        metadata_fields = [
+            "task_categories",
+            "language",
+            "size_categories",
+            "source_datasets",
+            "annotations_creators",
+            "language_creators",
+        ]
+
+        present_fields = 0
+        for field in metadata_fields:
+            if field in card_data and card_data[field]:
+                value = card_data[field]
+                if isinstance(value, list) and len(value) > 0:
+                    present_fields += 1
+                elif isinstance(value, str) and value.strip():
+                    present_fields += 1
+
+        return present_fields / len(metadata_fields)
+
     def get_score(self) -> float:
         return self.score
 
