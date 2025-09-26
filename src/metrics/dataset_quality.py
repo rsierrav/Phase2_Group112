@@ -82,7 +82,7 @@ class DatasetQualityMetric(Metric):
             score = float(content)
             self.score = max(0.0, min(1.0, score))
         except Exception:
-            self.score = self.calculate_heuristic_score(data)
+            self.score = 0.11  # API failure, assign low score
         finally:
             self.latency = int((time.time() - start) * 1000)  # ms
 
