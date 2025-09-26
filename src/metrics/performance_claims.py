@@ -34,7 +34,7 @@ class PerformanceClaims(Metric):
                 "metrics": metrics,
                 "paperswithcode": paperswithcode,
                 "benchmark_results": benchmark_results,
-                "category": category
+                "category": category,
             }
 
         elif category == "DATASET":
@@ -45,7 +45,7 @@ class PerformanceClaims(Metric):
                 "dataset_stats": dataset_stats,
                 "citations": citations,
                 "benchmark_results": benchmark_results,
-                "category": category
+                "category": category,
             }
 
         elif category == "CODE":
@@ -54,7 +54,7 @@ class PerformanceClaims(Metric):
             return {
                 "test_results": test_results,
                 "example_results": example_results,
-                "category": category
+                "category": category,
             }
 
         # fallback for unknown category
@@ -84,9 +84,7 @@ class PerformanceClaims(Metric):
             score = 0.0
             if data.get("dataset_stats"):
                 score += 0.3
-            if data.get(
-                "citations", 0
-            ) > 5:  # arbitrary threshold for "well-cited"
+            if data.get("citations", 0) > 5:  # arbitrary threshold for "well-cited"
                 score += 0.3
             if data.get("benchmark_results"):
                 score += 0.4

@@ -76,17 +76,17 @@ def debug_scoring():
             has_packaging = bool(cq_data.get("has_packaging", False))
 
             print(
-                "    Tests (30%): "
-                f"{1.0 if has_tests else 0.0} * 0.30 = "
-                f"{(1.0 if has_tests else 0.0) * 0.30}"
+                "    Tests (30%): {} * 0.30 = {}".format(
+                    1.0 if has_tests else 0.0, (1.0 if has_tests else 0.0) * 0.30
+                )
             )
             print(
                 f"    CI (25%): {1.0 if has_ci else 0.0} * 0.25 = {(1.0 if has_ci else 0.0) * 0.25}"
             )
             print(
-                "    Linting (15%): "
-                f"{1.0 if has_lint else 0.0} * 0.15 = "
-                f"{(1.0 if has_lint else 0.0) * 0.15}"
+                "    Linting (15%): {} * 0.15 = {}".format(
+                    1.0 if has_lint else 0.0, (1.0 if has_lint else 0.0) * 0.15
+                )
             )
             py_score = min(1.0, py_count / 20.0)
             print(f"    Python files (15%): {py_score} * 0.15 = {py_score * 0.15}")
