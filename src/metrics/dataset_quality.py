@@ -26,28 +26,6 @@ class DatasetQualityMetric(Metric):
             "code_url": parsed_data.get("code_url", ""),
         }
 
-    def calculate_heuristic_score(self, data: Dict[str, str]) -> float:
-        """
-        Calculate a heuristic score based on available information when API fails.
-        """
-        score = 0.0
-
-        # Basic score for having URLs
-        if data.get("dataset_url"):
-            score += 0.3
-        if data.get("code_url"):
-            score += 0.3
-
-        # If we have both, assume decent quality
-        if data.get("dataset_url") and data.get("code_url"):
-            score += 0.2
-
-        # Default reasonable score if we have some information
-        if score == 0:
-            score = 0.4
-
-        return min(1.0, score)
-
     def calculate_score(self, data: Dict[str, str]) -> None:
         """
         Call Purdue GenAI Studio to evaluate dataset/code clarity.
@@ -58,7 +36,7 @@ class DatasetQualityMetric(Metric):
         start = time.time()
 
         if not api_key:
-            self.score = self.calculate_heuristic_score(data)
+            self.score = 0.33  # No API key, assign low score
             self.latency = int((time.time() - start) * 1000)
             return
 
