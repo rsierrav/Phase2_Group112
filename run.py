@@ -51,7 +51,7 @@ coverage==7.3.2
         sys.exit(1)
 
 
-def run_tests():
+def run_test():
     """Run the test suite and report results in spec format."""
     # Import test dependencies inside the function
     try:
@@ -177,7 +177,7 @@ def run_tests():
 
     # Output in exact spec format
     print(
-        f"{passed_tests}/{total_tests} test cases passed. "
+        f"{passed_tests}/{total_tests} test cases passed."
         f"{coverage_percent}% line coverage achieved."
     )
 
@@ -209,7 +209,7 @@ if __name__ == "__main__":
     if command == "install":
         install_dependencies()
     elif command == "test":
-        run_tests()
+        run_test()
     elif command == "score":
         if len(sys.argv) < 3:
             print("Error: Missing URL_FILE argument for score command")
