@@ -11,20 +11,6 @@ from src.utils.output_format import format_score_row  # noqa: E402
 from src.scorer import Scorer  # noqa: E402
 
 
-def choose_primary_url(urls):
-    """Choose the primary URL from a list (prefer MODEL > DATASET > CODE)."""
-    for url in urls:
-        if "huggingface.co" in url and "/datasets/" not in url:
-            return url
-    for url in urls:
-        if "huggingface.co/datasets" in url:
-            return url
-    for url in urls:
-        if "github.com" in url:
-            return url
-    return urls[0] if urls else None
-
-
 def process(parsed_data):
     """Process parsed entries, but only output MODEL category rows."""
     if not parsed_data:
@@ -36,7 +22,8 @@ def process(parsed_data):
             continue
         metadata = fetch_metadata(entry)
         row = format_score_row(metadata, scorer)
-        print(json.dumps(row))
+        # Strict NDJSON: one JSON object per line, no spaces
+        print(json.dumps(row, separators=(",", ":")))
 
 
 def clean_and_split_line(line: str):
@@ -64,10 +51,9 @@ def process_file_lines(file_path: str):
                 sys.stderr.write(f"Error: JSON file {file_path} must contain a list of URLs\n")
                 sys.exit(1)
 
-            for url in urls:
-                if not url or not isinstance(url, str):
-                    continue
-                parsed_data = parse_input_file(url)
+            url_line = ",".join([u for u in urls if isinstance(u, str) and u.strip()])
+            if url_line:
+                parsed_data = parse_input_file(url_line)
                 if parsed_data:
                     process(parsed_data)
 
@@ -80,11 +66,11 @@ def process_file_lines(file_path: str):
                     urls = clean_and_split_line(line)
                     if not urls:
                         continue
-                    primary_url = choose_primary_url(urls)
-                    if primary_url:
-                        parsed_data = parse_input_file(primary_url)
-                        if parsed_data:
-                            process(parsed_data)
+                    # ✅ Pass all URLs on this line together
+                    url_line = ",".join(urls)
+                    parsed_data = parse_input_file(url_line)
+                    if parsed_data:
+                        process(parsed_data)
 
     except Exception as e:
         sys.stderr.write(f"Error processing file {file_path}: {e}\n")
