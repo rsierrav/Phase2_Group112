@@ -97,7 +97,10 @@ class DatasetQualityMetric(Metric):
                 total_examples = 0
                 for split in splits:
                     if isinstance(split, dict):
-                        total_examples += split.get("num_examples", 0)
+                        num_examples = split.get("num_examples", 0)
+                        # Handle None values safely
+                        if num_examples is not None and isinstance(num_examples, (int, float)):
+                            total_examples += int(num_examples)
                 return total_examples
             elif isinstance(dataset_info, list) and dataset_info:
                 total_examples = 0
@@ -105,7 +108,10 @@ class DatasetQualityMetric(Metric):
                     splits = info.get("splits", [])
                     for split in splits:
                         if isinstance(split, dict):
-                            total_examples += split.get("num_examples", 0)
+                            num_examples = split.get("num_examples", 0)
+                            # Handle None values safely
+                            if num_examples is not None and isinstance(num_examples, (int, float)):
+                                total_examples += int(num_examples)
                 return total_examples
         return 0
 
