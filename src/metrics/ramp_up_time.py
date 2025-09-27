@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional
 from .protocol import Metric
+import re
 
 
 class RampUpTime(Metric):
@@ -77,8 +78,13 @@ class RampUpTime(Metric):
             "requirements",
         ]
 
-        if any(indicator in description for indicator in install_indicators):
-            return True
+
+        for indicator in install_indicators:
+            pattern = r'\b' + re.escape(indicator) + r'\b'
+            if re.search(pattern, description):
+                return True
+#        if any(indicator in description for indicator in install_indicators):
+#            return True
 
         tags = parsed_data.get("tags", [])
         if not tags:
