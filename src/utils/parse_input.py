@@ -4,9 +4,6 @@ import os
 import re
 from typing import Optional, List, Dict, Any
 
-"""
-Enhanced version that scrapes model READMEs to find GitHub repository links
-"""
 
 HF_MODEL_API = "https://huggingface.co/api/models/"
 HF_DATASET_API = "https://huggingface.co/api/datasets/"
@@ -86,8 +83,10 @@ def fetch_huggingface_readme(model_id: str) -> Optional[str]:
 
 def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     """
-    Parses input file with proper 3-URL format: code_url, dataset_url, model_url
-    Returns only MODEL entries with associated code_url and dataset_url when available.
+    Parses input file with flexible URL format handling:
+    - Can handle 1, 2, 3, or more URLs per line
+    - Returns only MODEL entries with associated code_url and dataset_url when available
+    - Uses intelligent URL categorization to assign URLs to correct roles
     """
     parsed_entries: List[Dict[str, str]] = []
 
@@ -125,15 +124,10 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
                 try:
                     urls = json.loads(content)
                     if isinstance(urls, list):
-                        # Group URLs into triplets: code, dataset, model
-                        for i in range(0, len(urls), 3):
-                            if i + 2 < len(urls):  # Ensure we have all 3
-                                code_url = urls[i] if urls[i] else ""
-                                dataset_url = urls[i + 1] if urls[i + 1] else ""
-                                model_url = urls[i + 2] if urls[i + 2] else ""
-
-                                if model_url:  # Only process if we have a model
-                                    lines.append(f"{code_url},{dataset_url},{model_url}")
+                        # For JSON format, each URL is processed individually
+                        for url in urls:
+                            if url and is_model_url(url):
+                                lines.append(url)  # Single URL per line
                 except json.JSONDecodeError:
                     print(f"Error: Invalid JSON format in {input_path}")
                     return []
@@ -147,45 +141,116 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     else:
         lines = [input_path]
 
-    # Process each line
+    # Process each line with flexible URL handling
     for line_num, line in enumerate(lines, 1):
         if not line.strip():
             continue
 
-        # Split into exactly 3 parts: code_url, dataset_url, model_url
-        parts = [p.strip().strip('"').strip("'") for p in line.split(",")]
-
-        # Ensure we have exactly 3 parts (pad with empty strings if needed)
-        while len(parts) < 3:
-            parts.append("")
-
-        code_url, dataset_url, model_url = parts[0], parts[1], parts[2]
-
-        # Skip if no model URL
-        if not model_url or not is_model_url(model_url):
+        # Handle single URL case (JSON format or direct URL)
+        if line.startswith("http") and "," not in line:
+            if is_model_url(line):
+                model_entry = {
+                    "category": "MODEL",
+                    "url": line,
+                    "name": extract_model_name(line),
+                    "dataset_url": "",
+                    "code_url": "",
+                }
+                parsed_entries.append(model_entry)
             continue
 
-        # Store dataset in registry if we have one
-        if dataset_url and is_dataset_url(dataset_url):
-            if dataset_url not in seen_datasets:
-                seen_datasets[dataset_url] = {"url": dataset_url, "line": line_num}
+        # Split by comma and clean up URLs
+        parts = [p.strip().strip('"').strip("'") for p in line.split(",")]
 
-        # If no dataset_url but we've seen datasets before, try to infer
-        elif not dataset_url and seen_datasets:
-            # For now, use the most recently seen dataset
-            inferred_dataset = list(seen_datasets.keys())[-1]
-            dataset_url = inferred_dataset
+        # Remove empty parts
+        urls = [p for p in parts if p]
 
-        # Create model entry
-        model_entry = {
-            "category": "MODEL",
-            "url": model_url,
-            "name": extract_model_name(model_url),
-            "dataset_url": dataset_url,
-            "code_url": code_url,
-        }
+        if not urls:
+            continue
 
-        parsed_entries.append(model_entry)
+        # Categorize URLs intelligently
+        code_urls = []
+        dataset_urls = []
+        model_urls = []
+
+        for url in urls:
+            if is_model_url(url):
+                model_urls.append(url)
+            elif is_dataset_url(url):
+                dataset_urls.append(url)
+            elif is_code_url(url):
+                code_urls.append(url)
+
+        # If we can't categorize properly, fall back to positional parsing
+        if not model_urls:
+            # Try positional parsing: first 3 positions are code, dataset, model
+            if len(urls) >= 3:
+                code_url = urls[0] if is_code_url(urls[0]) else ""
+                dataset_url = urls[1] if is_dataset_url(urls[1]) else ""
+                model_url = urls[2] if is_model_url(urls[2]) else ""
+            elif len(urls) == 2:
+                # Two URLs: could be dataset+model or code+model
+                if is_model_url(urls[1]):
+                    model_url = urls[1]
+                    if is_dataset_url(urls[0]):
+                        dataset_url = urls[0]
+                        code_url = ""
+                    elif is_code_url(urls[0]):
+                        code_url = urls[0]
+                        dataset_url = ""
+                    else:
+                        # Ambiguous, assume first is code
+                        code_url = urls[0]
+                        dataset_url = ""
+                elif is_model_url(urls[0]):
+                    model_url = urls[0]
+                    code_url = ""
+                    dataset_url = ""
+                else:
+                    continue  # No model found
+            elif len(urls) == 1:
+                if is_model_url(urls[0]):
+                    model_url = urls[0]
+                    code_url = ""
+                    dataset_url = ""
+                else:
+                    continue  # No model found
+            else:
+                continue  # No URLs
+
+            model_urls = [model_url] if model_url else []
+            dataset_urls = [dataset_url] if dataset_url else []
+            code_urls = [code_url] if code_url else []
+
+        # Process each model found
+        for model_url in model_urls:
+            if not model_url:
+                continue
+
+            # Get the best matching dataset and code URLs
+            dataset_url = dataset_urls[0] if dataset_urls else ""
+            code_url = code_urls[0] if code_urls else ""
+
+            # Store dataset in registry if we have one
+            if dataset_url:
+                if dataset_url not in seen_datasets:
+                    seen_datasets[dataset_url] = {"url": dataset_url, "line": line_num}
+            # If no dataset_url but we've seen datasets before, try to infer
+            elif not dataset_url and seen_datasets:
+                # Use the most recently seen dataset
+                inferred_dataset = list(seen_datasets.keys())[-1]
+                dataset_url = inferred_dataset
+
+            # Create model entry
+            model_entry = {
+                "category": "MODEL",
+                "url": model_url,
+                "name": extract_model_name(model_url),
+                "dataset_url": dataset_url,
+                "code_url": code_url,
+            }
+
+            parsed_entries.append(model_entry)
 
     return parsed_entries
 
@@ -210,7 +275,12 @@ def is_model_url(url: str) -> bool:
 
 def is_dataset_url(url: str) -> bool:
     """Check if URL is a HuggingFace dataset"""
-    return bool(url) and "huggingface.co/datasets" in url
+    return bool(url and "huggingface.co/datasets" in url)
+
+
+def is_code_url(url: str) -> bool:
+    """Check if URL is a GitHub repository"""
+    return bool(url and "github.com" in url)
 
 
 def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]:
