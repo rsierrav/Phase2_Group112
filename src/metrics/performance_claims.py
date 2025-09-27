@@ -1,129 +1,218 @@
-# performance_claims.py
-from typing import Any, Dict
+# src/metrics/performance_claims.py
 import time
+import requests
+import re
+from typing import Dict, Any, List
 from .protocol import Metric
 
 
 class PerformanceClaims(Metric):
     """
-    Metric to evaluate the evidence of good performance for a given model,
-    dataset, or code URL.
-    Scores are normalized between 0 and 1:
-      - 0: no evidence
-      - 0.5: partial or weak evidence
-      - 1: strong evidence
+    Evaluate the quality and verifiability of performance claims
+    made about a model based on documentation and model cards.
     """
 
-    def __init__(self) -> None:
-        self.score: float = 0.0
-        self.latency: float = 0.0  # in milliseconds
+    def __init__(self):
+        self.score: float = -1.0
+        self.latency: float = -1.0
+
+    def _extract_metrics_from_text(self, text: str) -> List[Dict[str, Any]]:
+        """Extract performance metrics from text."""
+        metrics = []
+
+        # Common ML metrics patterns
+        metric_patterns = [
+            r"accuracy[:\s]*(\d+\.?\d*)%?",
+            r"f1[:\s]*(\d+\.?\d*)",
+            r"bleu[:\s]*(\d+\.?\d*)",
+            r"rouge[:\s]*(\d+\.?\d*)",
+            r"wer[:\s]*(\d+\.?\d*)%?",
+            r"loss[:\s]*(\d+\.?\d*)",
+            r"perplexity[:\s]*(\d+\.?\d*)",
+            r"auc[:\s]*(\d+\.?\d*)",
+            r"precision[:\s]*(\d+\.?\d*)%?",
+            r"recall[:\s]*(\d+\.?\d*)%?",
+            r"map[:\s]*(\d+\.?\d*)",
+            r"top-?1[:\s]*(\d+\.?\d*)%?",
+            r"top-?5[:\s]*(\d+\.?\d*)%?",
+        ]
+
+        text_lower = text.lower()
+        for pattern in metric_patterns:
+            matches = re.finditer(pattern, text_lower)
+            for match in matches:
+                metric_name = pattern.split("[")[0]
+                value = float(match.group(1))
+                metrics.append(
+                    {
+                        "name": metric_name,
+                        "value": value,
+                        "context": text[max(0, match.start() - 50) : match.end() + 50],
+                    }
+                )
+
+        return metrics
 
     def get_data(self, parsed_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Extract relevant metadata from the parsed entry.
-        Returns a dict with information that will be used to calculate score.
-        """
+        """Extract performance claims from model metadata."""
         metadata = parsed_data.get("metadata", {})
-        category = parsed_data.get("category", "UNKNOWN")
 
-        if category == "MODEL":
-            metrics = metadata.get("metrics", [])
-            paperswithcode = metadata.get("paperswithcode", {})
-            benchmark_results = metadata.get("benchmark_results", [])
-            return {
-                "metrics": metrics,
-                "paperswithcode": paperswithcode,
-                "benchmark_results": benchmark_results,
-                "category": category,
-            }
+        # Initialize data structure
+        data = {
+            "has_model_card": False,
+            "has_benchmarks": False,
+            "has_metrics": False,
+            "metrics_count": 0,
+            "has_datasets_tested": False,
+            "has_comparisons": False,
+            "documentation_quality": 0.0,
+        }
 
-        elif category == "DATASET":
-            dataset_stats = metadata.get("dataset_stats", {})
-            citations = metadata.get("citations", 0)
-            benchmark_results = metadata.get("benchmark_results", [])
-            return {
-                "dataset_stats": dataset_stats,
-                "citations": citations,
-                "benchmark_results": benchmark_results,
-                "category": category,
-            }
+        # Check for HuggingFace model-index (structured performance data)
+        model_index = metadata.get("model-index", [])
+        if model_index:
+            data["has_benchmarks"] = True
+            data["has_metrics"] = True
+            data["has_datasets_tested"] = True
 
-        elif category == "CODE":
-            test_results = metadata.get("test_results", {})
-            example_results = metadata.get("example_results", [])
-            return {
-                "test_results": test_results,
-                "example_results": example_results,
-                "category": category,
-            }
+            # Count metrics
+            total_metrics = 0
+            for model_entry in model_index:
+                results = model_entry.get("results", [])
+                for result in results:
+                    metrics = result.get("metrics", [])
+                    total_metrics += len(metrics)
 
-        # fallback for unknown category
-        return {"category": category}
+            data["metrics_count"] = total_metrics
+
+        # Check card data for performance information
+        card_data = metadata.get("cardData", {})
+        if card_data:
+            data["has_model_card"] = True
+
+        # Get README content for analysis
+        readme_content = ""
+        try:
+            if "huggingface.co" in parsed_data.get("url", ""):
+                if "/datasets/" in parsed_data.get("url", ""):
+                    model_id = "datasets/" + "/".join(
+                        parsed_data.get("url", "")
+                        .split("huggingface.co/datasets/")[-1]
+                        .split("/")[:2]
+                    )
+                else:
+                    model_id = "/".join(
+                        parsed_data.get("url", "").split("huggingface.co/")[-1].split("/")[:2]
+                    )
+
+                resp = requests.get(
+                    f"https://huggingface.co/{model_id}/raw/main/README.md", timeout=10
+                )
+                if resp.status_code == 200:
+                    readme_content = resp.text
+        except Exception:
+            pass
+
+        # Analyze README for performance claims
+        if readme_content:
+            readme_lower = readme_content.lower()
+
+            # Look for benchmark mentions
+            benchmark_indicators = [
+                "benchmark",
+                "evaluation",
+                "performance",
+                "results",
+                "accuracy",
+                "f1",
+                "bleu",
+                "rouge",
+                "wer",
+            ]
+            data["has_benchmarks"] = any(
+                indicator in readme_lower for indicator in benchmark_indicators
+            )
+
+            # Look for dataset mentions
+            dataset_indicators = [
+                "dataset",
+                "trained on",
+                "evaluated on",
+                "tested on",
+                "glue",
+                "squad",
+                "coco",
+                "imagenet",
+                "librispeech",
+            ]
+            data["has_datasets_tested"] = any(
+                indicator in readme_lower for indicator in dataset_indicators
+            )
+
+            # Look for comparisons
+            comparison_indicators = [
+                "compared to",
+                "vs",
+                "versus",
+                "outperforms",
+                "beats",
+                "state-of-the-art",
+                "sota",
+                "baseline",
+            ]
+            data["has_comparisons"] = any(
+                indicator in readme_lower for indicator in comparison_indicators
+            )
+
+            # Extract metrics from README
+            extracted_metrics = self._extract_metrics_from_text(readme_content)
+            if extracted_metrics:
+                data["has_metrics"] = True
+                data["metrics_count"] += len(extracted_metrics)
+
+        return data
 
     def calculate_score(self, data: Dict[str, Any]) -> None:
-        """
-        Compute the performance claims score using a heuristic:
-        - MODEL: metrics + paperswithcode + benchmark results
-        - DATASET: dataset stats + citations + benchmark results
-        - CODE: test coverage + example results
-        Returns score between 0 and 1.
-        """
-        category = data.get("category", "UNKNOWN")
+        """Calculate performance claims score."""
+        start = time.perf_counter()
 
-        if category == "MODEL":
-            score = 0.0
-            if data.get("metrics"):
-                score += 0.4
-            if data.get("paperswithcode"):
-                score += 0.4
-            if data.get("benchmark_results"):
+        score = 0.0
+
+        # Has model card (0-0.2)
+        if data.get("has_model_card", False):
+            score += 0.2
+
+        # Has benchmarks (0-0.25)
+        if data.get("has_benchmarks", False):
+            score += 0.25
+
+        # Has metrics with values (0-0.25)
+        if data.get("has_metrics", False):
+            metrics_count = data.get("metrics_count", 0)
+            if metrics_count >= 5:
+                score += 0.25
+            elif metrics_count >= 3:
                 score += 0.2
-            self.score = min(score, 1.0)
+            elif metrics_count >= 1:
+                score += 0.15
+            else:
+                score += 0.1
 
-        elif category == "DATASET":
-            score = 0.0
-            if data.get("dataset_stats"):
-                score += 0.3
-            if data.get("citations", 0) > 5:  # arbitrary threshold for "well-cited"
-                score += 0.3
-            if data.get("benchmark_results"):
-                score += 0.4
-            self.score = min(score, 1.0)
+        # Tested on standard datasets (0-0.15)
+        if data.get("has_datasets_tested", False):
+            score += 0.15
 
-        elif category == "CODE":
-            score = 0.0
-            test_results = data.get("test_results", {})
-            if test_results.get("coverage", 0) >= 50:  # threshold 50%
-                score += 0.5
-            if data.get("example_results"):
-                score += 0.5
-            self.score = min(score, 1.0)
+        # Has comparisons to other models (0-0.15)
+        if data.get("has_comparisons", False):
+            score += 0.15
 
-        else:
-            # Unknown category gets minimal score
-            self.score = 0.0
+        self.score = min(1.0, score)
 
-    def process_score(self, parsed_data: Dict[str, Any]) -> None:
-        """
-        Main processing function:
-        - Extract data
-        - Calculate score
-        - Record latency in milliseconds
-        """
-        start_time = time.perf_counter()
-        try:
-            data = self.get_data(parsed_data)
-            self.calculate_score(data)
-        except Exception as e:
-            self.score = 0.0
-            print(f"[PerformanceClaims] Error calculating score: {e}")
-        end_time = time.perf_counter()
-        self.latency = (end_time - start_time) * 1000
+        end = time.perf_counter()
+        self.latency = (end - start) * 1000.0
 
     def get_score(self) -> float:
-        """Return the current performance claims score."""
         return self.score
 
     def get_latency(self) -> float:
-        """Return the time taken to compute score in milliseconds."""
         return self.latency

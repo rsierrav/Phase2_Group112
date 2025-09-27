@@ -22,12 +22,11 @@ class SizeMetric(Metric):
         Scores are between 0.0 and 1.0.
         """
 
-        # In MBs (approximate thresholds), I made these up based on common hardware limits
         thresholds = {
-            "raspberry_pi": 50,
-            "jetson_nano": 200,
-            "desktop_pc": 2000,
-            "aws_server": 10000,
+            "raspberry_pi": 100,
+            "jetson_nano": 500,
+            "desktop_pc": 5000,
+            "aws_server": 20000,
         }
 
         scores = {}
