@@ -91,7 +91,7 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     - Lines with 1+ URLs separated by commas
     - JSON array of URLs
     - Single direct URL
-    Returns MODEL entries with associated dataset/code URLs.
+    Returns MODEL entries with optional dataset/code URLs.
     """
     parsed_entries: List[Dict[str, str]] = []
 
@@ -101,58 +101,51 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
 
     input_path = input_path.strip()
 
-    # Handle single direct URL (not a file)
+    # Handle single direct URL
     if input_path.startswith("http"):
-        return [make_entry("", "", input_path)]
+        return [make_entry(input_path)]
 
-    # Load lines from file
     lines = []
     if os.path.isfile(input_path):
         with open(input_path, "r", encoding="utf-8") as f:
             content = f.read().strip()
 
         if content.startswith("[") and content.endswith("]"):
+            # JSON array
             try:
                 urls = json.loads(content)
                 if isinstance(urls, list):
-                    lines = [",".join(urls)]
+                    for url in urls:
+                        if url:
+                            lines.append(url)
             except json.JSONDecodeError:
                 print(f"Error: Invalid JSON format in {input_path}")
                 return []
         else:
+            # TXT lines
             lines = [line.strip() for line in content.split("\n") if line.strip()]
     else:
         lines = [input_path]
 
-    # Process each line
     for line_num, line in enumerate(lines, 1):
+        # Split by commas and clean
         parts = [p.strip().strip('"').strip("'") for p in line.split(",")]
         parts = [p for p in parts if p]  # drop empties
 
-        dataset_url, code_url = "", ""
-        models = []
-
         for url in parts:
             if is_dataset_url(url):
-                dataset_url = url
                 seen_datasets[url] = {"url": url, "line": line_num}
             elif is_model_url(url):
-                models.append(url)
-            elif "github.com" in url:
-                code_url = url
-
-        # If no dataset found on this line, fall back to last seen
-        if not dataset_url and seen_datasets:
-            dataset_url = list(seen_datasets.keys())[-1]
-
-        # Create one entry per model
-        for m in models:
-            parsed_entries.append(make_entry(code_url, dataset_url, m))
+                dataset_url = ""
+                if seen_datasets:
+                    dataset_url = list(seen_datasets.keys())[-1]
+                parsed_entries.append(make_entry(url, dataset_url=dataset_url))
+            # else ignore (e.g., random GitHub links not attached to models)
 
     return parsed_entries
 
 
-def make_entry(code_url: str, dataset_url: str, model_url: str) -> Dict[str, str]:
+def make_entry(model_url: str, dataset_url: str = "", code_url: str = "") -> Dict[str, str]:
     """Helper to build a consistent model entry dict"""
     return {
         "category": "MODEL",
