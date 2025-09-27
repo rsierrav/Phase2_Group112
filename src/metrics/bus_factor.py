@@ -90,16 +90,8 @@ class bus_factor(Metric):
         # 1) Use pre-fetched commit authors if available
         pre_authors = parsed_data.get("commit_authors")
         if isinstance(pre_authors, list) and pre_authors:
-            # Normalize to strings and deduplicate while preserving order
-            seen: Set[str] = set()
-            unique_authors: List[str] = []
-            for a in pre_authors:
-                if a is not None:  # Filter out None values first
-                    author = str(a).strip()
-                    if author and author not in seen:
-                        seen.add(author)
-                        unique_authors.append(author)
-            return unique_authors
+            # Normalize to strings
+            return [str(a).strip() for a in pre_authors if a]
 
         # 2) Use code_url from parsed_data (parse_input.py now populates 'code_url' where possible)
         code_url = parsed_data.get("code_url") or parsed_data.get("url")  # fallback to entry url
@@ -113,11 +105,10 @@ class bus_factor(Metric):
         seen: Set[str] = set()
         unique_authors: List[str] = []
         for a in authors:
-            if a is not None:  # Filter out None values first
-                key = str(a).strip()
-                if key and key not in seen:
-                    seen.add(key)
-                    unique_authors.append(key)
+            key = str(a).strip()
+            if key and key not in seen:
+                seen.add(key)
+                unique_authors.append(key)
 
         return unique_authors
 
