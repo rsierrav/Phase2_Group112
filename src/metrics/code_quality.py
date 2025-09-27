@@ -89,13 +89,34 @@ class code_quality(Metric):
                 return lang
         return None
 
+    def _is_test_file(self, path: str) -> bool:
+        """
+        Check if a file path represents a test file that should be excluded from language counts.
+        Examples and documentation should NOT be excluded.
+        """
+        return (
+            path.startswith("tests/")
+            or "/tests/" in path
+            or path.startswith("test/")
+            or "/test/" in path
+            or path.startswith("spec/")
+            or "/spec/" in path
+            or path.startswith("test_")
+            or "/test_" in path
+            or path.endswith("_test.py")
+            or path.endswith("test.py")
+            or path.endswith("_spec.rb")
+            or path.endswith(".spec.js")
+            or path.endswith(".test.js")
+        )
+
     def get_data(self, parsed_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Extract repository evidence from CODE entry,
         or from MODEL entry with a code_url.
 
-         Returns:
-          {
+        Returns:
+        {
             "has_tests": bool,
             "has_ci": bool,
             "has_lint_config": bool,
@@ -103,7 +124,7 @@ class code_quality(Metric):
             "total_code_files": int,
             "has_readme": bool,
             "has_packaging": bool,
-          }
+        }
         """
         category = parsed_data.get("category", "")
         url = parsed_data.get("url", "")
@@ -149,7 +170,7 @@ class code_quality(Metric):
         has_readme = False
         has_packaging = False
 
-        # Packaging files accross ecosystems
+        # Packaging files across ecosystems
         packaging_files = {
             "setup.py",
             "pyproject.toml",
@@ -175,6 +196,9 @@ class code_quality(Metric):
             raw_path = entry.get("path", "") or ""
             path = raw_path.lower().lstrip("./")
 
+            # Debug: print paths being processed
+            print(f"DEBUG: Processing path: '{path}' (from raw: '{raw_path}')")
+
             # More test detection
             if (
                 path.startswith("tests/")
@@ -198,6 +222,7 @@ class code_quality(Metric):
                 or "pytest" in path
             ):
                 has_tests = True
+                print(f"DEBUG: Found test file: '{path}'")
 
             # More CI detection
             if (
@@ -221,6 +246,7 @@ class code_quality(Metric):
                 or path.endswith("build.bat")
             ):
                 has_ci = True
+                print(f"DEBUG: Found CI file: '{path}'")
 
             # More linting detection
             if (
@@ -253,6 +279,7 @@ class code_quality(Metric):
                 or "formatting" in path
             ):
                 has_lint_config = True
+                print(f"DEBUG: Found lint config file: '{path}'")
 
             # More README detection
             if (
@@ -262,17 +289,27 @@ class code_quality(Metric):
                 or path == "home.md"
             ):
                 has_readme = True
+                print(f"DEBUG: Found README file: '{path}'")
 
             # More packaging detection
             if path in packaging_files or any(path.endswith(f) for f in packaging_files):
                 has_packaging = True
+                print(f"DEBUG: Found packaging file: '{path}'")
 
             # Classify file by extension and increment language counts
             lang = self._classify_by_extension(path)
             if lang:
-                language_counts[lang] = language_counts.get(lang, 0) + 1
+                # Only count non-test files for language statistics
+                if not self._is_test_file(path):
+                    language_counts[lang] = language_counts.get(lang, 0) + 1
+                    print(f"DEBUG: Counted language file: '{path}' as {lang}")
+                else:
+                    print(f"DEBUG: Excluded test file from language count: '{path}'")
 
         total_code_files = sum(language_counts.values())
+
+        print(f"DEBUG: Final results - has_lint_config: {has_lint_config}")
+        print(f"DEBUG: Language counts: {language_counts}")
 
         return {
             "has_tests": has_tests,

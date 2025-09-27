@@ -131,7 +131,7 @@ class TestRunPy(unittest.TestCase):
         )
 
         with patch("builtins.print") as mock_print:
-            run.run_test()
+            run.run_tests()
 
         # Should report all tests passed
         mock_print.assert_called()
@@ -160,7 +160,7 @@ class TestRunPy(unittest.TestCase):
 
         with patch("builtins.print") as mock_print:
             with self.assertRaises(SystemExit) as cm:
-                run.run_test()
+                run.run_tests()
 
             self.assertEqual(cm.exception.code, 1)
 
@@ -187,7 +187,7 @@ class TestRunPy(unittest.TestCase):
 
         with patch("builtins.print") as mock_print:
             with self.assertRaises(SystemExit) as cm:
-                run.run_test()
+                run.run_tests()
 
             self.assertEqual(cm.exception.code, 1)
 
@@ -214,7 +214,7 @@ class TestRunPy(unittest.TestCase):
 
             with patch("builtins.print") as mock_print:
                 with self.assertRaises(SystemExit) as cm:  # Add this line!
-                    run.run_test()
+                    run.run_tests()
 
                 self.assertEqual(cm.exception.code, 1)
                 mock_print.assert_called()
@@ -237,7 +237,7 @@ class TestRunPy(unittest.TestCase):
 
         with patch("builtins.print") as mock_print:
             with self.assertRaises(SystemExit) as cm:
-                run.run_test()
+                run.run_tests()
 
             # Should exit with code 1 due to pytest failure
             self.assertEqual(cm.exception.code, 1)
@@ -329,7 +329,7 @@ class TestRunPy(unittest.TestCase):
 
         # Simulate the main logic
         if len(sys.argv) >= 2 and sys.argv[1] == "test":
-            run.run_test()
+            run.run_tests()
 
         mock_run_tests.assert_called_once()
 
@@ -386,7 +386,7 @@ class TestRunPy(unittest.TestCase):
             with patch("builtins.print") as mock_print:
                 # The function should handle subprocess failure gracefully
                 # and fall back to default test count
-                run.run_test()
+                run.run_tests()
 
             # Should use fallback test count
             output = mock_print.call_args[0][0]
