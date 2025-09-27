@@ -2,23 +2,28 @@ import json
 import requests
 import os
 import re
-import logging
 from typing import Optional, List, Dict, Any
+
+"""
+Enhanced version that scrapes model READMEs to find GitHub repository links
+"""
 
 HF_MODEL_API = "https://huggingface.co/api/models/"
 HF_DATASET_API = "https://huggingface.co/api/datasets/"
 GH_REPO_API = "https://api.github.com/repos/"
-
-logger = logging.getLogger(__name__)
 
 # Global registry to track seen datasets
 seen_datasets: Dict[str, Dict[str, Any]] = {}
 
 
 def extract_github_urls_from_text(text: str) -> List[str]:
+    """
+    Extract GitHub repository URLs from text content
+    """
     if not text:
         return []
 
+    # Pattern to search for GitHub URLs
     github_patterns = [
         r"https?://github\.com/([a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+)/?[^\s\)]*",
         r"github\.com/([a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+)",
@@ -30,146 +35,125 @@ def extract_github_urls_from_text(text: str) -> List[str]:
         matches = re.findall(pattern, text, re.IGNORECASE)
         for match in matches:
             if isinstance(match, tuple):
+                # For patterns with groups, reconstruct the URL
                 if match:
                     url = f"https://github.com/{match[0] if isinstance(match[0], str) else match}"
             else:
                 url = match if match.startswith("http") else f"https://github.com/{match}"
 
+            # Clean up the URL (remove trailing stuff)
             url = url.split("#")[0].split("?")[0].rstrip("/")
-            if "/blob/" in url or "/tree/" in url or "/issues" in url:
-                continue
-            parts = url.replace("https://github.com/", "").split("/")
-            if len(parts) >= 2 and parts[0] and parts[1]:
-                github_urls.append(url)
 
-    seen_set = set()
-    unique = []
-    for u in github_urls:
-        if u not in seen_set:
-            seen_set.add(u)
-            unique.append(u)
-    return unique
+            # Validate it looks like a repo URL (owner/repo format)
+            if "/blob/" not in url and "/tree/" not in url and "/issues" not in url:
+                parts = url.replace("https://github.com/", "").split("/")
+                if len(parts) >= 2 and parts[0] and parts[1]:
+                    github_urls.append(url)
+
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_urls = []
+    for url in github_urls:
+        if url not in seen:
+            seen.add(url)
+            unique_urls.append(url)
+
+    return unique_urls
 
 
 def fetch_huggingface_readme(model_id: str) -> Optional[str]:
+    """
+    Fetch the README content from a Hugging Face model
+    """
     try:
         readme_url = f"https://huggingface.co/{model_id}/raw/main/README.md"
         resp = requests.get(readme_url, timeout=10)
         if resp.status_code == 200:
             return resp.text
+
+        # Try alternative README formats
         for readme_name in ["README.rst", "readme.md", "readme.txt", "README"]:
             alt_url = f"https://huggingface.co/{model_id}/raw/main/{readme_name}"
             resp = requests.get(alt_url, timeout=5)
             if resp.status_code == 200:
                 return resp.text
-    except Exception as e:
-        logger.debug(f"README fetch failed for {model_id}: {e}")
+
+    except Exception:
+        pass
+
     return None
 
 
+# Trying to fix the two url and multiple url tests
 def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     """
-    Robust parsing:
-    - Accepts file path, single direct URL, or JSON array of URLs.
-    - For each line, consider *all* comma-separated URLs:
-      * Hugging Face dataset -> dataset_url
-      * Hugging Face model   -> yields an entry
-      * GitHub repo          -> code_url
-    - If multiple models appear on a line, emit one entry per model, each
-      carrying the dataset/code found on that same line (or last seen dataset fallback).
-    - No prints to stdout. All diagnostics go to logger.
+    Parses input file. Supports:
+    - Lines with 1+ URLs separated by commas
+    - JSON array of URLs
+    - Single direct URL
+    Returns MODEL entries with associated dataset/code URLs.
     """
     parsed_entries: List[Dict[str, str]] = []
 
     if not input_path or not input_path.strip():
-        logger.warning("Empty or None input provided to parse_input_file")
+        print("Warning: Empty or None input provided")
         return []
 
     input_path = input_path.strip()
 
-    # Handle single direct URL
+    # Handle single direct URL (not a file)
     if input_path.startswith("http"):
-        # Direct URL: categorize and emit if it's a model
-        ds_url = ""
-        code_url = ""
-        if is_dataset_url(input_path):
-            seen_datasets[input_path] = {"url": input_path, "line": 0}
-            return []  # dataset alone doesn't produce an entry
-        if "github.com" in input_path:
-            # code URL alone doesn't produce an entry
-            return []
-        if is_model_url(input_path):
-            if seen_datasets:
-                ds_url = list(seen_datasets.keys())[-1]
-            parsed_entries.append(make_entry(code_url, ds_url, input_path))
-        return parsed_entries
+        return [make_entry("", "", input_path)]
 
-    # Load lines from file or treat input as literal line
-    lines: List[str] = []
+    # Load lines from file
+    lines = []
     if os.path.isfile(input_path):
-        try:
-            with open(input_path, "r", encoding="utf-8") as f:
-                content = f.read().strip()
-        except Exception as e:
-            logger.error(f"Error reading file {input_path}: {e}")
-            return []
+        with open(input_path, "r", encoding="utf-8") as f:
+            content = f.read().strip()
 
         if content.startswith("[") and content.endswith("]"):
-            # JSON array of URLs
             try:
                 urls = json.loads(content)
                 if isinstance(urls, list):
-                    # treat as a single "line" containing all URLs
-                    lines = [",".join([u for u in urls if isinstance(u, str)])]
-                else:
-                    logger.error(f"Top-level JSON in {input_path} is not a list.")
-                    return []
-            except json.JSONDecodeError as e:
-                logger.error(f"Invalid JSON in {input_path}: {e}")
+                    lines = [",".join(urls)]
+            except json.JSONDecodeError:
+                print(f"Error: Invalid JSON format in {input_path}")
                 return []
         else:
-            # Plain text lines
-            lines = [ln.strip() for ln in content.split("\n") if ln.strip()]
+            lines = [line.strip() for line in content.split("\n") if line.strip()]
     else:
-        # Treat input as a literal "line" of URLs
         lines = [input_path]
 
+    # Process each line
     for line_num, line in enumerate(lines, 1):
-        # Split and clean every token; do NOT stop early
-        raw_parts = line.split(",")
-        parts = [p.strip().strip('"').strip("'") for p in raw_parts]
-        parts = [p for p in parts if p]  # drop empty tokens only
+        parts = [p.strip().strip('"').strip("'") for p in line.split(",")]
+        parts = [p for p in parts if p]  # drop empties
 
-        dataset_url_on_line = ""
-        code_url_on_line = ""
-        models_on_line: List[str] = []
+        dataset_url, code_url = "", ""
+        models = []
 
         for url in parts:
             if is_dataset_url(url):
-                dataset_url_on_line = url
+                dataset_url = url
                 seen_datasets[url] = {"url": url, "line": line_num}
             elif is_model_url(url):
-                models_on_line.append(url)
+                models.append(url)
             elif "github.com" in url:
-                code_url_on_line = url
-            else:
-                # Unknown/unsupported URL type -> ignore silently
-                logger.debug(
-                    f"Ignoring non-model non-dataset non-GitHub URL on line {line_num}: {url}"
-                )
+                code_url = url
 
-        # Fallback to last seen dataset if none on this line
-        if not dataset_url_on_line and seen_datasets:
-            dataset_url_on_line = list(seen_datasets.keys())[-1]
+        # If no dataset found on this line, fall back to last seen
+        if not dataset_url and seen_datasets:
+            dataset_url = list(seen_datasets.keys())[-1]
 
-        # Emit one entry per model found on this line
-        for m in models_on_line:
-            parsed_entries.append(make_entry(code_url_on_line, dataset_url_on_line, m))
+        # Create one entry per model
+        for m in models:
+            parsed_entries.append(make_entry(code_url, dataset_url, m))
 
     return parsed_entries
 
 
 def make_entry(code_url: str, dataset_url: str, model_url: str) -> Dict[str, str]:
+    """Helper to build a consistent model entry dict"""
     return {
         "category": "MODEL",
         "url": model_url,
@@ -180,25 +164,32 @@ def make_entry(code_url: str, dataset_url: str, model_url: str) -> Dict[str, str
 
 
 def extract_model_name(url: str) -> str:
+    """Extract model name from HuggingFace URL"""
     try:
         if "huggingface.co" in url:
             parts = url.split("huggingface.co/")[-1].split("/")
             if len(parts) >= 2:
-                return parts[1]
+                return parts[1]  # Get model name (second part after owner)
+        # Fallback
         return url.rstrip("/").split("/")[-1] or "unknown"
     except Exception:
         return "unknown"
 
 
 def is_model_url(url: str) -> bool:
+    """Check if URL is a HuggingFace model"""
     return bool(url and "huggingface.co" in url and "/datasets/" not in url)
 
 
 def is_dataset_url(url: str) -> bool:
+    """Check if URL is a HuggingFace dataset"""
     return bool(url) and "huggingface.co/datasets" in url
 
 
 def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]:
+    """
+    Enhanced metadata fetching that scrapes READMEs for GitHub URLs
+    """
     category = entry.get("category", "UNKNOWN")
     url = entry.get("url", "")
     code_url = entry.get("code_url", "")
@@ -212,7 +203,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
 
     try:
         if category == "MODEL":
-            # Extract model id
+            # Extract model ID safely
             try:
                 model_id = "/".join(url.split("huggingface.co/")[-1].split("/")[:2])
                 if not model_id or model_id == "/":
@@ -222,7 +213,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                 entry["model_size_mb"] = 0.0
                 return entry
 
-            # HF API
+            # Query Hugging Face API
             try:
                 resp = requests.get(HF_MODEL_API + model_id, timeout=10)
                 if resp.status_code == 200:
@@ -240,6 +231,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
             except requests.exceptions.RequestException as e:
                 entry["metadata"] = {"error": f"Request failed: {str(e)}"}
 
+            # Size calculation
             size_bytes = 0
             md = entry["metadata"]
 
@@ -253,15 +245,16 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                         for s in md["siblings"]:
                             if isinstance(s, dict) and isinstance(s.get("size"), (int, float)):
                                 size_bytes += s["size"]
+
                     entry["model_size_mb"] = (
                         round(size_bytes / (1024 * 1024), 2) if size_bytes > 0 else 0.0
                     )
                 except Exception as e:
                     entry["model_size_mb"] = 0.0
                     if debug:
-                        logger.debug(f"Error calculating model size: {e}")
+                        print(f"Warning: Error calculating model size: {e}")
 
-                # License extraction
+                # Extract license from metadata
                 license_found = False
                 if isinstance(md.get("license"), str):
                     entry["license"] = md["license"]
@@ -280,7 +273,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                             license_found = True
                             break
 
-                # Extra info
+                # Extract additional info for dataset_and_code metric
                 entry["description"] = md.get("description", "")
                 entry["downloads"] = md.get("downloads", 0)
                 entry["likes"] = md.get("likes", 0)
@@ -290,12 +283,16 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                 entry["widgetData"] = md.get("widgetData", [])
                 entry["transformersInfo"] = md.get("transformersInfo", {})
 
+            # Preserve code_url and dataset_url from input parsing
             if not entry.get("code_url") and code_url:
                 entry["code_url"] = code_url
+
             if not entry.get("dataset_url") and dataset_url:
                 entry["dataset_url"] = dataset_url
 
+            # If no code_url yet, try to infer from metadata first
             if not entry.get("code_url") and isinstance(md, dict) and "error" not in md:
+                # Try to infer from metadata
                 card_data = md.get("cardData")
                 if isinstance(card_data, dict):
                     if "github" in card_data:
@@ -304,29 +301,43 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                         repos = card_data["repositories"]
                         if isinstance(repos, list) and repos:
                             entry["code_url"] = repos[0]
+
+                # Fallback: look in tags
                 if not entry.get("code_url") and isinstance(md.get("tags"), list):
                     for t in md["tags"]:
                         if isinstance(t, str) and "github.com" in t:
                             entry["code_url"] = t
                             break
 
+            # NEW: If still no code_url, scrape the README for GitHub URLs
             if not entry.get("code_url"):
                 if debug:
-                    logger.debug(f"Scraping README for {model_id} to find GitHub URLs...")
+                    print(f"Scraping README for {model_id} to find GitHub URLs...")
+
                 readme_content = fetch_huggingface_readme(model_id)
                 if readme_content:
                     github_urls = extract_github_urls_from_text(readme_content)
                     if github_urls:
+                        # Use the first GitHub URL found
                         entry["code_url"] = github_urls[0]
+                        if debug:
+                            print(f"Found GitHub URL in README: {github_urls[0]}")
+                    elif debug:
+                        print("No GitHub URLs found in README")
+                elif debug:
+                    print("Could not fetch README")
 
     except Exception as e:
         entry["metadata"] = {"error": f"Unexpected error: {str(e)}"}
         entry["model_size_mb"] = 0.0
 
     if debug:
-        logger.debug(
-            f"SUMMARY name={entry.get('name', 'unknown')} "
-            f"code_url={entry.get('code_url')} dataset_url={entry.get('dataset_url')} "
-            f"license={entry.get('license')} size_mb={entry.get('model_size_mb')}"
-        )
+        print(f"\n--- METADATA SUMMARY for {entry.get('name', 'unknown')} ---")
+        print(f"Code URL: {entry.get('code_url', 'None')}")
+        print(f"Dataset URL: {entry.get('dataset_url', 'None')}")
+        print(f"License: {entry.get('license', 'None')}")
+        print(f"Size: {entry.get('model_size_mb', 0)} MB")
+        if isinstance(entry.get("metadata"), dict) and "error" in entry["metadata"]:
+            print(f"Error: {entry['metadata']['error']}")
+
     return entry
