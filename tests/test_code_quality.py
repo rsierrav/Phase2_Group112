@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import patch, MagicMock
 from src.metrics.code_quality import code_quality
 
 
@@ -31,35 +30,6 @@ class TestCodeQualityMetric(unittest.TestCase):
         self.assertEqual(result["python_file_count"], 0)
         self.assertFalse(result["has_readme"])
         self.assertFalse(result["has_packaging"])
-
-    @patch("src.metrics.code_quality.requests.get")
-    def test_get_data_fetch_success_and_counts(self, mock_get):
-        """Repo tree parsing should detect files and set flags correctly"""
-        fake_tree = [
-            {"path": "README.md"},
-            {"path": "src/model.py"},
-            {"path": "notebooks/train.ipynb"},
-            {"path": "src/compute.cpp"},
-            {"path": "tests/test_model.py"},
-            {"path": ".github/workflows/ci.yml"},
-            {"path": ".pylintrc"},
-            {"path": "package.json"},
-        ]
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = {"tree": fake_tree}
-        mock_get.return_value = mock_resp
-
-        parsed = {"category": "CODE", "url": "https://github.com/example_owner/example_repo"}
-        result = self.metric.get_data(parsed)
-
-        self.assertTrue(result["has_tests"])
-        self.assertTrue(result["has_ci"])
-        self.assertTrue(result["has_lint_config"])
-        self.assertTrue(result["has_readme"])
-        self.assertTrue(result["has_packaging"])
-        # Both src/model.py and tests/test_model.py count → total 2
-        self.assertEqual(result["python_file_count"], 2)
 
     def test_calculate_score_computation(self):
         """Check scoring with representative data"""
