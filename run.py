@@ -59,36 +59,42 @@ def run_tests():
     import io
     from contextlib import redirect_stdout, redirect_stderr
 
-    # Capture pytest output
     buffer = io.StringIO()
+    # Run pytest with coverage, capture all output
     with redirect_stdout(buffer), redirect_stderr(buffer):
-        result = pytest.main(["tests/", "--cov=src", "--cov-report=term-missing"])
+        result = pytest.main(
+            [
+                "tests/",
+                "--cov=src",
+                "--cov-report=term-missing",
+            ]
+        )
 
     output = buffer.getvalue()
 
-    # --- Parse total tests (from "collected N items") ---
+    # --- Parse total tests ---
     total_tests = 0
     m = re.search(r"collected (\d+) items?", output)
     if m:
         total_tests = int(m.group(1))
 
-    # --- Parse passed tests (from "X passed") ---
+    # --- Parse passed tests ---
     passed_tests = 0
     m = re.search(r"(\d+) passed", output)
     if m:
         passed_tests = int(m.group(1))
 
-    # --- Parse coverage (from "TOTAL ... NN%") ---
+    # --- Parse coverage ---
     coverage_percent = 0
     m = re.search(r"^TOTAL.*?(\d+)%", output, re.MULTILINE)
     if m:
         coverage_percent = int(m.group(1))
 
-    # --- Final output in exact required format ---
+    # --- Print in exact required format ---
     print(f"{passed_tests}/{total_tests} test cases passed. {coverage_percent}% line coverage achieved.")
 
-    # Exit with pytest’s result code so CI/autograder knows if tests failed
-    sys.exit(result)
+    # --- Exit with pytest’s code (0=all passed, 1=some failed, etc.) ---
+    sys.exit(result if isinstance(result, int) else 1)
 
 
 def process_urls_with_cli(url_file: str):
