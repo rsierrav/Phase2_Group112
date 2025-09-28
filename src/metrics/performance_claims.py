@@ -8,7 +8,8 @@ from .protocol import Metric
 class PerformanceClaims(Metric):
     """
     Metric to evaluate the evidence of good performance for a given model.
-    Analyzes model-index, benchmark results, and performance metrics.
+    Considers model-index benchmarks, performance-related tags, and
+    community validation (downloads/likes).
     """
 
     def __init__(self) -> None:
@@ -17,7 +18,7 @@ class PerformanceClaims(Metric):
 
     def get_data(self, parsed_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Extract performance-related data from HuggingFace metadata.
+        Extract performance-related data from Hugging Face metadata.
         """
         metadata = parsed_data.get("metadata", {})
 
@@ -33,6 +34,7 @@ class PerformanceClaims(Metric):
     def calculate_score(self, data: Dict[str, Any]) -> None:
         """
         Calculate performance claims score based on available evidence.
+        Adjusted to give more generous scoring for widely used models.
         """
         category = data.get("category", "UNKNOWN")
 
@@ -49,11 +51,9 @@ class PerformanceClaims(Metric):
                 if isinstance(model_entry, dict):
                     results = model_entry.get("results", [])
                     if results:
-                        score += 0.4  # Strong evidence of benchmarking
-
-                        # Bonus for multiple benchmarks
+                        score += 0.5  # Strong evidence of benchmarking
                         if len(results) > 1:
-                            score += 0.1
+                            score += 0.2  # Bonus for multiple benchmarks
                         break
 
         # Check for performance-related tags
@@ -67,28 +67,32 @@ class PerformanceClaims(Metric):
             "state-of-the-art",
             "performance",
         ]
-
         has_performance_tags = any(any(perf_tag in tag.lower() for perf_tag in performance_tags) for tag in tags if isinstance(tag, str))
-
         if has_performance_tags:
-            score += 0.2
+            score += 0.25
 
         # Check cardData for additional performance info
         card_data = data.get("cardData", {})
         if isinstance(card_data, dict):
-            # Look for model-index in cardData too
-            card_model_index = card_data.get("model-index", [])
-            if card_model_index and not model_index:  # Avoid double counting
+            if card_data.get("model-index", []) and not model_index:
                 score += 0.3
 
-        # Community validation (downloads/likes as weak evidence)
+        # Community validation (downloads/likes as stronger evidence)
         downloads = data.get("downloads", 0)
         likes = data.get("likes", 0)
 
-        if downloads > 1000 or likes > 10:
-            score += 0.1
+        if downloads > 100000 or likes > 500:
+            score += 0.4
+        elif downloads > 10000 or likes > 100:
+            score += 0.3
+        elif downloads > 1000 or likes > 10:
+            score += 0.2
         elif downloads > 100 or likes > 5:
-            score += 0.05
+            score += 0.1
+
+        # Baseline: any published model gets at least some points
+        if score == 0.0:
+            score = 0.1
 
         # Cap the score at 1.0
         self.score = min(score, 1.0)
