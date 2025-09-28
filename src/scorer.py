@@ -2,6 +2,9 @@
 
 from typing import Dict, Any, List, Tuple, Union
 import time
+import concurrent.futures
+import multiprocessing
+import copy
 
 # Import implemented metrics
 from src.metrics.dataset_and_code import DatasetAndCodeMetric
@@ -13,13 +16,43 @@ from src.metrics.code_quality import code_quality
 from src.metrics.ramp_up_time import RampUpTime
 from src.metrics.performance_claims import PerformanceClaims
 
-# from src.metrics.ramp_up_time import RampUpTimeMetric
-# from src.metrics.performance_claims import PerformanceClaimsMetric
+
+def run_metric(metric_info: Tuple[str, Any], metadata: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+    """
+    Helper function to run a single metric in a separate process/thread.
+    Returns the metric name and its results.
+    """
+    key, metric = metric_info
+
+    try:
+        # Create a deep copy of metadata to avoid sharing issues
+        metadata_copy = copy.deepcopy(metadata)
+
+        # Process the metric
+        metric.process_score(metadata_copy)
+
+        # Get results
+        if key == "size_score" and hasattr(metric, "get_size_score"):
+            score = metric.get_size_score()
+        else:
+            score = metric.get_score()
+
+        latency = metric.get_latency()
+
+        return key, {"score": score, "latency": latency, "success": True}
+
+    except Exception as e:
+        return key, {
+            "score": {} if key == "size_score" else -1.0,
+            "latency": -1.0,
+            "success": False,
+            "error": str(e),
+        }
 
 
 class Scorer:
     """
-    Runs all metrics and returns a flat dict of results.
+    Runs all metrics in parallel and returns a flat dict of results.
     Handles both scalar and structured metrics (e.g., size_score dict).
     """
 
@@ -60,7 +93,7 @@ class Scorer:
 
     def score(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Run all metrics on metadata and return a flat dict with scores + latencies.
+        Run all metrics on metadata in parallel and return a flat dict with scores + latencies.
         """
         result: Dict[str, Union[float, Dict[str, float], str]] = {
             "name": metadata.get("name", "Unknown"),
@@ -69,23 +102,34 @@ class Scorer:
 
         start_time = time.perf_counter()
 
-        # Run each metric and collect results
-        for key, metric in self.metrics:
-            try:
-                metric.process_score(metadata)
+        # Determine number of workers based on available CPU cores
+        # Use min of available cores and number of metrics to avoid over-parallelization
+        max_workers = min(multiprocessing.cpu_count(), len(self.metrics))
 
-                # Special case: size_score may return a dict
-                if key == "size_score" and hasattr(metric, "get_size_score"):
-                    result[key] = metric.get_size_score()
-                else:
-                    result[key] = metric.get_score()
+        # Run metrics in parallel using ThreadPoolExecutor
+        # Using threads instead of processes to avoid serialization issues with metrics
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all metrics for parallel execution
+            future_to_metric = {executor.submit(run_metric, metric_info, metadata): metric_info[0] for metric_info in self.metrics}
 
-                result[f"{key}_latency"] = metric.get_latency()
+            # Collect results as they complete
+            for future in concurrent.futures.as_completed(future_to_metric):
+                metric_name = future_to_metric[future]
 
-            except Exception as e:
-                result[key] = {} if key == "size_score" else -1.0
-                result[f"{key}_latency"] = -1.0
-                print(f"[WARN] Metric {key} failed for {metadata.get('name', 'unknown')}: {e}")
+                try:
+                    key, metric_result = future.result()
+
+                    if not metric_result["success"]:
+                        print(f"[WARN] Metric {key} failed for {metadata.get('name', 'unknown')}: {metric_result.get('error', 'Unknown error')}")
+
+                    # Store the results
+                    result[key] = metric_result["score"]
+                    result[f"{key}_latency"] = metric_result["latency"]
+
+                except Exception as e:
+                    print(f"[ERROR] Metric {metric_name} crashed: {e}")
+                    result[metric_name] = {} if metric_name == "size_score" else -1.0
+                    result[f"{metric_name}_latency"] = -1.0
 
         # Weighted net score calculation
         weighted_sum = 0.0
