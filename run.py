@@ -113,8 +113,6 @@ def run_tests():
     import re
     import io
     from contextlib import redirect_stdout, redirect_stderr
-    import pytest
-    import coverage
 
     tests_dir = os.path.join(SCRIPT_DIR, "tests")
 
@@ -122,17 +120,26 @@ def run_tests():
         print("Error: No tests directory found")
         sys.exit(1)
 
-    # Start coverage
-    cov = coverage.Coverage(source=["src"])
-    cov.start()
-
     buffer = io.StringIO()
     try:
-        # Run pytest silently with coverage
+        # Run pytest with coverage - let pytest handle coverage completely
         with redirect_stdout(buffer), redirect_stderr(buffer):
-            result = pytest.main([tests_dir, "--cov=src", "--cov-report=term-missing"])
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    tests_dir,
+                    "--cov=src",
+                    "--cov-report=term-missing",
+                    "-v",
+                ],
+                capture_output=True,
+                text=True,
+                cwd=SCRIPT_DIR,
+            )
 
-        output = buffer.getvalue()
+        output = result.stdout + result.stderr
 
         # --- Parse total tests ---
         total_tests = 0
@@ -155,15 +162,12 @@ def run_tests():
         # Print in required format
         print(f"{passed_tests}/{total_tests} test cases passed. {coverage_percent}% line coverage achieved.")
 
-        # Exit with pytest’s return code (0=pass, 1=fail)
-        sys.exit(result if isinstance(result, int) else 1)
+        # Exit with pytest's return code (0=pass, 1=fail)
+        sys.exit(result.returncode)
 
     except Exception as e:
         print(f"Error running tests: {e}")
         sys.exit(1)
-    finally:
-        cov.stop()
-        cov.save()
 
 
 def process_urls_with_cli(url_file: str):
