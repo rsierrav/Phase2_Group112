@@ -1,3 +1,11 @@
 [tool.black]
-line-length = 150
+line-length = 100
 target-version = ["py313"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]
+python_files = [
+    "test_*.py"
+]
