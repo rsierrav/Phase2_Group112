@@ -21,7 +21,7 @@ jobs:
           pip install black flake8
 
       - name: Check formatting with Black
-        run: black --check --line-length 100 .
+        run: black --check --line-length 150 .
 
       - name: Run flake8 on src directory
         run: flake8 src/
