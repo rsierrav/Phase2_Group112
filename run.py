@@ -47,11 +47,9 @@ def validate_log_file() -> None:
             sys.stderr.write(f"Error: cannot write to log file {log_path}\n")
             sys.exit(1)
     else:
-        # Do not create new file (per Piazza)
         sys.stderr.write(f"Error: log file {log_path} does not exist\n")
         sys.exit(1)
 
-    # Handle log level
     level_str = os.getenv("LOG_LEVEL", "1")
     if level_str == "0":
         logging.disable(logging.CRITICAL)
@@ -80,6 +78,7 @@ def show_usage():
 
 def install_dependencies():
     try:
+        logging.info("Installing dependencies...")
         if not os.path.exists(REQUIREMENTS):
             with open(REQUIREMENTS, "w") as f:
                 f.write(
@@ -99,11 +98,14 @@ coverage==7.3.2
 """
                 )
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", REQUIREMENTS])
+        logging.info("Dependencies installed successfully.")
         print("Dependencies installed successfully")
     except subprocess.CalledProcessError as e:
+        logging.error(f"Pip failed: {e}")
         print(f"[ERROR] pip failed: {e}")
         sys.exit(1)
     except Exception as e:
+        logging.error(f"Unexpected install error: {e}")
         print(f"[ERROR] Unexpected install error: {e}")
         sys.exit(1)
 
@@ -122,7 +124,7 @@ def run_tests():
 
     buffer = io.StringIO()
     try:
-        # Run pytest with coverage - let pytest handle coverage completely
+        logging.info("Running pytest with coverage...")
         with redirect_stdout(buffer), redirect_stderr(buffer):
             result = subprocess.run(
                 [
@@ -141,46 +143,47 @@ def run_tests():
 
         output = result.stdout + result.stderr
 
-        # --- Parse total tests ---
         total_tests = 0
         m = re.search(r"collected (\d+) items?", output)
         if m:
             total_tests = int(m.group(1))
 
-        # --- Parse passed tests ---
         passed_tests = 0
         m = re.search(r"(\d+) passed", output)
         if m:
             passed_tests = int(m.group(1))
 
-        # --- Parse coverage ---
         coverage_percent = 0
         m = re.search(r"^TOTAL.*?(\d+)%", output, re.MULTILINE)
         if m:
             coverage_percent = int(m.group(1))
 
-        # Print in required format
+        logging.info(f"Tests complete: {passed_tests}/{total_tests} passed, coverage={coverage_percent}%")
         print(f"{passed_tests}/{total_tests} test cases passed. {coverage_percent}% line coverage achieved.")
 
-        # Exit with pytest's return code (0=pass, 1=fail)
         sys.exit(result.returncode)
 
     except Exception as e:
+        logging.error(f"Error running tests: {e}", exc_info=True)
         print(f"Error running tests: {e}")
         sys.exit(1)
 
 
 def process_urls_with_cli(url_file: str):
     if not os.path.exists(url_file):
+        logging.error(f"Input file not found: {url_file}")
         print(f"Error: input file '{url_file}' not found")
         sys.exit(1)
+    logging.info(f"Processing URL file: {url_file}")
     process_and_score_input_file(url_file)
 
 
 def process_local_files():
     if not os.path.exists(MAIN_SCRIPT):
+        logging.error("src/init.py not found")
         print("Error: init.py not found")
         sys.exit(1)
+    logging.info("Running dev mode via src/init.py")
     subprocess.check_call([sys.executable, "-m", "src.init", "dev"], cwd=SCRIPT_DIR)
 
 
@@ -190,7 +193,6 @@ if __name__ == "__main__":
 
     command = sys.argv[1]
 
-    # Validate environment variables for all commands except install
     if command != "install":
         validate_github_token()
         validate_log_file()
@@ -207,9 +209,8 @@ if __name__ == "__main__":
             sys.exit(1)
         process_urls_with_cli(sys.argv[2])
     elif command.startswith("/") or os.path.exists(command):
-        # Handle file path directly
         process_urls_with_cli(command)
     else:
-        # Default case - shouldn't happen in normal autograder usage
+        logging.warning(f"Unknown command {command}, defaulting to run_cli()")
         print(f"DEBUG: Falling through to run_cli() with command: {command}", file=sys.stderr)
         run_cli()

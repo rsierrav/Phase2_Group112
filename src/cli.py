@@ -45,11 +45,9 @@ def validate_log_file() -> None:
             sys.stderr.write(f"Error: cannot write to log file {log_path}\n")
             sys.exit(1)
     else:
-        # Do not create new file (per Piazza)
         sys.stderr.write(f"Error: log file {log_path} does not exist\n")
         sys.exit(1)
 
-    # Handle log level
     level_str = os.getenv("LOG_LEVEL", "1")
     if level_str == "0":
         logging.disable(logging.CRITICAL)
@@ -69,40 +67,50 @@ def validate_log_file() -> None:
 
 def process_and_score_input_file(input_file: str) -> None:
     """Parse, fetch metadata, score entries, and output results in NDJSON."""
+    logging.info(f"Processing input file: {input_file}")
 
     scorer = Scorer()
     parsed_entries = parse_input_file(input_file)
 
     for entry in parsed_entries:
+        logging.debug(f"Parsed entry: {entry.get('url', '')} (category: {entry.get('category')})")
         if entry.get("category") != "MODEL":
+            logging.info(f"Skipping non-MODEL entry: {entry.get('url', '')}")
             continue
-        metadata: Dict[str, Any] = fetch_metadata(entry)
-        row: Dict[str, Any] = format_score_row(metadata, scorer)
-        print(json.dumps(row, separators=(",", ":")))
+        try:
+            metadata: Dict[str, Any] = fetch_metadata(entry)
+            logging.debug(f"Fetched metadata for {entry.get('url', '')}")
+            row: Dict[str, Any] = format_score_row(metadata, scorer)
+            print(json.dumps(row, separators=(",", ":")))
+            logging.info(f"Successfully scored model: {row.get('name', 'unknown')}")
+        except Exception as e:
+            logging.error(f"Error processing {entry.get('url', '')}: {e}", exc_info=True)
 
 
 def run_cli() -> None:
     """Main CLI handler orchestrator."""
-    # Validate env vars first
     validate_github_token()
     validate_log_file()
 
-    # Autograder mode: ./run score <file>
     if len(sys.argv) > 2 and sys.argv[1] == "score":
         input_file = sys.argv[2]
         if not os.path.exists(input_file):
+            logging.error(f"File not found: {input_file}")
             print(f"Error: file not found {input_file}", file=sys.stderr)
             sys.exit(1)
         process_and_score_input_file(input_file)
         return
 
     if not os.path.isdir(INPUT_DIR):
+        logging.error(f"Input folder '{INPUT_DIR}' not found")
         print(f"Error: input folder '{INPUT_DIR}' not found.", file=sys.stderr)
         sys.exit(1)
 
     files = [f for f in os.listdir(INPUT_DIR) if os.path.isfile(os.path.join(INPUT_DIR, f))]
     if not files:
+        logging.error(f"No files found inside '{INPUT_DIR}'")
         print(f"No files found inside '{INPUT_DIR}'", file=sys.stderr)
         sys.exit(1)
 
+    logging.info(f"Processing default file: {files[0]} from {INPUT_DIR}")
     process_and_score_input_file(os.path.join(INPUT_DIR, files[0]))
