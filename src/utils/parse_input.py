@@ -125,15 +125,10 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
                 try:
                     urls = json.loads(content)
                     if isinstance(urls, list):
-                        # Group URLs into triplets: code, dataset, model
-                        for i in range(0, len(urls), 3):
-                            if i + 2 < len(urls):  # Ensure we have all 3
-                                code_url = urls[i] if urls[i] else ""
-                                dataset_url = urls[i + 1] if urls[i + 1] else ""
-                                model_url = urls[i + 2] if urls[i + 2] else ""
-
-                                if model_url:  # Only process if we have a model
-                                    lines.append(f"{code_url},{dataset_url},{model_url}")
+                        # Each URL in the list should be a model URL
+                        for url in urls:
+                            if url and is_model_url(url):
+                                lines.append(f",,{url}")  # Empty code and dataset URLs
                 except json.JSONDecodeError:
                     print(f"Error: Invalid JSON format in {input_path}")
                     return []
@@ -188,6 +183,42 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
         parsed_entries.append(model_entry)
 
     return parsed_entries
+
+
+def categorize_url(url: str) -> Optional[Dict[str, str]]:
+    """
+    Categorizes a single URL, only caring about MODEL vs other types.
+    """
+    if not url or not isinstance(url, str):
+        return None
+
+    url = url.strip()
+    if not url or "." not in url:
+        return None
+
+    # Extract name with special handling for HuggingFace URLs
+    try:
+        if "huggingface.co" in url and "datasets" not in url:
+            # For HuggingFace model URLs, extract the model name properly
+            # Format: huggingface.co/owner/model-name[/tree/branch]
+            parts = url.split("huggingface.co/")[-1].split("/")
+            if len(parts) >= 2:
+                name = parts[1]  # Get the model name (second part after owner)
+            else:
+                name = parts[0] if parts else "unknown"
+        else:
+            # For other URLs, use existing logic
+            url_parts = url.rstrip("/").split("/")
+            name = url_parts[-1] if url_parts[-1] else (url_parts[-2] if len(url_parts) > 1 else "unknown")
+    except Exception:
+        name = "unknown"
+
+    # Models on Hugging Face
+    if "huggingface.co" in url and "datasets" not in url:
+        return {"category": "MODEL", "url": url, "name": name}
+
+    # Everything else is ignored
+    return None
 
 
 def extract_model_name(url: str) -> str:

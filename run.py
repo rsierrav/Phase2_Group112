@@ -93,7 +93,7 @@ def run_tests():
     # --- Print in exact required format ---
     print(f"{passed_tests}/{total_tests} test cases passed. {coverage_percent}% line coverage achieved.")
 
-    # --- Exit with pytest’s code (0=all passed, 1=some failed, etc.) ---
+    # --- Exit with pytest's code (0=all passed, 1=some failed, etc.) ---
     sys.exit(result if isinstance(result, int) else 1)
 
 
@@ -121,11 +121,17 @@ if __name__ == "__main__":
         install_dependencies()
     elif command == "test":
         run_tests()
+    elif command == "dev":
+        process_local_files()
     elif command == "score":
         if len(sys.argv) < 3:
             print("Error: Missing URL_FILE argument for score command")
             sys.exit(1)
         process_urls_with_cli(sys.argv[2])
+    elif command.startswith("/") or os.path.exists(command):
+        # Handle file path directly
+        process_urls_with_cli(command)
     else:
+        # Default case - shouldn't happen in normal autograder usage
         print(f"DEBUG: Falling through to run_cli() with command: {command}", file=sys.stderr)
         run_cli()
