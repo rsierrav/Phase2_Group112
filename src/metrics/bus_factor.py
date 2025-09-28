@@ -2,6 +2,7 @@ import os
 import re
 import time
 import requests
+import logging
 from typing import Dict, Any, List, Set, Optional
 from .protocol import Metric
 
@@ -30,15 +31,10 @@ class bus_factor(Metric):
         if not url or "github.com" not in url:
             return None
 
-        # remove tailing slashes and common fragments
         url = url.split("#")[0].split("?")[0].rstrip("/")
-
-        # regex to capture owner/repo
         m = re.search(r"github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)", url)
         if m:
-            # return the first two path components only (owner/repo)
             repo = m.group(1)
-            # sanitize (strip any tailing path components)
             parts = repo.split("/")
             if len(parts) >= 2:
                 return f"{parts[0]}/{parts[1]}"
@@ -51,19 +47,17 @@ class bus_factor(Metric):
         """
         try:
             url = GH_COMMITS_API.format(repo=repo_path, per_page=per_page)
+            logging.info(f"Fetching commit authors from GitHub for {repo_path}")
             resp = requests.get(url, headers=self._make_headers(), timeout=10)
             if resp.status_code != 200:
-                # Non-200: return empty list (caller will handle)
+                logging.warning(f"GitHub API returned {resp.status_code} for {repo_path}")
                 return []
             commits = resp.json()
             authors: List[str] = []
             for c in commits:
-                # Prefer the GitHub user login if available
                 if isinstance(c.get("author"), dict) and c["author"] and c["author"].get("login"):
                     authors.append(str(c["author"]["login"]))
                     continue
-
-                # Otherwise fall back to commit.author.name or email
                 commit_info = c.get("commit", {}).get("author", {})
                 name = commit_info.get("name")
                 email = commit_info.get("email")
@@ -71,25 +65,19 @@ class bus_factor(Metric):
                     authors.append(str(name))
                 elif email:
                     authors.append(str(email))
+            logging.debug(f"Fetched {len(authors)} commit authors for {repo_path}")
             return authors
-        except Exception:
-            # Any exception (network, JSON decode, etc.) -> return empty to avoid crashing
+        except Exception as e:
+            logging.error(f"Error fetching commit authors for {repo_path}: {e}", exc_info=True)
             return []
 
     def get_data(self, parsed_data: Dict[str, Any]) -> List[str]:
         """
         Extract or Fetch a list of commit authors for linked repository.
-        Priority:
-        1. if parsed_data already contains 'commit_authors' (a list), return it.
-        2. if parsed_data contains 'code_url' pointing to github, extract
-        owner/repo and call the GitHub commits API to retrieve recent commit authors.
-        3. otherwise return empty list.
-
-        Returns list[str] (possibly empty).
         """
-        # 1) Use pre-fetched commit authors if available
         pre_authors = parsed_data.get("commit_authors")
         if isinstance(pre_authors, list) and pre_authors:
+            logging.debug("Using pre-fetched commit authors")
             seen = set()
             normalized = []
             for a in pre_authors:
@@ -101,15 +89,13 @@ class bus_factor(Metric):
                     normalized.append(name)
             return normalized
 
-        # 2) Use code_url from parsed_data (parse_input.py now populates 'code_url' where possible)
-        code_url = parsed_data.get("code_url") or parsed_data.get("url")  # fallback to entry url
+        code_url = parsed_data.get("code_url") or parsed_data.get("url")
         repo_path = self._extract_repo_path(code_url) if isinstance(code_url, str) else None
         if not repo_path:
+            logging.warning("No valid repo path found for bus factor metric")
             return []
 
-        # 3) Fetch commit authors from GitHub
         authors = self._fetch_commit_authors_from_github(repo_path, per_page=100)
-        # Normalize and deduplicate while preserving order
         seen: Set[str] = set()
         unique_authors: List[str] = []
         for a in authors:
@@ -118,48 +104,43 @@ class bus_factor(Metric):
                 seen.add(key)
                 unique_authors.append(key)
 
+        logging.info(f"Unique authors found: {len(unique_authors)} for {repo_path}")
         return unique_authors
 
     def calculate_score(self, data: Any) -> None:
         """
         data: expected to be List[str] of author identifiers.
-        Sets self.score in [0,1] and sets self.latency in milliseconds.
-        Heuristic: score = min(1.0, unique_author_count / 50.0)
         """
         authors = []
         if isinstance(data, list):
             authors = [str(a).strip() for a in data if a]
         else:
-            # Defensive: if something else was provided, attemto coerce to list
             try:
                 authors = [str(data)]
             except Exception:
                 authors = []
 
         unique_count = len(set(authors))
-
-        # Simple linear scaling: 0 authors -> 0.0, 50+ -> 1.0
         if unique_count <= 0:
             self.score = 0.0
         else:
             self.score = min(1.0, unique_count / 50.0)
 
+        logging.info(f"Calculated bus factor score={self.score:.2f} (unique_count={unique_count})")
+
     def process_score(self, parsed_data: Dict[str, Any]) -> None:
         """
         Process the metric: measure latency and compute score.
-        Updates `score` and `latency` attributes.
         """
         start_time = time.perf_counter()
         data = self.get_data(parsed_data)
         self.calculate_score(data)
         end_time = time.perf_counter()
-
-        # store latency in milliseconds
         self.latency = (end_time - start_time) * 1000
+        logging.debug(f"Bus factor latency={self.latency:.2f} ms")
 
     def get_score(self) -> float:
         return self.score
 
     def get_latency(self) -> float:
-        # return latency in milliseconds
         return self.latency
