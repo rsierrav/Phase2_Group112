@@ -33,7 +33,7 @@ class SizeMetric(Metric):
             self.score = 0.0
             return
 
-        # In MBs (approximate thresholds)
+        # In MBs (approximate thresholds), I made these up based on common hardware limits
         thresholds = {
             "raspberry_pi": 50,
             "jetson_nano": 200,
@@ -44,19 +44,18 @@ class SizeMetric(Metric):
         scores = {}
         for device, max_size in thresholds.items():
             if size_mb <= max_size:
-                # Linear scoring: smaller models get higher scores
-                score = 1.0 - (size_mb / max_size) * 0.5  # Range from 1.0 to 0.5
+                # smaller models get slightly higher scores
+                score = 0.5 + 0.5 * (1 - size_mb / max_size)
             else:
-                # Exponential penalty for oversized models
-                overage_ratio = (size_mb - max_size) / max_size
-                score = max(0.0, 0.5 * (1.0 / (1.0 + overage_ratio)))
+                # penalize oversize models quickly
+                score = max(0.0, 1.0 - (size_mb - max_size) / (2 * max_size))
 
-            # Round to 2 decimal places to avoid floating point precision issues
-            scores[device] = round(min(max(score, 0.0), 1.0), 2)
+            # Round to 2 decimal places and clamp to [0.0, 1.0]
+            scores[device] = round(max(0.0, min(score, 1.0)), 2)
 
         self.size_score = scores
         # Overall score is the average
-        self.score = round(sum(scores.values()) / len(scores), 2)
+        self.score = sum(scores.values()) / len(scores)
 
     def process_score(self, parsed_data: Dict[str, Any]) -> None:
         """Process the metric with timing."""
