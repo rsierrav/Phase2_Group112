@@ -1,5 +1,6 @@
 import os
 import time
+import logging
 from typing import Any, Dict, List, Optional
 import requests
 from .protocol import Metric
@@ -20,17 +21,19 @@ class code_quality(Metric):
             headers["Authorization"] = f"token {token}"
         return headers
 
-    def _fetch_repo_tree(
-        self, repo_path: str, branch: str = "HEAD"
-    ) -> Optional[List[Dict[str, Any]]]:
+    def _fetch_repo_tree(self, repo_path: str, branch: str = "HEAD") -> Optional[List[Dict[str, Any]]]:
         url = GH_TREE_API.format(repo=repo_path, branch=branch)
         try:
+            logging.info(f"Fetching repo tree for {repo_path}")
             resp = requests.get(url, headers=self._make_headers(), timeout=10)
             if resp.status_code == 200:
                 payload = resp.json()
+                logging.debug(f"Repo tree fetched with {len(payload.get('tree', []))} items")
                 return payload.get("tree", [])
+            logging.warning(f"GitHub API returned {resp.status_code} for repo tree {repo_path}")
             return None
-        except Exception:
+        except Exception as e:
+            logging.error(f"Error fetching repo tree for {repo_path}: {e}", exc_info=True)
             return None
 
     def get_data(self, parsed_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -50,6 +53,7 @@ class code_quality(Metric):
             repo_url = code_url
 
         if not repo_url:
+            logging.info("No GitHub repo found for code quality metric")
             return {
                 "has_tests": False,
                 "has_ci": False,
@@ -64,6 +68,7 @@ class code_quality(Metric):
             parts = repo_url.split("github.com/")[-1].split("/")
             repo_path = "/".join(parts[:2])  # owner/repo
         except Exception:
+            logging.error(f"Could not parse repo URL: {repo_url}")
             return {
                 "has_tests": False,
                 "has_ci": False,
@@ -75,6 +80,7 @@ class code_quality(Metric):
 
         tree = self._fetch_repo_tree(repo_path)
         if not tree:
+            logging.warning(f"No repo tree returned for {repo_path}")
             return {
                 "has_tests": False,
                 "has_ci": False,
@@ -95,7 +101,6 @@ class code_quality(Metric):
         for entry in tree:
             path = entry.get("path", "").lower()
 
-            # More test detection
             if (
                 path.startswith("tests/")
                 or "/tests/" in path
@@ -112,7 +117,6 @@ class code_quality(Metric):
             ):
                 has_tests = True
 
-            # More CI detection
             if (
                 path.startswith(".github/workflows")
                 or path.endswith(".travis.yml")
@@ -134,7 +138,6 @@ class code_quality(Metric):
             ):
                 has_ci = True
 
-            # More linting detection
             if (
                 path
                 in {
@@ -158,16 +161,9 @@ class code_quality(Metric):
             ):
                 has_lint_config = True
 
-            # More README detection
-            if (
-                path.startswith("readme")
-                or path in {"readme.md", "readme.rst", "readme.txt", "readme"}
-                or path == "index.md"
-                or path == "home.md"
-            ):
+            if path.startswith("readme") or path in {"readme.md", "readme.rst", "readme.txt", "readme"} or path == "index.md" or path == "home.md":
                 has_readme = True
 
-            # More packaging detection
             if (
                 path
                 in {
@@ -191,6 +187,11 @@ class code_quality(Metric):
 
             if path.endswith(".py"):
                 python_file_count += 1
+
+        logging.debug(
+            f"Repo analysis: tests={has_tests}, ci={has_ci}, lint={has_lint_config}, "
+            f"readme={has_readme}, packaging={has_packaging}, py_files={python_file_count}"
+        )
 
         return {
             "has_tests": has_tests,
@@ -216,11 +217,7 @@ class code_quality(Metric):
         s_tests = 1.0 if has_tests else 0.0
         s_ci = 1.0 if has_ci else 0.0
         s_lint = 1.0 if has_lint else 0.0
-
-        if py_count <= 0:
-            s_py = 0.0
-        else:
-            s_py = min(1.0, py_count / 20.0)
+        s_py = min(1.0, py_count / 20.0) if py_count > 0 else 0.0
 
         if has_readme and has_packaging:
             s_doc_pack = 1.0
@@ -229,18 +226,14 @@ class code_quality(Metric):
         else:
             s_doc_pack = 0.0
 
-        score = (
-            w_tests * s_tests
-            + w_ci * s_ci
-            + w_lint * s_lint
-            + w_py * s_py
-            + w_doc_pack * s_doc_pack
-        )
+        score = w_tests * s_tests + w_ci * s_ci + w_lint * s_lint + w_py * s_py + w_doc_pack * s_doc_pack
 
         self.score = max(0.0, min(1.0, score))
 
         end = time.perf_counter()
         self.latency = (end - start) * 1000.0
+
+        logging.info(f"Code quality score={self.score:.2f}, latency={self.latency:.2f} ms")
 
     def get_score(self) -> float:
         return self.score
