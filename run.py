@@ -114,11 +114,14 @@ if __name__ == "__main__":
     if command == "install":
         install_dependencies()
     elif command == "test":
+        print("DEBUG: About to call run_tests()", file=sys.stderr)
         run_tests()
     elif command == "score":
+        print("DEBUG: About to call score", file=sys.stderr)
         if len(sys.argv) < 3:
             print("Error: Missing URL_FILE argument for score command")
             sys.exit(1)
         process_urls_with_cli(sys.argv[2])
     else:
+        print(f"DEBUG: Falling through to run_cli() with command: {command}", file=sys.stderr)
         run_cli()

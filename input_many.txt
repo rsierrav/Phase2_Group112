@@ -1,0 +1,10 @@
+https://huggingface.co/google/bert-base-uncased
+https://huggingface.co/openai/whisper-tiny
+https://huggingface.co/facebook/bart-large
+https://huggingface.co/distilbert-base-uncased
+https://huggingface.co/google/flan-t5-small
+https://huggingface.co/microsoft/deberta-v3-small
+https://huggingface.co/roberta-base
+https://huggingface.co/xlm-roberta-base
+https://huggingface.co/allenai/longformer-base-4096
+https://huggingface.co/EleutherAI/gpt-neo-125M
