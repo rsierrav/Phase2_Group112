@@ -53,134 +53,53 @@ coverage==7.3.2
 
 def run_test():
     """Run the test suite and report results in spec format."""
-    # Import test dependencies inside the function
-    try:
-        import coverage
-        import pytest
-        import io
-        from contextlib import redirect_stdout, redirect_stderr
-    except ImportError as e:
-        print(f"Error: Missing test dependencies. Run './run install' first. ({e})")
-        sys.exit(1)
+    import pytest
+    import sys
+    import re
+    import io
+    from contextlib import redirect_stdout, redirect_stderr
 
-    # Start coverage measurement
-    cov = coverage.Coverage(source=["src"])
-    cov.start()
+    # Capture pytest output (quiet + coverage)
+    buffer = io.StringIO()
+    with redirect_stdout(buffer), redirect_stderr(buffer):
+        result = pytest.main(["tests/", "-q", "--tb=no", "--cov=src", "--cov-report=term"])
 
-    try:
-        # Capture pytest output to avoid interfering with our final output
-        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
-            # Run pytest and get the result code
-            result = pytest.main(["-q", "tests/"])
+    output = buffer.getvalue()
 
-        # Stop coverage and calculate percentage
-        cov.stop()
-        cov.save()
-
-        # Get coverage percentage
-        coverage_output = io.StringIO()
-        with redirect_stdout(coverage_output):
-            coverage_percent = cov.report(show_missing=False)
-
-        # Round coverage to integer
-        coverage_percent = round(coverage_percent)
-
-    except Exception:
-        # If anything fails, report zero
-        result = 1
-        coverage_percent = 0
-
-    # Count total tests and get actual pass/fail counts
+    # --- Parse test results ---
     total_tests = 0
+    passed_tests = 0
     failed_tests = 0
 
-    try:
-        # Run pytest again to get detailed results
-        collect_result = subprocess.run(
-            [sys.executable, "-m", "pytest", "tests/", "-v", "--tb=no"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
+    for line in output.splitlines():
+        # Examples: "140 passed in 2.34s" or "2 failed, 140 passed in 8.87s"
+        if "failed" in line and "passed" in line:
+            m = re.search(r"(\d+) failed.*?(\d+) passed", line)
+            if m:
+                failed_tests = int(m.group(1))
+                passed_tests = int(m.group(2))
+                total_tests = failed_tests + passed_tests
+                break
+        elif "passed" in line and "failed" not in line:
+            m = re.search(r"(\d+) passed", line)
+            if m:
+                passed_tests = total_tests = int(m.group(1))
+                failed_tests = 0
+                break
 
-        if collect_result.returncode in [0, 1]:  # 0=all pass, 1=some fail
-            lines = collect_result.stdout.split("\n")
+    # --- Parse coverage ---
+    coverage_percent = 0
+    for line in output.splitlines():
+        # pytest-cov prints like: "TOTAL ... 59%"
+        m = re.search(r"TOTAL.*?(\d+)%", line)
+        if m:
+            coverage_percent = int(m.group(1))
+            break
 
-            # Look for the summary line like "2 failed, 140 passed in 8.87s"
-            for line in lines:
-                if "failed" in line and "passed" in line:
-                    # Parse "X failed, Y passed"
-                    parts = line.split()
-                    for i, part in enumerate(parts):
-                        if part == "failed," and i > 0:
-                            failed_tests = int(parts[i - 1])
-                        elif part == "passed" and i > 0:
-                            passed_tests = int(parts[i - 1])
-                    total_tests = failed_tests + passed_tests
-                    break
-                elif "passed" in line and "failed" not in line:
-                    # All tests passed - look for "X passed"
-                    parts = line.split()
-                    for i, part in enumerate(parts):
-                        if part == "passed" and i > 0 and parts[i - 1].isdigit():
-                            passed_tests = total_tests = int(parts[i - 1])
-                            failed_tests = 0
-                            break
-                    if total_tests > 0:
-                        break
+    # --- Final output in exact required format ---
+    print(f"{passed_tests}/{total_tests} test cases passed. {coverage_percent}% line coverage achieved.")
 
-        # Fallback: use collection method if parsing failed
-        if total_tests == 0:
-            collect_result = subprocess.run(
-                [sys.executable, "-m", "pytest", "--collect-only", "-q", "tests/"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-
-            if collect_result.returncode == 0:
-                lines = collect_result.stdout.strip().split("\n")
-                for line in lines:
-                    if "test" in line and "collected" in line:
-                        words = line.split()
-                        for i, word in enumerate(words):
-                            if word.isdigit() and i + 1 < len(words) and "test" in words[i + 1]:
-                                total_tests = int(word)
-                                break
-                        if total_tests > 0:
-                            break
-
-    except Exception:
-        total_tests = 0
-
-    # Calculate passed tests based on pytest result and our counts
-    if total_tests == 0:
-        total_tests = 142  # Current known test count
-
-    if result == 0:
-        # All tests passed
-        passed_tests = total_tests
-    elif failed_tests > 0:
-        # We got actual failure count
-        passed_tests = total_tests - failed_tests
-    elif result == 1:
-        # Some tests failed but we couldn't parse the count
-        # Use a conservative estimate
-        passed_tests = max(0, total_tests - 5)
-    elif result == 5:
-        # No tests collected
-        passed_tests = 0
-        total_tests = 0
-    else:
-        # Other error
-        passed_tests = 0
-
-    # Output in exact spec format
-    print(f"{passed_tests}/{total_tests} test cases passed. {int(coverage_percent)}% line coverage achieved.")
-
-    # Exit with appropriate code
-    if result != 0:
-        sys.exit(1)
+    sys.exit(result)
 
 
 def process_urls_with_cli(url_file: str):

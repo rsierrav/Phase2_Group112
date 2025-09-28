@@ -88,6 +88,7 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     """
     Parses input file with proper 3-URL format: code_url, dataset_url, model_url
     Returns only MODEL entries with associated code_url and dataset_url when available.
+    Enhanced to handle space-separated URLs and blank lines.
     """
     parsed_entries: List[Dict[str, str]] = []
 
@@ -152,6 +153,10 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
         if not line.strip():
             continue
 
+        # Skip effectively blank lines (handles "Many URLs Test")
+        if re.match(r'^[\s,;"\'()]*$', line.strip()):
+            continue
+
         # Split into exactly 3 parts: code_url, dataset_url, model_url
         parts = [p.strip().strip('"').strip("'") for p in line.split(",")]
 
@@ -161,31 +166,44 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
 
         code_url, dataset_url, model_url = parts[0], parts[1], parts[2]
 
-        # Skip if no model URL
-        if not model_url or not is_model_url(model_url):
-            continue
+        # Handle space-separated URLs in the model_url field (handles "Two URLs Test")
+        model_urls = []
+        if model_url:
+            # Check if there are multiple URLs separated by spaces
+            potential_urls = re.findall(r"https?://[^\s,]+|(?:huggingface\.co)/[^\s,]+", model_url)
+            for url in potential_urls:
+                url = url.strip()
+                if not url.startswith("http"):
+                    url = "https://" + url
+                if is_model_url(url):
+                    model_urls.append(url)
 
-        # Store dataset in registry if we have one
-        if dataset_url and is_dataset_url(dataset_url):
-            if dataset_url not in seen_datasets:
-                seen_datasets[dataset_url] = {"url": dataset_url, "line": line_num}
+            # If no URLs found with regex, try the original field as single URL
+            if not model_urls and is_model_url(model_url):
+                model_urls.append(model_url)
 
-        # If no dataset_url but we've seen datasets before, try to infer
-        elif not dataset_url and seen_datasets:
-            # For now, use the most recently seen dataset
-            inferred_dataset = list(seen_datasets.keys())[-1]
-            dataset_url = inferred_dataset
+        # Create one entry per model URL found
+        for model_url in model_urls:
+            # Store dataset in registry if we have one
+            if dataset_url and is_dataset_url(dataset_url):
+                if dataset_url not in seen_datasets:
+                    seen_datasets[dataset_url] = {"url": dataset_url, "line": line_num}
 
-        # Create model entry
-        model_entry = {
-            "category": "MODEL",
-            "url": model_url,
-            "name": extract_model_name(model_url),
-            "dataset_url": dataset_url,
-            "code_url": code_url,
-        }
+            # If no dataset_url but we've seen datasets before, try to infer
+            elif not dataset_url and seen_datasets:
+                inferred_dataset = list(seen_datasets.keys())[-1]
+                dataset_url = inferred_dataset
 
-        parsed_entries.append(model_entry)
+            # Create model entry
+            model_entry = {
+                "category": "MODEL",
+                "url": model_url,
+                "name": extract_model_name(model_url),
+                "dataset_url": dataset_url,
+                "code_url": code_url,
+            }
+
+            parsed_entries.append(model_entry)
 
     return parsed_entries
 
@@ -273,9 +291,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                             if isinstance(s, dict) and isinstance(s.get("size"), (int, float)):
                                 size_bytes += s["size"]
 
-                    entry["model_size_mb"] = (
-                        round(size_bytes / (1024 * 1024), 2) if size_bytes > 0 else 0.0
-                    )
+                    entry["model_size_mb"] = round(size_bytes / (1024 * 1024), 2) if size_bytes > 0 else 0.0
                 except Exception as e:
                     entry["model_size_mb"] = 0.0
                     if debug:
