@@ -23,6 +23,7 @@ def extract_github_urls_from_text(text: str) -> List[str]:
     if not text:
         return []
 
+    # Pattern to search for GitHub URLs
     github_patterns = [
         r"https?://github\.com/([a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+)/?[^\s\)]*",
         r"github\.com/([a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+)",
@@ -34,17 +35,22 @@ def extract_github_urls_from_text(text: str) -> List[str]:
         matches = re.findall(pattern, text, re.IGNORECASE)
         for match in matches:
             if isinstance(match, tuple):
+                # For patterns with groups, reconstruct the URL
                 if match:
                     url = f"https://github.com/{match[0] if isinstance(match[0], str) else match}"
             else:
                 url = match if match.startswith("http") else f"https://github.com/{match}"
 
+            # Clean up the URL (remove trailing stuff)
             url = url.split("#")[0].split("?")[0].rstrip("/")
+
+            # Validate it looks like a repo URL (owner/repo format)
             if "/blob/" not in url and "/tree/" not in url and "/issues" not in url:
                 parts = url.replace("https://github.com/", "").split("/")
                 if len(parts) >= 2 and parts[0] and parts[1]:
                     github_urls.append(url)
 
+    # Remove duplicates while preserving order
     seen = set()
     unique_urls = []
     for url in github_urls:
@@ -56,119 +62,32 @@ def extract_github_urls_from_text(text: str) -> List[str]:
 
 
 def fetch_huggingface_readme(model_id: str) -> Optional[str]:
-    """Fetch the README content from a Hugging Face model"""
+    """
+    Fetch the README content from a Hugging Face model
+    """
     try:
         readme_url = f"https://huggingface.co/{model_id}/raw/main/README.md"
         resp = requests.get(readme_url, timeout=10)
         if resp.status_code == 200:
             return resp.text
 
+        # Try alternative README formats
         for readme_name in ["README.rst", "readme.md", "readme.txt", "README"]:
             alt_url = f"https://huggingface.co/{model_id}/raw/main/{readme_name}"
             resp = requests.get(alt_url, timeout=5)
             if resp.status_code == 200:
                 return resp.text
+
     except Exception:
         pass
 
     return None
 
 
-# --- Helpers for parsing ------------------------------------------------------
-
-_URL_TOKEN_RE = re.compile(
-    r"(https?://[^\s,;|]+|(?:github\.com|huggingface\.co)/[^\s,;|]+)",
-    flags=re.IGNORECASE,
-)
-
-
-def _ensure_https(url: str) -> str:
-    url = url.strip().strip("\"'")
-
-    if not url:
-        return url
-
-    if not url.lower().startswith(("http://", "https://")):
-        if url.lower().startswith(("github.com/", "huggingface.co/")):
-            url = "https://" + url
-    return url
-
-
-def _normalize_github_repo_url(url: str) -> str:
-    url = _ensure_https(url)
-    if "github.com/" not in url.lower():
-        return url
-
-    base = url.split("#")[0].split("?")[0]
-    tail = base.split("github.com/")[-1]
-    parts = [p for p in tail.split("/") if p]
-
-    if len(parts) >= 2:
-        owner, repo = parts[0], parts[1]
-        return f"https://github.com/{owner}/{repo}"
-    return url
-
-
-def _normalize_hf_model_url(url: str) -> str:
-    url = _ensure_https(url)
-    if "huggingface.co/" not in url.lower():
-        return url
-    if "/datasets/" in url.lower():
-        return url
-
-    base = url.split("#")[0].split("?")[0]
-    tail = base.split("huggingface.co/")[-1]
-    parts = [p for p in tail.split("/") if p]
-
-    if len(parts) >= 2:
-        owner, model = parts[0], parts[1]
-        return f"https://huggingface.co/{owner}/{model}"
-    return base.rstrip("/")
-
-
-def _normalize_hf_dataset_url(url: str) -> str:
-    url = _ensure_https(url)
-    low = url.lower()
-    if "huggingface.co/datasets/" not in low:
-        return url
-
-    base = url.split("#")[0].split("?")[0]
-    tail = base.split("huggingface.co/datasets/")[-1]
-    parts = [p for p in tail.split("/") if p]
-
-    if len(parts) == 1:
-        return f"https://huggingface.co/datasets/{parts[0]}"
-    elif len(parts) >= 2:
-        return f"https://huggingface.co/datasets/{parts[0]}/{parts[1]}"
-    return "https://huggingface.co/datasets"
-
-
-def _classify_and_normalize(url: str):
-    u = _ensure_https(url)
-    low = u.lower()
-
-    if "github.com/" in low:
-        return "code", _normalize_github_repo_url(u)
-    if "huggingface.co/datasets/" in low:
-        return "dataset", _normalize_hf_dataset_url(u)
-    if "huggingface.co/" in low and "/datasets/" not in low:
-        return "model", _normalize_hf_model_url(u)
-    return None, u
-
-
-def _line_is_effectively_blank(line: str) -> bool:
-    return re.fullmatch(r'[\s,;"\'()]*', line or "") is not None
-
-
 def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     """
-    Parses input with messy lines:
-      - Proper 3-field CSV (code_url, dataset_url, model_url)
-      - Lines with 2 or many URLs in any order (space/comma separated)
-      - Blank/garbage lines like ",,,"
-    Returns one MODEL entry per model URL found on a line, attaching the best
-    dataset/code URLs found on that same line. If no dataset on the line,
-    reuses the most recently seen dataset.
+    Parses input file with proper 3-URL format: code_url, dataset_url, model_url
+    Returns only MODEL entries with associated code_url and dataset_url when available.
     """
     parsed_entries: List[Dict[str, str]] = []
 
@@ -178,14 +97,14 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
 
     input_path = input_path.strip()
 
+    # Handle single URL case (direct URL passed)
     if input_path.startswith("http"):
-        kind, norm = _classify_and_normalize(input_path)
-        if kind == "model":
+        if "huggingface.co" in input_path and "/datasets/" not in input_path:
             return [
                 {
                     "category": "MODEL",
-                    "url": norm,
-                    "name": extract_model_name(norm),
+                    "url": input_path,
+                    "name": extract_model_name(input_path),
                     "dataset_url": "",
                     "code_url": "",
                 }
@@ -193,89 +112,80 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
         else:
             return []
 
-    lines: List[str] = []
+    # Handle file input
+    lines = []
     if os.path.isfile(input_path):
         try:
             with open(input_path, "r", encoding="utf-8") as f:
-                content = f.read()
+                content = f.read().strip()
 
-            stripped = content.strip()
-            if stripped.startswith("[") and stripped.endswith("]"):
+            # Detect JSON vs TXT format
+            if content.startswith("[") and content.endswith("]"):
+                # JSON format - list of URLs
                 try:
-                    urls = json.loads(stripped)
+                    urls = json.loads(content)
                     if isinstance(urls, list):
-                        for i in range(0, len(urls), 1):
-                            if isinstance(urls[i], str) and urls[i].strip():
-                                lines.append(urls[i].strip())
+                        # Group URLs into triplets: code, dataset, model
+                        for i in range(0, len(urls), 3):
+                            if i + 2 < len(urls):  # Ensure we have all 3
+                                code_url = urls[i] if urls[i] else ""
+                                dataset_url = urls[i + 1] if urls[i + 1] else ""
+                                model_url = urls[i + 2] if urls[i + 2] else ""
+
+                                if model_url:  # Only process if we have a model
+                                    lines.append(f"{code_url},{dataset_url},{model_url}")
                 except json.JSONDecodeError:
                     print(f"Error: Invalid JSON format in {input_path}")
                     return []
             else:
-                lines = [ln.rstrip("\n") for ln in content.splitlines()]
+                # TXT format - comma separated lines
+                lines = [line.strip() for line in content.split("\n") if line.strip()]
+
         except Exception as e:
             print(f"Error reading file {input_path}: {e}")
             return []
     else:
         lines = [input_path]
 
-    last_dataset_url: Optional[str] = None
-
-    for line_num, raw_line in enumerate(lines, 1):
-        line = (raw_line or "").strip()
-        if not line or _line_is_effectively_blank(line):
+    # Process each line
+    for line_num, line in enumerate(lines, 1):
+        if not line.strip():
             continue
 
-        tokens = _URL_TOKEN_RE.findall(line)
-        if not tokens:
-            parts = [p.strip().strip('"').strip("'") for p in line.split(",")]
-            tokens = [p for p in parts if p]
+        # Split into exactly 3 parts: code_url, dataset_url, model_url
+        parts = [p.strip().strip('"').strip("'") for p in line.split(",")]
 
-        model_candidates: List[str] = []
-        dataset_candidates: List[str] = []
-        code_candidates: List[str] = []
+        # Ensure we have exactly 3 parts (pad with empty strings if needed)
+        while len(parts) < 3:
+            parts.append("")
 
-        for tok in tokens:
-            kind, norm = _classify_and_normalize(tok)
-            if kind == "model" and norm not in model_candidates:
-                model_candidates.append(norm)
-            elif kind == "dataset" and norm not in dataset_candidates:
-                dataset_candidates.append(norm)
-            elif kind == "code" and norm not in code_candidates:
-                code_candidates.append(norm)
+        code_url, dataset_url, model_url = parts[0], parts[1], parts[2]
 
-        if not model_candidates and "," in line:
-            parts = [p.strip().strip('"').strip("'") for p in line.split(",")]
-            while len(parts) < 3:
-                parts.append("")
-            code_url_fb, dataset_url_fb, model_url_fb = parts[0], parts[1], parts[2]
-            if is_model_url(model_url_fb):
-                model_candidates.append(_normalize_hf_model_url(model_url_fb))
-            if is_dataset_url(dataset_url_fb):
-                dataset_candidates.append(_normalize_hf_dataset_url(dataset_url_fb))
-            if "github.com/" in (code_url_fb or ""):
-                code_candidates.append(_normalize_github_repo_url(code_url_fb))
-
-        if not model_candidates:
+        # Skip if no model URL
+        if not model_url or not is_model_url(model_url):
             continue
 
-        chosen_dataset = dataset_candidates[0] if dataset_candidates else (last_dataset_url or "")
-        chosen_code = code_candidates[0] if code_candidates else ""
+        # Store dataset in registry if we have one
+        if dataset_url and is_dataset_url(dataset_url):
+            if dataset_url not in seen_datasets:
+                seen_datasets[dataset_url] = {"url": dataset_url, "line": line_num}
 
-        if chosen_dataset:
-            last_dataset_url = chosen_dataset
-            if chosen_dataset not in seen_datasets:
-                seen_datasets[chosen_dataset] = {"url": chosen_dataset, "line": line_num}
+        # If no dataset_url but we've seen datasets before, try to infer
+        elif not dataset_url and seen_datasets:
+            # For now, use the most recently seen dataset
+            inferred_dataset = list(seen_datasets.keys())[-1]
+            dataset_url = inferred_dataset
 
-        for murl in model_candidates:
-            parsed_entries.append(
-                {
-                    "category": "MODEL",
-                    "url": murl,
-                    "name": extract_model_name(murl),
-                    "dataset_url": chosen_dataset or "",
-                    "code_url": chosen_code or "",
-                }
-            )
+        # Create model entry
+        model_entry = {
+            "category": "MODEL",
+            "url": model_url,
+            "name": extract_model_name(model_url),
+            "dataset_url": dataset_url,
+            "code_url": code_url,
+        }
+
+        parsed_entries.append(model_entry)
 
     return parsed_entries
 
@@ -286,17 +196,20 @@ def extract_model_name(url: str) -> str:
         if "huggingface.co" in url:
             parts = url.split("huggingface.co/")[-1].split("/")
             if len(parts) >= 2:
-                return parts[1]
+                return parts[1]  # Get model name (second part after owner)
+        # Fallback
         return url.rstrip("/").split("/")[-1] or "unknown"
     except Exception:
         return "unknown"
 
 
 def is_model_url(url: str) -> bool:
+    """Check if URL is a HuggingFace model"""
     return bool(url and "huggingface.co" in url and "/datasets/" not in url)
 
 
 def is_dataset_url(url: str) -> bool:
+    """Check if URL is a HuggingFace dataset"""
     return bool(url) and "huggingface.co/datasets" in url
 
 
@@ -317,6 +230,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
 
     try:
         if category == "MODEL":
+            # Extract model ID safely
             try:
                 model_id = "/".join(url.split("huggingface.co/")[-1].split("/")[:2])
                 if not model_id or model_id == "/":
@@ -326,6 +240,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                 entry["model_size_mb"] = 0.0
                 return entry
 
+            # Query Hugging Face API
             try:
                 resp = requests.get(HF_MODEL_API + model_id, timeout=10)
                 if resp.status_code == 200:
@@ -343,6 +258,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
             except requests.exceptions.RequestException as e:
                 entry["metadata"] = {"error": f"Request failed: {str(e)}"}
 
+            # Size calculation
             size_bytes = 0
             md = entry["metadata"]
 
@@ -363,6 +279,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                     if debug:
                         print(f"Warning: Error calculating model size: {e}")
 
+                # Extract license from metadata
                 license_found = False
                 if isinstance(md.get("license"), str):
                     entry["license"] = md["license"]
@@ -381,6 +298,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                             license_found = True
                             break
 
+                # Extract additional info for dataset_and_code metric
                 entry["description"] = md.get("description", "")
                 entry["downloads"] = md.get("downloads", 0)
                 entry["likes"] = md.get("likes", 0)
@@ -390,12 +308,14 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                 entry["widgetData"] = md.get("widgetData", [])
                 entry["transformersInfo"] = md.get("transformersInfo", {})
 
+            # Preserve code_url and dataset_url from input parsing
             if not entry.get("code_url") and code_url:
                 entry["code_url"] = code_url
 
             if not entry.get("dataset_url") and dataset_url:
                 entry["dataset_url"] = dataset_url
 
+            # If no code_url yet, try to infer from metadata first
             if not entry.get("code_url") and isinstance(md, dict) and "error" not in md:
                 card_data = md.get("cardData")
                 if isinstance(card_data, dict):
@@ -412,6 +332,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                             entry["code_url"] = t
                             break
 
+            # NEW: If still no code_url, scrape the README for GitHub URLs
             if not entry.get("code_url"):
                 if debug:
                     print(f"Scraping README for {model_id} to find GitHub URLs...")
@@ -423,6 +344,8 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                         entry["code_url"] = github_urls[0]
                         if debug:
                             print(f"Found GitHub URL in README: {github_urls[0]}")
+                    elif debug:
+                        print("No GitHub URLs found in README")
                 elif debug:
                     print("Could not fetch README")
 
