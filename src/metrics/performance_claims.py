@@ -86,7 +86,15 @@ class PerformanceClaims(Metric):
         tags_evidence: List[str] = []
 
         tags = data.get("tags", [])
-        performance_tags = ["arxiv:", "leaderboard", "benchmark", "evaluation", "sota", "state-of-the-art", "performance"]
+        performance_tags = [
+            "arxiv:",
+            "leaderboard",
+            "benchmark",
+            "evaluation",
+            "sota",
+            "state-of-the-art",
+            "performance",
+        ]
 
         # 1. tags
         matched_tags = [t for t in tags if isinstance(t, str) and any(pt in t.lower() for pt in performance_tags)]
@@ -116,16 +124,12 @@ class PerformanceClaims(Metric):
 
         total_score += tags_score
 
-        # --------------------------
-        # Community validation
-        # --------------------------
         community_score = 0.0
         downloads = data.get("downloads", 0)
         likes = data.get("likes", 0)
         transformers_info = data.get("transformersInfo", {})
         card_data = data.get("cardData", {})
 
-        # 1. downloads / likes
         if downloads > 1000 or likes > 10:
             community_score += 0.1
         elif downloads > 100 or likes > 5:
