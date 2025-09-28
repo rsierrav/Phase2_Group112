@@ -110,41 +110,60 @@ coverage==7.3.2
 
 def run_tests():
     """Run the test suite and report results in spec format."""
+    import re
+    import io
+    from contextlib import redirect_stdout, redirect_stderr
+    import pytest
+    import coverage
+
     tests_dir = os.path.join(SCRIPT_DIR, "tests")
 
     if not os.path.isdir(tests_dir):
         print("Error: No tests directory found")
         sys.exit(1)
 
+    # Start coverage
+    cov = coverage.Coverage(source=["src"])
+    cov.start()
+
+    buffer = io.StringIO()
     try:
-        # Simple pytest run
-        result = subprocess.run([sys.executable, "-m", "pytest", tests_dir, "-v"], capture_output=True, text=True)
+        # Run pytest silently with coverage
+        with redirect_stdout(buffer), redirect_stderr(buffer):
+            result = pytest.main([tests_dir, "--cov=src", "--cov-report=term-missing"])
 
-        # Print the output
-        if result.stdout:
-            print(result.stdout)
-        if result.stderr:
-            print(result.stderr, file=sys.stderr)
+        output = buffer.getvalue()
 
-        # Exit with pytest's return code
-        sys.exit(result.returncode)
+        # --- Parse total tests ---
+        total_tests = 0
+        m = re.search(r"collected (\d+) items?", output)
+        if m:
+            total_tests = int(m.group(1))
 
-    except FileNotFoundError:
-        # Fallback if pytest not available - use unittest
-        try:
-            result = subprocess.run(
-                [sys.executable, "-m", "unittest", "discover", "-s", tests_dir, "-v"],
-                capture_output=True,
-                text=True,
-            )
-            if result.stdout:
-                print(result.stdout)
-            if result.stderr:
-                print(result.stderr, file=sys.stderr)
-            sys.exit(result.returncode)
-        except Exception as e:
-            print(f"Error running tests: {e}")
-            sys.exit(1)
+        # --- Parse passed tests ---
+        passed_tests = 0
+        m = re.search(r"(\d+) passed", output)
+        if m:
+            passed_tests = int(m.group(1))
+
+        # --- Parse coverage ---
+        coverage_percent = 0
+        m = re.search(r"^TOTAL.*?(\d+)%", output, re.MULTILINE)
+        if m:
+            coverage_percent = int(m.group(1))
+
+        # Print in required format
+        print(f"{passed_tests}/{total_tests} test cases passed. {coverage_percent}% line coverage achieved.")
+
+        # Exit with pytest’s return code (0=pass, 1=fail)
+        sys.exit(result if isinstance(result, int) else 1)
+
+    except Exception as e:
+        print(f"Error running tests: {e}")
+        sys.exit(1)
+    finally:
+        cov.stop()
+        cov.save()
 
 
 def process_urls_with_cli(url_file: str):
