@@ -1,5 +1,3 @@
-# src/metrics/performance_claims.py
-
 from typing import Any, Dict
 import time
 from .protocol import Metric
@@ -49,7 +47,7 @@ class PerformanceClaims(Metric):
                 if isinstance(model_entry, dict):
                     results = model_entry.get("results", [])
                     if results:
-                        score += 0.4  # Strong evidence of benchmarking
+                        score += 0.4
 
                         # Bonus for multiple benchmarks
                         if len(results) > 1:
@@ -89,6 +87,11 @@ class PerformanceClaims(Metric):
             score += 0.1
         elif downloads > 100 or likes > 5:
             score += 0.05
+
+        if downloads > 10000:  # extremely widely used model
+            score = max(score, 0.5)
+        elif downloads > 1000:
+            score = max(score, 0.3)
 
         # Cap the score at 1.0
         self.score = min(score, 1.0)

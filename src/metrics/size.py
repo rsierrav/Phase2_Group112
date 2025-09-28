@@ -22,7 +22,7 @@ class SizeMetric(Metric):
         Scores are between 0.0 and 1.0.
         """
 
-        # In MBs (approximate thresholds), I made these up based on common hardware limits
+        # In MBs (approximate thresholds)
         thresholds = {
             "raspberry_pi": 50,
             "jetson_nano": 200,
@@ -38,7 +38,8 @@ class SizeMetric(Metric):
             else:
                 # penalize oversize models quickly
                 score = max(0.0, 1.0 - (size_mb - max_size) / (2 * max_size))
-            scores[device] = round(score, 2)
+
+            scores[device] = min(max(score, 0.0), 1.0)
 
         self.size_score = scores
         # Overall score is the average
