@@ -59,6 +59,3 @@ flake8.log
 .DS_Store
 Thumbs.db
 comprehensive_parser_test.py
-input_many.txt
-input_two.txt
-debug_tests.py
