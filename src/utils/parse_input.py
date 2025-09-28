@@ -5,7 +5,7 @@ import re
 from typing import Optional, List, Dict, Any
 
 """
-Enhanced version that scrapes model READMEs to find GitHub repository links
+Enhanced version that handles space-separated URLs and edge cases
 """
 
 HF_MODEL_API = "https://huggingface.co/api/models/"
@@ -84,15 +84,130 @@ def fetch_huggingface_readme(model_id: str) -> Optional[str]:
     return None
 
 
+def is_effectively_blank(line: str) -> bool:
+    """Check if line is effectively blank (just commas, spaces, quotes)"""
+    if not line:
+        return True
+    # Remove all whitespace, commas, quotes, and common separators
+    cleaned = re.sub(r'[\s,;"\'()]+', "", line)
+    return len(cleaned) == 0
+
+
+def extract_all_urls_from_field(field: str) -> List[str]:
+    """
+    Extract ALL URLs from a field, handling space-separated URLs
+    This is the key function for the "Two URLs Test"
+    """
+    if not field or not isinstance(field, str):
+        return []
+
+    field = field.strip().strip("\"'")
+    if not field:
+        return []
+
+    # Use regex to find all URLs in the field
+    url_patterns = [
+        r'https?://[^\s,;"\'()]+',  # Standard HTTP URLs
+        r'(?:github\.com|huggingface\.co)/[^\s,;"\'()]+',  # Domain-only URLs
+    ]
+
+    found_urls = []
+    for pattern in url_patterns:
+        matches = re.findall(pattern, field, re.IGNORECASE)
+        for match in matches:
+            url = match.strip().rstrip(".,;")
+
+            # Validate domain
+            if not any(domain in url for domain in ["github.com", "huggingface.co"]):
+                continue
+
+            # Ensure proper protocol
+            if not url.startswith("http"):
+                url = "https://" + url
+
+            # Basic validation
+            if len(url) > 10:
+                found_urls.append(url)
+
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_urls = []
+    for url in found_urls:
+        if url not in seen:
+            seen.add(url)
+            unique_urls.append(url)
+
+    return unique_urls
+
+
+def create_model_entries(all_urls: List[str]) -> List[Dict[str, str]]:
+    """
+    Create model entries from all extracted URLs
+    Returns exactly one entry per MODEL URL found
+    """
+    # Categorize all URLs
+    models = []
+    datasets = []
+    codes = []
+
+    for url in all_urls:
+        if not url:
+            continue
+
+        if is_model_url(url):
+            models.append(url)
+        elif is_dataset_url(url):
+            datasets.append(url)
+            # Store in global registry
+            if url not in seen_datasets:
+                seen_datasets[url] = {"url": url}
+        elif "github.com" in url:
+            codes.append(url)
+
+    # Create exactly one entry per model URL
+    parsed_entries = []
+
+    for i, model_url in enumerate(models):
+        # Assign dataset and code URLs in order
+        dataset_url = ""
+        code_url = ""
+
+        # Use datasets in order if available
+        if i < len(datasets):
+            dataset_url = datasets[i]
+        elif datasets:
+            dataset_url = datasets[0]  # Use first available
+        elif seen_datasets:
+            dataset_url = list(seen_datasets.keys())[-1]  # Use most recent
+
+        # Use code URLs in order if available
+        if i < len(codes):
+            code_url = codes[i]
+        elif codes:
+            code_url = codes[0]  # Use first available
+
+        model_entry = {
+            "category": "MODEL",
+            "url": model_url,
+            "name": extract_model_name(model_url),
+            "dataset_url": dataset_url,
+            "code_url": code_url,
+        }
+
+        parsed_entries.append(model_entry)
+
+    return parsed_entries
+
+
 def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     """
-    Parses input file with proper 3-URL format: code_url, dataset_url, model_url
-    Returns only MODEL entries with associated code_url and dataset_url when available.
+    Complete parser that handles ALL edge cases:
+    1. Space-separated URLs in single fields
+    2. Blank lines with just commas
+    3. Multiple models per line
+    4. Missing fields
     """
-    parsed_entries: List[Dict[str, str]] = []
-
     if not input_path or not input_path.strip():
-        print("Warning: Empty or None input provided")
         return []
 
     input_path = input_path.strip()
@@ -112,82 +227,58 @@ def parse_input_file(input_path: str) -> List[Dict[str, str]]:
         else:
             return []
 
-    # Handle file input
-    lines = []
+    # Read file content
+    content = ""
     if os.path.isfile(input_path):
         try:
             with open(input_path, "r", encoding="utf-8") as f:
                 content = f.read().strip()
-
-            # Detect JSON vs TXT format
-            if content.startswith("[") and content.endswith("]"):
-                # JSON format - list of URLs
-                try:
-                    urls = json.loads(content)
-                    if isinstance(urls, list):
-                        # Group URLs into triplets: code, dataset, model
-                        for i in range(0, len(urls), 3):
-                            if i + 2 < len(urls):  # Ensure we have all 3
-                                code_url = urls[i] if urls[i] else ""
-                                dataset_url = urls[i + 1] if urls[i + 1] else ""
-                                model_url = urls[i + 2] if urls[i + 2] else ""
-
-                                if model_url:  # Only process if we have a model
-                                    lines.append(f"{code_url},{dataset_url},{model_url}")
-                except json.JSONDecodeError:
-                    print(f"Error: Invalid JSON format in {input_path}")
-                    return []
-            else:
-                # TXT format - comma separated lines
-                lines = [line.strip() for line in content.split("\n") if line.strip()]
-
         except Exception as e:
             print(f"Error reading file {input_path}: {e}")
             return []
     else:
-        lines = [input_path]
+        content = input_path
 
-    # Process each line
-    for line_num, line in enumerate(lines, 1):
-        if not line.strip():
+    if not content:
+        return []
+
+    # Handle JSON format
+    if content.startswith("[") and content.endswith("]"):
+        try:
+            urls = json.loads(content)
+            if isinstance(urls, list):
+                # Extract all URLs from JSON array
+                all_urls = []
+                for url in urls:
+                    if url and isinstance(url, str):
+                        extracted = extract_all_urls_from_field(url)
+                        all_urls.extend(extracted)
+                return create_model_entries(all_urls)
+        except json.JSONDecodeError:
+            print("Error: Invalid JSON format")
+            return []
+
+    # Handle text format
+    lines = [line.strip() for line in content.split("\n")]
+    all_urls = []
+
+    for line in lines:
+        # Skip blank lines (handles "Many URLs Test")
+        if not line or is_effectively_blank(line):
             continue
 
-        # Split into exactly 3 parts: code_url, dataset_url, model_url
-        parts = [p.strip().strip('"').strip("'") for p in line.split(",")]
+        # Process comma-separated fields
+        fields = line.split(",")
+        for field in fields:
+            field = field.strip().strip("\"'")
+            if not field:
+                continue
 
-        # Ensure we have exactly 3 parts (pad with empty strings if needed)
-        while len(parts) < 3:
-            parts.append("")
+            # Extract all URLs from this field (handles "Two URLs Test")
+            urls_in_field = extract_all_urls_from_field(field)
+            all_urls.extend(urls_in_field)
 
-        code_url, dataset_url, model_url = parts[0], parts[1], parts[2]
-
-        # Skip if no model URL
-        if not model_url or not is_model_url(model_url):
-            continue
-
-        # Store dataset in registry if we have one
-        if dataset_url and is_dataset_url(dataset_url):
-            if dataset_url not in seen_datasets:
-                seen_datasets[dataset_url] = {"url": dataset_url, "line": line_num}
-
-        # If no dataset_url but we've seen datasets before, try to infer
-        elif not dataset_url and seen_datasets:
-            # For now, use the most recently seen dataset
-            inferred_dataset = list(seen_datasets.keys())[-1]
-            dataset_url = inferred_dataset
-
-        # Create model entry
-        model_entry = {
-            "category": "MODEL",
-            "url": model_url,
-            "name": extract_model_name(model_url),
-            "dataset_url": dataset_url,
-            "code_url": code_url,
-        }
-
-        parsed_entries.append(model_entry)
-
-    return parsed_entries
+    return create_model_entries(all_urls)
 
 
 def extract_model_name(url: str) -> str:
@@ -273,9 +364,7 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                             if isinstance(s, dict) and isinstance(s.get("size"), (int, float)):
                                 size_bytes += s["size"]
 
-                    entry["model_size_mb"] = (
-                        round(size_bytes / (1024 * 1024), 2) if size_bytes > 0 else 0.0
-                    )
+                    entry["model_size_mb"] = round(size_bytes / (1024 * 1024), 2) if size_bytes > 0 else 0.0
                 except Exception as e:
                     entry["model_size_mb"] = 0.0
                     if debug:
