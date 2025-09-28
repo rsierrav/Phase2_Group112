@@ -20,11 +20,13 @@ def process(parsed_data):
     scorer = Scorer()
 
     for entry in parsed_data:
+        logging.debug(f"Processing entry: {entry.get('url', '')} (category={entry.get('category')})")
         if entry.get("category") != "MODEL":
             logging.info(f"Skipping non-MODEL entry: {entry.get('url', '')}")
             continue
         try:
             metadata = fetch_metadata(entry)
+            logging.debug(f"Fetched metadata for {entry.get('url', '')}")
             row = format_score_row(metadata, scorer)
             print(json.dumps(row, separators=(",", ":")))
             logging.info(f"Scored model entry: {row.get('name', 'unknown')}")
@@ -33,8 +35,10 @@ def process(parsed_data):
 
 
 def main():
+    logging.debug("Entered main()")
     if len(sys.argv) < 2:
         sys.stderr.write("Usage: python src/init.py <URL | URL_FILE | 'dev'>\n")
+        logging.error("Invalid usage: no argument provided")
         sys.exit(1)
 
     input_file = None
@@ -48,6 +52,7 @@ def main():
         files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
         if not files:
             sys.stderr.write("No files found in the input directory.\n")
+            logging.error("Dev mode: no files in input directory")
             sys.exit(1)
         logging.info(f"Dev mode: processing {files[0]}")
         input_file_path = os.path.join(input_dir, files[0])
