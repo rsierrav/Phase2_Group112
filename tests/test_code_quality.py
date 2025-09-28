@@ -58,8 +58,8 @@ class TestCodeQualityMetric(unittest.TestCase):
         self.assertTrue(result["has_lint_config"])
         self.assertTrue(result["has_readme"])
         self.assertTrue(result["has_packaging"])
-        # Only Python files are counted
-        self.assertEqual(result["python_file_count"], 1)
+        # Both src/model.py and tests/test_model.py count → total 2
+        self.assertEqual(result["python_file_count"], 2)
 
     def test_calculate_score_computation(self):
         """Check scoring with representative data"""
