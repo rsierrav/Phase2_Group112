@@ -42,7 +42,7 @@ class TestCodeQualityMetric(unittest.TestCase):
             {"path": "src/compute.cpp"},
             {"path": "tests/test_model.py"},
             {"path": ".github/workflows/ci.yml"},
-            {"path": ".eslintrc"},
+            {"path": ".pylintrc"},
             {"path": "package.json"},
         ]
         mock_resp = MagicMock()
