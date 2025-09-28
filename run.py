@@ -114,10 +114,8 @@ if __name__ == "__main__":
     if command == "install":
         install_dependencies()
     elif command == "test":
-        print("DEBUG: About to call run_tests()", file=sys.stderr)
         run_tests()
     elif command == "score":
-        print("DEBUG: About to call score", file=sys.stderr)
         if len(sys.argv) < 3:
             print("Error: Missing URL_FILE argument for score command")
             sys.exit(1)
