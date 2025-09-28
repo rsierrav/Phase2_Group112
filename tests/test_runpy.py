@@ -41,9 +41,7 @@ class TestRunPy(unittest.TestCase):
     @patch("subprocess.check_call")
     @patch("os.path.exists")
     @patch("builtins.open", new_callable=mock_open)
-    def test_install_dependencies_create_requirements(
-        self, mock_file, mock_exists, mock_subprocess
-    ):
+    def test_install_dependencies_create_requirements(self, mock_file, mock_exists, mock_subprocess):
         """Test install_dependencies when requirements.txt doesn't exist"""
         mock_exists.return_value = False
 
@@ -117,24 +115,15 @@ class TestRunPy(unittest.TestCase):
     @patch("subprocess.run")
     def test_run_tests_all_pass(self, mock_subprocess, mock_pytest, mock_coverage):
         """Test run_tests when all tests pass"""
-        # Mock coverage
         mock_cov = MagicMock()
         mock_cov.report.return_value = 85.5
         mock_coverage.return_value = mock_cov
-
-        # Mock pytest result (0 = all passed)
         mock_pytest.return_value = 0
-
-        # Mock subprocess for test collection
-        mock_subprocess.return_value = MagicMock(
-            returncode=0, stdout="121 tests collected in 0.45s"
-        )
+        mock_subprocess.return_value = MagicMock(returncode=0, stdout="121 tests collected in 0.45s")
 
         with patch("builtins.print") as mock_print:
-            run.run_test()
+            run.run_tests()
 
-        # Should report all tests passed
-        mock_print.assert_called()
         output = mock_print.call_args[0][0]
         self.assertIn("121/121 test cases passed", output)
         self.assertIn("86% line coverage achieved", output)
@@ -144,29 +133,22 @@ class TestRunPy(unittest.TestCase):
     @patch("subprocess.run")
     def test_run_tests_some_fail(self, mock_subprocess, mock_pytest, mock_coverage):
         """Test run_tests when some tests fail"""
-        # Mock coverage
         mock_cov = MagicMock()
         mock_cov.report.return_value = 75.2
         mock_coverage.return_value = mock_cov
-
-        # Mock pytest result (1 = some failed)
         mock_pytest.return_value = 1
-
-        # Mock subprocess for test collection - need to mock both calls
         mock_subprocess.side_effect = [
-            MagicMock(returncode=1, stdout="2 failed, 140 passed in 8.87s"),  # First call with -v
-            MagicMock(returncode=0, stdout="142 tests collected in 0.35s"),  # Fallback call
+            MagicMock(returncode=1, stdout="2 failed, 140 passed in 8.87s"),
+            MagicMock(returncode=0, stdout="142 tests collected in 0.35s"),
         ]
 
         with patch("builtins.print") as mock_print:
             with self.assertRaises(SystemExit) as cm:
-                run.run_test()
+                run.run_tests()
 
             self.assertEqual(cm.exception.code, 1)
-
-            # Should report actual failures parsed from output
             output = mock_print.call_args[0][0]
-            self.assertIn("140/142 test cases passed", output)  # Updated to match actual parsing
+            self.assertIn("140/142 test cases passed", output)
             self.assertIn("75% line coverage achieved", output)
 
     @patch("coverage.Coverage")
@@ -174,50 +156,35 @@ class TestRunPy(unittest.TestCase):
     @patch("subprocess.run")
     def test_run_tests_no_tests_collected(self, mock_subprocess, mock_pytest, mock_coverage):
         """Test run_tests when no tests are collected"""
-        # Mock coverage
         mock_cov = MagicMock()
         mock_cov.report.return_value = 0
         mock_coverage.return_value = mock_cov
-
-        # Mock pytest result (5 = no tests found)
         mock_pytest.return_value = 5
-
-        # Mock subprocess for test collection
         mock_subprocess.return_value = MagicMock(returncode=0, stdout="no tests collected")
 
         with patch("builtins.print") as mock_print:
             with self.assertRaises(SystemExit) as cm:
-                run.run_test()
+                run.run_tests()
 
             self.assertEqual(cm.exception.code, 1)
-
             output = mock_print.call_args[0][0]
             self.assertIn("0/0 test cases passed", output)
 
     def test_run_tests_import_error(self):
         """Test run_tests when test dependencies are missing"""
-        # Mock the import inside run_tests function
         with patch("run.run_tests") as mock_run_tests:
-            # Make it raise the import error and print the message
-            def side_effect():
-                print(
-                    (
-                        "Error: Missing test dependencies. Run './run install' first. "
-                        "(No module named 'coverage')"
-                    )
-                )
-                import sys
 
+            def side_effect():
+                print("Error: Missing test dependencies. Run './run install' first. " "(No module named 'coverage')")
                 sys.exit(1)
 
             mock_run_tests.side_effect = side_effect
 
             with patch("builtins.print") as mock_print:
-                with self.assertRaises(SystemExit) as cm:  # Add this line!
-                    run.run_test()
+                with self.assertRaises(SystemExit) as cm:
+                    run.run_tests()
 
                 self.assertEqual(cm.exception.code, 1)
-                mock_print.assert_called()
                 error_msg = mock_print.call_args[0][0]
                 self.assertIn("Missing test dependencies", error_msg)
 
@@ -226,23 +193,17 @@ class TestRunPy(unittest.TestCase):
     @patch("subprocess.run")
     def test_run_tests_coverage_exception(self, mock_subprocess, mock_pytest, mock_coverage):
         """Test run_tests when coverage measurement fails"""
-        # Mock coverage to raise exception
         mock_cov = MagicMock()
         mock_cov.report.side_effect = Exception("Coverage error")
         mock_coverage.return_value = mock_cov
-
-        # Mock pytest to return 1 (failure) to trigger the sys.exit
         mock_pytest.return_value = 1
         mock_subprocess.return_value = MagicMock(returncode=0, stdout="50 tests collected")
 
         with patch("builtins.print") as mock_print:
             with self.assertRaises(SystemExit) as cm:
-                run.run_test()
+                run.run_tests()
 
-            # Should exit with code 1 due to pytest failure
             self.assertEqual(cm.exception.code, 1)
-
-            # Should handle coverage error gracefully
             output = mock_print.call_args[0][0]
             self.assertIn("0% line coverage achieved", output)
 
@@ -380,15 +341,11 @@ class TestRunPy(unittest.TestCase):
             mock_cov = MagicMock()
             mock_cov.report.return_value = 50
             mock_coverage.return_value = mock_cov
-
             mock_pytest.return_value = 0
 
             with patch("builtins.print") as mock_print:
-                # The function should handle subprocess failure gracefully
-                # and fall back to default test count
-                run.run_test()
+                run.run_tests()
 
-            # Should use fallback test count
             output = mock_print.call_args[0][0]
             self.assertIn("test cases passed", output)
 
