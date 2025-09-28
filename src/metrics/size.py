@@ -1,4 +1,5 @@
 from typing import Any, Dict
+import time
 from .protocol import Metric
 
 
@@ -21,6 +22,16 @@ class SizeMetric(Metric):
         Map model size (MB) into compatibility scores for different hardware.
         Scores are between 0.0 and 1.0.
         """
+        # Handle zero size case
+        if size_mb <= 0:
+            self.size_score = {
+                "raspberry_pi": 0.0,
+                "jetson_nano": 0.0,
+                "desktop_pc": 0.0,
+                "aws_server": 0.0,
+            }
+            self.score = 0.0
+            return
 
         # In MBs (approximate thresholds)
         thresholds = {
@@ -33,17 +44,27 @@ class SizeMetric(Metric):
         scores = {}
         for device, max_size in thresholds.items():
             if size_mb <= max_size:
-                # smaller models get slightly higher scores
-                score = 0.5 + 0.5 * (1 - size_mb / max_size)
+                # Linear scoring: smaller models get higher scores
+                score = 1.0 - (size_mb / max_size) * 0.5  # Range from 1.0 to 0.5
             else:
-                # penalize oversize models quickly
-                score = max(0.0, 1.0 - (size_mb - max_size) / (2 * max_size))
+                # Exponential penalty for oversized models
+                overage_ratio = (size_mb - max_size) / max_size
+                score = max(0.0, 0.5 * (1.0 / (1.0 + overage_ratio)))
 
-            scores[device] = min(max(score, 0.0), 1.0)
+            # Round to 2 decimal places to avoid floating point precision issues
+            scores[device] = round(min(max(score, 0.0), 1.0), 2)
 
         self.size_score = scores
         # Overall score is the average
-        self.score = sum(scores.values()) / len(scores)
+        self.score = round(sum(scores.values()) / len(scores), 2)
+
+    def process_score(self, parsed_data: Dict[str, Any]) -> None:
+        """Process the metric with timing."""
+        start_time = time.perf_counter()
+        data = self.get_data(parsed_data)
+        self.calculate_score(data)
+        end_time = time.perf_counter()
+        self.latency = (end_time - start_time) * 1000
 
     def get_score(self) -> float:
         return self.score
