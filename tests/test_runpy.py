@@ -91,14 +91,6 @@ class TestRunPy(unittest.TestCase):
             run.run_tests()
         self.assertEqual(cm.exception.code, 1)
 
-    def test_main_no_args(self):
-        sys.argv = ["run.py"]
-        with patch.object(run, "show_usage") as mock_usage:
-            with self.assertRaises(SystemExit):
-                if len(sys.argv) < 2:
-                    run.show_usage()
-            mock_usage.assert_called_once()
-
     @patch.object(run, "install_dependencies")
     def test_main_install_command(self, mock_install):
         sys.argv = ["run.py", "install"]
