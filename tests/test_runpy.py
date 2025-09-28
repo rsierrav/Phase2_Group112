@@ -9,12 +9,10 @@ import run
 class TestRunPy(unittest.TestCase):
 
     def setUp(self):
-        """Set up test fixtures"""
         self.temp_dir = tempfile.mkdtemp()
         self.original_argv = sys.argv.copy()
 
     def tearDown(self):
-        """Clean up test fixtures"""
         import shutil
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)
