@@ -23,7 +23,7 @@ It is added to .gitignore so it will uploaded when pushed.
 
 ## 3. Activate the virtual environment
 
-### On Windows (PowerShell).venv\Scripts\Activate.ps1
+### On Windows (PowerShell)
 ```powershell
 .venv\Scripts\Activate.ps1
 ```
