@@ -53,48 +53,41 @@ coverage==7.3.2
 
 def run_tests():
     """Run the test suite and report results in spec format."""
-    import pytest
-    import sys
-    import re
-    import io
-    from contextlib import redirect_stdout, redirect_stderr
+    tests_dir = os.path.join(SCRIPT_DIR, "tests")
 
-    buffer = io.StringIO()
-    # Run pytest with coverage, capture all output
-    with redirect_stdout(buffer), redirect_stderr(buffer):
-        result = pytest.main(
-            [
-                "tests/",
-                "--cov=src",
-                "--cov-report=term-missing",
-            ]
-        )
+    if not os.path.isdir(tests_dir):
+        print("Error: No tests directory found")
+        sys.exit(1)
 
-    output = buffer.getvalue()
+    try:
+        # Simple pytest run
+        result = subprocess.run([sys.executable, "-m", "pytest", tests_dir, "-v"], capture_output=True, text=True)
 
-    # --- Parse total tests ---
-    total_tests = 0
-    m = re.search(r"collected (\d+) items?", output)
-    if m:
-        total_tests = int(m.group(1))
+        # Print the output
+        if result.stdout:
+            print(result.stdout)
+        if result.stderr:
+            print(result.stderr, file=sys.stderr)
 
-    # --- Parse passed tests ---
-    passed_tests = 0
-    m = re.search(r"(\d+) passed", output)
-    if m:
-        passed_tests = int(m.group(1))
+        # Exit with pytest's return code
+        sys.exit(result.returncode)
 
-    # --- Parse coverage ---
-    coverage_percent = 0
-    m = re.search(r"^TOTAL.*?(\d+)%", output, re.MULTILINE)
-    if m:
-        coverage_percent = int(m.group(1))
-
-    # --- Print in exact required format ---
-    print(f"{passed_tests}/{total_tests} test cases passed. {coverage_percent}% line coverage achieved.")
-
-    # --- Exit with pytest's code (0=all passed, 1=some failed, etc.) ---
-    sys.exit(result if isinstance(result, int) else 1)
+    except FileNotFoundError:
+        # Fallback if pytest not available - use unittest
+        try:
+            result = subprocess.run(
+                [sys.executable, "-m", "unittest", "discover", "-s", tests_dir, "-v"],
+                capture_output=True,
+                text=True,
+            )
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print(result.stderr, file=sys.stderr)
+            sys.exit(result.returncode)
+        except Exception as e:
+            print(f"Error running tests: {e}")
+            sys.exit(1)
 
 
 def process_urls_with_cli(url_file: str):
