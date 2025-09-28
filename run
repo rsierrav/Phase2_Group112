@@ -1,1 +1,2 @@
-exec python3 run.py "$@"exec python3 -m src.init "$@"
+#!/bin/bash
+exec python3 run.py "$@"
