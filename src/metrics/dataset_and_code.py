@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, Optional
 from .protocol import Metric
 
@@ -25,20 +26,16 @@ class DatasetAndCodeMetric(Metric):
 
             if isinstance(dataset_info, dict):
                 splits = dataset_info.get("splits", [])
-                total_examples = sum(
-                    split.get("num_examples", 0) for split in splits if isinstance(split, dict)
-                )
+                total_examples = sum(split.get("num_examples", 0) for split in splits if isinstance(split, dict))
+                logging.debug(f"Example count (dict splits) = {total_examples}")
                 return total_examples
             elif isinstance(dataset_info, list):
                 total_examples = sum(
-                    sum(
-                        split.get("num_examples", 0)
-                        for split in info.get("splits", [])
-                        if isinstance(split, dict)
-                    )
+                    sum(split.get("num_examples", 0) for split in info.get("splits", []) if isinstance(split, dict))
                     for info in dataset_info
                     if isinstance(info, dict)
                 )
+                logging.debug(f"Example count (list splits) = {total_examples}")
                 return total_examples
         return 0
 
@@ -61,8 +58,11 @@ class DatasetAndCodeMetric(Metric):
         license_tags = [tag for tag in tags if tag.startswith("license:")]
         if license_tags:
             license_from_tags = ", ".join([tag.replace("license:", "") for tag in license_tags])
-            return f"{license_info}, {license_from_tags}" if license_info else license_from_tags
+            combined = f"{license_info}, {license_from_tags}" if license_info else license_from_tags
+            logging.debug(f"License detected: {combined}")
+            return combined
 
+        logging.debug(f"License detected: {license_info}")
         return license_info
 
     def ml_integration(self, parsed_data: Dict[str, Any]) -> bool:
@@ -84,9 +84,11 @@ class DatasetAndCodeMetric(Metric):
         for tag in tags:
             for indicator in ml_indicators:
                 if indicator in tag.lower():
+                    logging.debug("ML integration detected from tags")
                     return True
 
         if parsed_data.get("pipeline_tag") or parsed_data.get("transformersInfo"):
+            logging.debug("ML integration detected from pipeline_tag/transformersInfo")
             return True
 
         return False
@@ -95,11 +97,7 @@ class DatasetAndCodeMetric(Metric):
         engagement = {
             "downloads": parsed_data.get("downloads", 0),
             "likes": parsed_data.get("likes", 0),
-            "spaces": (
-                len(parsed_data.get("spaces", []))
-                if isinstance(parsed_data.get("spaces"), list)
-                else 0
-            ),
+            "spaces": (len(parsed_data.get("spaces", [])) if isinstance(parsed_data.get("spaces"), list) else 0),
         }
 
         if not engagement["downloads"] or not engagement["likes"]:
@@ -107,6 +105,7 @@ class DatasetAndCodeMetric(Metric):
             engagement["downloads"] = engagement["downloads"] or metadata.get("downloads", 0)
             engagement["likes"] = engagement["likes"] or metadata.get("likes", 0)
 
+        logging.debug(f"Engagement metrics: {engagement}")
         return engagement
 
     def has_documentation(self, parsed_data: Dict[str, Any]) -> bool:
@@ -124,6 +123,7 @@ class DatasetAndCodeMetric(Metric):
             if isinstance(sibling, dict):
                 filename = sibling.get("rfilename", "").upper()
                 if any(doc.upper() in filename for doc in doc_files):
+                    logging.debug("Documentation file detected")
                     return True
 
         return True
@@ -138,10 +138,9 @@ class DatasetAndCodeMetric(Metric):
         if widget_data:
             return True
 
-        transformers_info = parsed_data.get(
-            "transformersInfo", metadata.get("transformersInfo", {})
-        )
+        transformers_info = parsed_data.get("transformersInfo", metadata.get("transformersInfo", {}))
         if transformers_info.get("auto_model"):
+            logging.debug("Code example detected from transformersInfo")
             return True
 
         example_indicators = ["example", "demo", "tutorial", ".py", ".ipynb"]
@@ -154,6 +153,7 @@ class DatasetAndCodeMetric(Metric):
             if isinstance(sibling, dict):
                 filename = sibling.get("rfilename", "").lower()
                 if any(indicator in filename for indicator in example_indicators):
+                    logging.debug(f"Code example detected from filename: {filename}")
                     return True
 
         return False
@@ -172,18 +172,17 @@ class DatasetAndCodeMetric(Metric):
             "has_documentation": self.has_documentation(parsed_data),
             "has_code_examples": self.has_code_examples(parsed_data),
             "tags": parsed_data.get("tags", []) or parsed_data.get("metadata", {}).get("tags", []),
-            "card_data": parsed_data.get("cardData", {})
-            or parsed_data.get("metadata", {}).get("cardData", {}),
-            "downloads": parsed_data.get("downloads", 0)
-            or parsed_data.get("metadata", {}).get("downloads", 0),
+            "card_data": parsed_data.get("cardData", {}) or parsed_data.get("metadata", {}).get("cardData", {}),
+            "downloads": parsed_data.get("downloads", 0) or parsed_data.get("metadata", {}).get("downloads", 0),
             "likes": parsed_data.get("likes", 0) or parsed_data.get("metadata", {}).get("likes", 0),
         }
-
+        logging.info(f"DatasetAndCodeMetric collected data for category={result['category']}")
         return result
 
     def calculate_score(self, data: Optional[Dict[str, Any]]) -> None:
         if not data:
             self.dataset_and_code_score = 0.0
+            logging.warning("No data provided for DatasetAndCodeMetric.calculate_score")
             return
 
         score = 0.0
@@ -225,9 +224,9 @@ class DatasetAndCodeMetric(Metric):
         engagement = data["engagement"]
         score += min(engagement["downloads"] / 1000, 0.10)
         score += min(engagement["likes"] / 100, 0.05)
-        # score += min(engagement['spaces'] / 10, 0.05)
 
         self.dataset_and_code_score = score
+        logging.info(f"DatasetAndCodeMetric score={self.dataset_and_code_score:.2f}")
 
     def get_score(self) -> float:
         return self.dataset_and_code_score
