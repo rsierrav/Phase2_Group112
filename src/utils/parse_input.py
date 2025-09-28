@@ -5,7 +5,7 @@ import re
 from typing import Optional, List, Dict, Any
 
 """
-Enhanced version that scrapes model READMEs to find GitHub repository links
+Enhanced version that handles all edge cases for URL parsing
 """
 
 HF_MODEL_API = "https://huggingface.co/api/models/"
@@ -84,126 +84,162 @@ def fetch_huggingface_readme(model_id: str) -> Optional[str]:
     return None
 
 
+def parse_single_url(url: str) -> List[Dict[str, str]]:
+    """Handle direct URL input"""
+    if is_model_url(url):
+        return [
+            {
+                "category": "MODEL",
+                "url": url,
+                "name": extract_model_name(url),
+                "dataset_url": "",
+                "code_url": "",
+            }
+        ]
+    return []
+
+
+def extract_all_urls_from_line(line: str) -> List[str]:
+    """
+    Extract all URLs from a line, handling various separators and formats
+    """
+    urls = []
+
+    # First try comma separation
+    comma_parts = [p.strip().strip('"').strip("'") for p in line.split(",")]
+
+    for part in comma_parts:
+        if not part:
+            continue
+
+        # Check if this part contains multiple space-separated URLs
+        space_urls = re.findall(r"https?://[^\s,]+", part)
+        if space_urls:
+            urls.extend(space_urls)
+        elif part.startswith("http") or "huggingface.co" in part:
+            # Single URL
+            if not part.startswith("http"):
+                part = "https://" + part
+            urls.append(part)
+
+    # If no URLs found with comma splitting, try space splitting on whole line
+    if not urls:
+        space_urls = re.findall(r"https?://[^\s,]+", line)
+        urls.extend(space_urls)
+
+    return urls
+
+
 def parse_input_file(input_path: str) -> List[Dict[str, str]]:
     """
-    Parses input file with proper 3-URL format: code_url, dataset_url, model_url
-    Returns only MODEL entries with associated code_url and dataset_url when available.
-    Enhanced to handle space-separated URLs and blank lines.
+    Enhanced parser that handles all edge cases:
+    - Single URLs
+    - Multiple URLs per line (space or comma separated)
+    - JSON format files
+    - Text format files
+    - Blank/empty lines
+    - Lines with 1, 2, or 3+ URLs
     """
     parsed_entries: List[Dict[str, str]] = []
 
     if not input_path or not input_path.strip():
-        print("Warning: Empty or None input provided")
         return []
 
     input_path = input_path.strip()
 
     # Handle single URL case (direct URL passed)
     if input_path.startswith("http"):
-        if "huggingface.co" in input_path and "/datasets/" not in input_path:
-            return [
-                {
-                    "category": "MODEL",
-                    "url": input_path,
-                    "name": extract_model_name(input_path),
-                    "dataset_url": "",
-                    "code_url": "",
-                }
-            ]
-        else:
-            return []
+        return parse_single_url(input_path)
 
     # Handle file input
-    lines = []
-    if os.path.isfile(input_path):
-        try:
-            with open(input_path, "r", encoding="utf-8") as f:
-                content = f.read().strip()
+    if not os.path.isfile(input_path):
+        return []
 
-            # Detect JSON vs TXT format
-            if content.startswith("[") and content.endswith("]"):
-                # JSON format - list of URLs
-                try:
-                    urls = json.loads(content)
-                    if isinstance(urls, list):
-                        # Group URLs into triplets: code, dataset, model
-                        for i in range(0, len(urls), 3):
-                            if i + 2 < len(urls):  # Ensure we have all 3
-                                code_url = urls[i] if urls[i] else ""
-                                dataset_url = urls[i + 1] if urls[i + 1] else ""
-                                model_url = urls[i + 2] if urls[i + 2] else ""
+    try:
+        with open(input_path, "r", encoding="utf-8") as f:
+            content = f.read().strip()
 
-                                if model_url:  # Only process if we have a model
-                                    lines.append(f"{code_url},{dataset_url},{model_url}")
-                except json.JSONDecodeError:
-                    print(f"Error: Invalid JSON format in {input_path}")
-                    return []
-            else:
-                # TXT format - comma separated lines
-                lines = [line.strip() for line in content.split("\n") if line.strip()]
-
-        except Exception as e:
-            print(f"Error reading file {input_path}: {e}")
+        if not content:
             return []
-    else:
-        lines = [input_path]
 
-    # Process each line
-    for line_num, line in enumerate(lines, 1):
-        if not line.strip():
-            continue
+        # Detect JSON vs TXT format
+        if content.startswith("[") and content.endswith("]"):
+            # JSON format
+            try:
+                urls = json.loads(content)
+                if not isinstance(urls, list):
+                    return []
 
-        # Skip effectively blank lines (handles "Many URLs Test")
-        if re.match(r'^[\s,;"\'()]*$', line.strip()):
-            continue
+                # Each URL in the list should produce one model entry
+                for url in urls:
+                    if url and isinstance(url, str) and is_model_url(url):
+                        parsed_entries.extend(parse_single_url(url))
 
-        # Split into exactly 3 parts: code_url, dataset_url, model_url
-        parts = [p.strip().strip('"').strip("'") for p in line.split(",")]
+            except json.JSONDecodeError:
+                return []
+        else:
+            # Text format - process line by line
+            lines = content.split("\n")
 
-        # Ensure we have exactly 3 parts (pad with empty strings if needed)
-        while len(parts) < 3:
-            parts.append("")
+            for line_num, line in enumerate(lines, 1):
+                line = line.strip()
 
-        code_url, dataset_url, model_url = parts[0], parts[1], parts[2]
+                # Skip truly empty lines
+                if not line:
+                    continue
 
-        # Handle space-separated URLs in the model_url field (handles "Two URLs Test")
-        model_urls = []
-        if model_url:
-            # Check if there are multiple URLs separated by spaces
-            potential_urls = re.findall(r"https?://[^\s,]+|(?:huggingface\.co)/[^\s,]+", model_url)
-            for url in potential_urls:
-                url = url.strip()
-                if not url.startswith("http"):
-                    url = "https://" + url
-                if is_model_url(url):
-                    model_urls.append(url)
+                # Skip lines that are just punctuation/whitespace
+                if re.match(r'^[\s,;"\'()]*$', line):
+                    continue
 
-            # If no URLs found with regex, try the original field as single URL
-            if not model_urls and is_model_url(model_url):
-                model_urls.append(model_url)
+                # Extract all URLs from this line
+                all_urls = extract_all_urls_from_line(line)
 
-        # Create one entry per model URL found
-        for model_url in model_urls:
-            # Store dataset in registry if we have one
-            if dataset_url and is_dataset_url(dataset_url):
-                if dataset_url not in seen_datasets:
-                    seen_datasets[dataset_url] = {"url": dataset_url, "line": line_num}
+                if not all_urls:
+                    continue
 
-            # If no dataset_url but we've seen datasets before, try to infer
-            elif not dataset_url and seen_datasets:
-                inferred_dataset = list(seen_datasets.keys())[-1]
-                dataset_url = inferred_dataset
+                # Determine code_url, dataset_url, and model_urls based on URL count and types
+                code_url = ""
+                dataset_url = ""
+                model_urls = []
 
-            # Create model entry
-            model_entry = {
-                "category": "MODEL",
-                "url": model_url,
-                "name": extract_model_name(model_url),
-                "dataset_url": dataset_url,
-                "code_url": code_url,
-            }
+                # Categorize URLs
+                for url in all_urls:
+                    if is_model_url(url):
+                        model_urls.append(url)
+                    elif "github.com" in url:
+                        if not code_url:  # Use first GitHub URL as code_url
+                            code_url = url
+                    elif is_dataset_url(url):
+                        if not dataset_url:  # Use first dataset URL
+                            dataset_url = url
 
-            parsed_entries.append(model_entry)
+                # If we have model URLs, create entries for them
+                for model_url in model_urls:
+                    # Handle dataset inheritance from previous lines
+                    current_dataset_url = dataset_url
+                    if not current_dataset_url and seen_datasets:
+                        # Inherit from last seen dataset
+                        current_dataset_url = list(seen_datasets.keys())[-1]
+
+                    # Store new dataset if we found one
+                    if dataset_url and dataset_url not in seen_datasets:
+                        seen_datasets[dataset_url] = {"url": dataset_url, "line": line_num}
+
+                    # Create model entry
+                    entry = {
+                        "category": "MODEL",
+                        "url": model_url,
+                        "name": extract_model_name(model_url),
+                        "dataset_url": current_dataset_url,
+                        "code_url": code_url,
+                    }
+
+                    parsed_entries.append(entry)
+
+    except Exception as e:
+        print(f"Error reading file {input_path}: {e}")
+        return []
 
     return parsed_entries
 
