@@ -176,7 +176,10 @@ def run_test():
         passed_tests = 0
 
     # Output in exact spec format
-    print((f"{passed_tests}/{total_tests} test cases passed. {coverage_percent}% line coverage achieved."))
+    print(
+        f"{passed_tests}/{total_tests} test cases passed."
+        f"{coverage_percent}% line coverage achieved."
+    )
 
     # Exit with appropriate code
     if result != 0:
