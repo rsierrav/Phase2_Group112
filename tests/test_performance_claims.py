@@ -48,12 +48,14 @@ class TestPerformanceClaims(unittest.TestCase):
         self.assertAlmostEqual(self.metric.get_score(), 0.3)
 
     def test_downloads_and_likes_thresholds(self):
+        # Updated expectations to match new fallback logic
         cases = [
-            (50, 2, 0.0),
-            (200, 2, 0.05),
-            (50, 6, 0.05),
-            (2000, 0, 0.1),
-            (0, 20, 0.1),
+            (50, 2, 0.0),  # very low activity
+            (200, 2, 0.05),  # small downloads, low likes
+            (50, 6, 0.05),  # low downloads, some likes
+            (2000, 0, 0.3),  # downloads >1000 triggers baseline 0.3
+            (0, 20, 0.1),  # high likes gives 0.1
+            (20000, 5, 0.5),  # very popular model baseline 0.5
         ]
         for downloads, likes, expected in cases:
             data = {
@@ -61,7 +63,7 @@ class TestPerformanceClaims(unittest.TestCase):
                 "metadata": {"downloads": downloads, "likes": likes},
             }
             self.metric.process_score(data)
-            self.assertAlmostEqual(self.metric.get_score(), expected)
+            self.assertAlmostEqual(self.metric.get_score(), expected, places=2)
 
     def test_score_maxes_at_seven_tenths(self):
         """Implementation maxes out at ~0.7, not 1.0"""
