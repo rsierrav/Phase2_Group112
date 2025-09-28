@@ -9,3 +9,10 @@ testpaths = [
 python_files = [
     "test_*.py"
 ]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true

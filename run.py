@@ -51,7 +51,7 @@ coverage==7.3.2
         sys.exit(1)
 
 
-def run_test():
+def run_tests():
     """Run the test suite and report results in spec format."""
     import pytest
     import sys
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     if command == "install":
         install_dependencies()
     elif command == "test":
-        run_test()
+        run_tests()
     elif command == "score":
         if len(sys.argv) < 3:
             print("Error: Missing URL_FILE argument for score command")
