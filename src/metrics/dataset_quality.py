@@ -1,6 +1,7 @@
 import os
 import time
 import requests
+import logging
 from typing import Any, Dict
 from .protocol import Metric
 
@@ -19,7 +20,7 @@ class DatasetQualityMetric(Metric):
         """
         Extract dataset URL, code URL, and metadata for scoring.
         """
-        return {
+        data = {
             "dataset_url": parsed_data.get("dataset_url", ""),
             "code_url": parsed_data.get("code_url", ""),
             "description": parsed_data.get("description", ""),
@@ -27,6 +28,8 @@ class DatasetQualityMetric(Metric):
             "siblings": parsed_data.get("siblings", []),
             "tags": parsed_data.get("tags", []),
         }
+        logging.debug(f"DatasetQualityMetric.get_data extracted keys={list(data.keys())}")
+        return data
 
     def calculate_score(self, data: Dict[str, Any]) -> None:
         """
@@ -42,6 +45,7 @@ class DatasetQualityMetric(Metric):
         # Try LLM API first if available
         if api_key:
             try:
+                logging.info("Calling GenAI Studio API for DatasetQualityMetric")
                 prompt = f"""
 You are a Software Engineer evaluating model resources.
 Dataset link: {dataset_url or "N/A"}
@@ -78,13 +82,17 @@ Respond with only a number between 0.0 and 1.0.
                     score = float(content)
                     self.score = max(0.0, min(1.0, score))
                     self.latency = int((time.time() - start) * 1000)
+                    logging.info(f"LLM-based dataset quality score={self.score:.2f}")
                     return
-            except Exception:
-                pass  # Fall through to heuristic
+                else:
+                    logging.warning(f"GenAI API returned status {resp.status_code}")
+            except Exception as e:
+                logging.error(f"Error during GenAI API call: {e}", exc_info=True)
 
         # Fallback to heuristic scoring
         self.score = self._calculate_heuristic_score(data)
         self.latency = int((time.time() - start) * 1000)
+        logging.info(f"Heuristic dataset quality score={self.score:.2f}, latency={self.latency} ms")
 
     def _calculate_heuristic_score(self, data: Dict[str, Any]) -> float:
         """
@@ -92,35 +100,40 @@ Respond with only a number between 0.0 and 1.0.
         """
         score = 0.0
 
-        # Check if we have any dataset or code URLs
         dataset_url = data.get("dataset_url", "")
         code_url = data.get("code_url", "")
-
         if dataset_url:
             score += 0.3
         if code_url:
             score += 0.3
 
-        # Check description quality
         description = data.get("description", "")
         if len(description) > 100:
             score += 0.2
         elif len(description) > 50:
             score += 0.1
 
-        # Check for documentation files
         siblings = data.get("siblings", [])
         has_readme = any(s.get("rfilename", "").upper().startswith("README") for s in siblings if isinstance(s, dict))
         if has_readme:
             score += 0.1
 
-        # Check for examples or tutorials
         has_examples = any(
             "example" in s.get("rfilename", "").lower() or "tutorial" in s.get("rfilename", "").lower() for s in siblings if isinstance(s, dict)
         )
         if has_examples:
             score += 0.1
 
+        logging.debug(
+            (
+                "Heuristic components: "
+                f"dataset_url={bool(dataset_url)}, "
+                f"code_url={bool(code_url)}, "
+                f"desc_len={len(description)}, "
+                f"readme={has_readme}, "
+                f"examples={has_examples}"
+            )
+        )
         return min(score, 1.0)
 
     def get_score(self) -> float:
