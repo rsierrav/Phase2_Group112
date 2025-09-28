@@ -95,8 +95,7 @@ class TestRunPy(unittest.TestCase):
         sys.argv = ["run.py"]
         with patch.object(run, "show_usage") as mock_usage:
             with self.assertRaises(SystemExit):
-                if len(sys.argv) < 2:
-                    run.show_usage()
+                run.main()
             mock_usage.assert_called_once()
 
     @patch.object(run, "install_dependencies")
