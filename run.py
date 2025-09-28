@@ -59,46 +59,35 @@ def run_test():
     import io
     from contextlib import redirect_stdout, redirect_stderr
 
-    # Capture pytest output (quiet + coverage)
+    # Capture pytest output
     buffer = io.StringIO()
     with redirect_stdout(buffer), redirect_stderr(buffer):
-        result = pytest.main(["tests/", "-q", "--tb=no", "--cov=src", "--cov-report=term"])
+        result = pytest.main(["tests/", "--cov=src", "--cov-report=term-missing"])
 
     output = buffer.getvalue()
 
-    # --- Parse test results ---
+    # --- Parse total tests (from "collected N items") ---
     total_tests = 0
+    m = re.search(r"collected (\d+) items?", output)
+    if m:
+        total_tests = int(m.group(1))
+
+    # --- Parse passed tests (from "X passed") ---
     passed_tests = 0
-    failed_tests = 0
+    m = re.search(r"(\d+) passed", output)
+    if m:
+        passed_tests = int(m.group(1))
 
-    for line in output.splitlines():
-        # Examples: "140 passed in 2.34s" or "2 failed, 140 passed in 8.87s"
-        if "failed" in line and "passed" in line:
-            m = re.search(r"(\d+) failed.*?(\d+) passed", line)
-            if m:
-                failed_tests = int(m.group(1))
-                passed_tests = int(m.group(2))
-                total_tests = failed_tests + passed_tests
-                break
-        elif "passed" in line and "failed" not in line:
-            m = re.search(r"(\d+) passed", line)
-            if m:
-                passed_tests = total_tests = int(m.group(1))
-                failed_tests = 0
-                break
-
-    # --- Parse coverage ---
+    # --- Parse coverage (from "TOTAL ... NN%") ---
     coverage_percent = 0
-    for line in output.splitlines():
-        # pytest-cov prints like: "TOTAL ... 59%"
-        m = re.search(r"TOTAL.*?(\d+)%", line)
-        if m:
-            coverage_percent = int(m.group(1))
-            break
+    m = re.search(r"^TOTAL.*?(\d+)%", output, re.MULTILINE)
+    if m:
+        coverage_percent = int(m.group(1))
 
     # --- Final output in exact required format ---
     print(f"{passed_tests}/{total_tests} test cases passed. {coverage_percent}% line coverage achieved.")
 
+    # Exit with pytest’s result code so CI/autograder knows if tests failed
     sys.exit(result)
 
 
