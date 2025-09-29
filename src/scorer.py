@@ -107,9 +107,14 @@ class Scorer:
                 try:
                     key, metric_result = future.result()
                     if not metric_result["success"]:
-                        logging.warning(f"Metric {key} failed: {metric_result.get('error', 'Unknown error')}")
+                        warning_msg = (
+                            f"[WARN] Metric {key} failed for {metadata.get('name', 'unknown')}: " f"{metric_result.get('error', 'Unknown error')}"
+                        )
+                        print(warning_msg)
+                        logging.warning(warning_msg)
                     result[key] = metric_result["score"]
                     result[f"{key}_latency"] = metric_result["latency"]
+
                 except Exception as e:
                     logging.error(f"Metric {metric_name} crashed: {e}", exc_info=True)
                     result[metric_name] = {} if metric_name == "size_score" else -1.0

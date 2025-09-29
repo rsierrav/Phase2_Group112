@@ -1,6 +1,7 @@
 # utils/output_format.py
 
 import json
+import logging
 from typing import Dict, List, Any
 from src.scorer import Scorer
 
@@ -29,6 +30,7 @@ TABLE_COLUMNS = [
 
 
 def print_score_table(rows: List[Dict[str, Any]]):
+    logging.debug(f"Printing score table for {len(rows)} rows")
     print(json.dumps(rows, indent=4))
 
 
@@ -37,10 +39,9 @@ def format_score_row(metadata: Dict[str, Any], scorer: Scorer) -> Dict[str, Any]
     Run scorer on metadata and return a flat row dict
     matching the sample_output schema.
     """
+    logging.debug(f"Formatting score row for: {metadata.get('name', 'unknown')}")
     result = scorer.score(metadata)
 
-    # Helper to coerce values to floats, with fallback
-    # Latencinces are supposed to be rounded to the nearest whole number
     def as_float(val, default=0.0, is_latency=False):
         try:
             if is_latency:
@@ -48,6 +49,7 @@ def format_score_row(metadata: Dict[str, Any], scorer: Scorer) -> Dict[str, Any]
             else:
                 return round(float(val), 2)
         except (TypeError, ValueError):
+            logging.warning(f"Failed to coerce value {val} to float, using default={default}")
             return default
 
     row = {
@@ -60,9 +62,7 @@ def format_score_row(metadata: Dict[str, Any], scorer: Scorer) -> Dict[str, Any]
         "bus_factor": as_float(result.get("bus_factor"), -1),
         "bus_factor_latency": as_float(result.get("bus_factor_latency"), -1, is_latency=True),
         "performance_claims": as_float(result.get("performance_claims"), -1),
-        "performance_claims_latency": as_float(
-            result.get("performance_claims_latency"), -1, is_latency=True
-        ),
+        "performance_claims_latency": as_float(result.get("performance_claims_latency"), -1, is_latency=True),
         "license": as_float(result.get("license"), -1),
         "license_latency": as_float(result.get("license_latency"), -1, is_latency=True),
         "size_score": {
@@ -73,24 +73,22 @@ def format_score_row(metadata: Dict[str, Any], scorer: Scorer) -> Dict[str, Any]
         },
         "size_score_latency": as_float(result.get("size_score_latency"), -1, is_latency=True),
         "dataset_and_code_score": as_float(result.get("dataset_and_code_score"), -1),
-        "dataset_and_code_score_latency": as_float(
-            result.get("dataset_and_code_score_latency"), -1, is_latency=True
-        ),
+        "dataset_and_code_score_latency": as_float(result.get("dataset_and_code_score_latency"), -1, is_latency=True),
         "dataset_quality": as_float(result.get("dataset_quality"), -1),
-        "dataset_quality_latency": as_float(
-            result.get("dataset_quality_latency"), -1, is_latency=True
-        ),
+        "dataset_quality_latency": as_float(result.get("dataset_quality_latency"), -1, is_latency=True),
         "code_quality": as_float(result.get("code_quality"), -1),
         "code_quality_latency": as_float(result.get("code_quality_latency"), -1, is_latency=True),
     }
 
-    # Guarantee all columns exist in case TABLE_COLUMNS changes
     for col in TABLE_COLUMNS:
         if col not in row:
+            logging.debug(f"Adding missing column {col} with default value 0.0")
             row[col] = 0.0
 
+    logging.info(f"Formatted score row for {row['name']}, net_score={row['net_score']}")
     return row
 
 
 def print_score_table_as_json(rows: List[Dict[str, Any]]):
+    logging.debug(f"Printing score table as JSON with {len(rows)} rows")
     print(json.dumps(rows, indent=4))
