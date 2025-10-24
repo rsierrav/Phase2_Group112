@@ -1,15 +1,16 @@
-## Summary
-<!-- What changed and why -->
+## Purpose
+
+Explain the feature or fix this PR introduces.
 
 ## Changes
--
 
-## Tests
-- [ ] Unit tests added/updated
-- [ ] `pytest` locally passes
-- [ ] Lint/typecheck pass
+- Summary of code changes
+- Tests or docs added/updated
 
-## Checklist
-- [ ] Self-reviewed
-- [ ] Small, focused PR
-- [ ] Linked Issue(s): #__
+## Verification
+
+- [ ] CI workflow passes
+- [ ] Coverage ≥ 70 %
+- [ ] Reviewer assigned
+
+Closes #
