@@ -61,7 +61,9 @@ class LicenseMetric(Metric):
                     )
                     if resp.status_code == 200:
                         readme_data = resp.json()
-                        content = base64.b64decode(readme_data.get("content", "")).decode("utf-8", errors="ignore")
+                        content = base64.b64decode(readme_data.get("content", "")).decode(
+                            "utf-8", errors="ignore"
+                        )
                         for lic in HIGH_QUALITY_LICENSES | MEDIUM_QUALITY_LICENSES:
                             if lic.replace("-", " ") in content.lower():
                                 logging.debug(f"License keyword found in README: {lic}")

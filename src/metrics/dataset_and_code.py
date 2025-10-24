@@ -26,12 +26,18 @@ class DatasetAndCodeMetric(Metric):
 
             if isinstance(dataset_info, dict):
                 splits = dataset_info.get("splits", [])
-                total_examples = sum(split.get("num_examples", 0) for split in splits if isinstance(split, dict))
+                total_examples = sum(
+                    split.get("num_examples", 0) for split in splits if isinstance(split, dict)
+                )
                 logging.debug(f"Example count (dict splits) = {total_examples}")
                 return total_examples
             elif isinstance(dataset_info, list):
                 total_examples = sum(
-                    sum(split.get("num_examples", 0) for split in info.get("splits", []) if isinstance(split, dict))
+                    sum(
+                        split.get("num_examples", 0)
+                        for split in info.get("splits", [])
+                        if isinstance(split, dict)
+                    )
                     for info in dataset_info
                     if isinstance(info, dict)
                 )
@@ -97,7 +103,11 @@ class DatasetAndCodeMetric(Metric):
         engagement = {
             "downloads": parsed_data.get("downloads", 0),
             "likes": parsed_data.get("likes", 0),
-            "spaces": (len(parsed_data.get("spaces", [])) if isinstance(parsed_data.get("spaces"), list) else 0),
+            "spaces": (
+                len(parsed_data.get("spaces", []))
+                if isinstance(parsed_data.get("spaces"), list)
+                else 0
+            ),
         }
 
         if not engagement["downloads"] or not engagement["likes"]:
@@ -138,7 +148,9 @@ class DatasetAndCodeMetric(Metric):
         if widget_data:
             return True
 
-        transformers_info = parsed_data.get("transformersInfo", metadata.get("transformersInfo", {}))
+        transformers_info = parsed_data.get(
+            "transformersInfo", metadata.get("transformersInfo", {})
+        )
         if transformers_info.get("auto_model"):
             logging.debug("Code example detected from transformersInfo")
             return True
@@ -172,8 +184,10 @@ class DatasetAndCodeMetric(Metric):
             "has_documentation": self.has_documentation(parsed_data),
             "has_code_examples": self.has_code_examples(parsed_data),
             "tags": parsed_data.get("tags", []) or parsed_data.get("metadata", {}).get("tags", []),
-            "card_data": parsed_data.get("cardData", {}) or parsed_data.get("metadata", {}).get("cardData", {}),
-            "downloads": parsed_data.get("downloads", 0) or parsed_data.get("metadata", {}).get("downloads", 0),
+            "card_data": parsed_data.get("cardData", {})
+            or parsed_data.get("metadata", {}).get("cardData", {}),
+            "downloads": parsed_data.get("downloads", 0)
+            or parsed_data.get("metadata", {}).get("downloads", 0),
             "likes": parsed_data.get("likes", 0) or parsed_data.get("metadata", {}).get("likes", 0),
         }
         logging.info(f"DatasetAndCodeMetric collected data for category={result['category']}")

@@ -16,3 +16,17 @@ omit = ["tests/*"]
 
 [tool.coverage.report]
 show_missing = true
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src"]
+explicit_package_bases = true
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = ["src.metrics.bus_factor"]
+disable_error_code = ["no-redef"]
+
+[[tool.mypy.overrides]]
+module = ["src.utils.parse_input"]
+disable_error_code = ["assignment"]

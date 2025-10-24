@@ -158,8 +158,12 @@ def run_tests():
         if m:
             coverage_percent = int(m.group(1))
 
-        logging.info(f"Tests complete: {passed_tests}/{total_tests} passed, coverage={coverage_percent}%")
-        print(f"{passed_tests}/{total_tests} test cases passed. {coverage_percent}% line coverage achieved.")
+        logging.info(
+            f"Tests complete: {passed_tests}/{total_tests} passed, coverage={coverage_percent}%"
+        )
+        print(
+            f"{passed_tests}/{total_tests} test cases passed. {coverage_percent}% line coverage achieved."
+        )
 
         sys.exit(result.returncode)
 

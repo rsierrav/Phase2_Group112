@@ -18,7 +18,9 @@ from src.metrics.ramp_up_time import RampUpTime
 from src.metrics.performance_claims import PerformanceClaims
 
 
-def run_metric(metric_info: Tuple[str, Any], metadata: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+def run_metric(
+    metric_info: Tuple[str, Any], metadata: Dict[str, Any]
+) -> Tuple[str, Dict[str, Any]]:
     """
     Helper function to run a single metric in a separate process/thread.
     Returns the metric name and its results.
@@ -101,14 +103,18 @@ class Scorer:
         logging.debug(f"Using {max_workers} workers for scoring")
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_metric = {executor.submit(run_metric, metric_info, metadata): metric_info[0] for metric_info in self.metrics}
+            future_to_metric = {
+                executor.submit(run_metric, metric_info, metadata): metric_info[0]
+                for metric_info in self.metrics
+            }
             for future in concurrent.futures.as_completed(future_to_metric):
                 metric_name = future_to_metric[future]
                 try:
                     key, metric_result = future.result()
                     if not metric_result["success"]:
                         warning_msg = (
-                            f"[WARN] Metric {key} failed for {metadata.get('name', 'unknown')}: " f"{metric_result.get('error', 'Unknown error')}"
+                            f"[WARN] Metric {key} failed for {metadata.get('name', 'unknown')}: "
+                            f"{metric_result.get('error', 'Unknown error')}"
                         )
                         print(warning_msg)
                         logging.warning(warning_msg)

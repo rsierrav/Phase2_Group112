@@ -21,7 +21,9 @@ class SizeMetric(Metric):
 
     def calculate_score(self, size_mb: int) -> None:
         if size_mb <= 0:
-            self.size_score = {d: 0.0 for d in ["raspberry_pi", "jetson_nano", "desktop_pc", "aws_server"]}
+            self.size_score = {
+                d: 0.0 for d in ["raspberry_pi", "jetson_nano", "desktop_pc", "aws_server"]
+            }
             self.score = 0.0
             logging.info("SizeMetric.calculate_score: size <= 0 → all device scores=0.0")
             return
@@ -37,10 +39,14 @@ class SizeMetric(Metric):
         for device, max_size in thresholds.items():
             if size_mb <= max_size:
                 score = 0.5 + 0.5 * (1 - size_mb / max_size)
-                logging.debug(f"SizeMetric: {device} → within threshold {max_size} MB, raw score={score:.2f}")
+                logging.debug(
+                    f"SizeMetric: {device} → within threshold {max_size} MB, raw score={score:.2f}"
+                )
             else:
                 score = max(0.0, 1.0 - (size_mb - max_size) / (2 * max_size))
-                logging.debug(f"SizeMetric: {device} → exceeds threshold {max_size} MB, raw score={score:.2f}")
+                logging.debug(
+                    f"SizeMetric: {device} → exceeds threshold {max_size} MB, raw score={score:.2f}"
+                )
             scores[device] = round(max(0.0, min(score, 1.0)), 2)
 
         self.size_score = scores
