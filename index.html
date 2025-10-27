@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Model Registry — Phase 2 (Group 112)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light">
+  <link rel="stylesheet" href="./style.css?v=4">
+<!--Fonts-->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+  
+<body class="app">
+  <header class="app-header" role="banner">
+    <h1>Model Registry</h1>
+    <nav aria-label="Primary">
+      <a href="#upload">Upload</a>
+      <a href="#models">Models</a>
+      <a href="#health">Health</a>
+    </nav>
+  </header>
+
+  <main class="container" id="content">
+    <!-- Upload -->
+    <section id="upload" aria-labelledby="upload-title" class="card" style="scroll-margin-top:72px">
+      <h2 id="upload-title" class="section-title">Upload a Model</h2>
+
+      <form id="uploadForm" class="form-grid">
+        <div class="field">
+          <label for="modelName">Model name</label>
+          <input id="modelName" name="name" required placeholder="e.g., Tiny-LLM" />
+        </div>
+
+        <div class="field">
+          <label for="modelVersion">Version</label>
+          <input id="modelVersion" name="version" required placeholder="e.g., 1.0.0" />
+        </div>
+
+        <div class="field">
+          <label for="modelFile">ZIP file</label>
+          <input id="modelFile" name="file" type="file" accept=".zip" required />
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">Upload</button>
+        </div>
+      </form>
+
+      <pre id="uploadResult" class="result muted" aria-live="polite"></pre>
+    </section>
+
+    <!-- Models -->
+    <section id="models" aria-labelledby="models-title" class="card" style="scroll-margin-top:72px">
+      <div class="section-header">
+        <h2 id="models-title" class="section-title">Models</h2>
+        <div class="input-group" role="search">
+          <input id="searchText" placeholder="Search by name…" />
+          <button id="refreshBtn" type="button" class="btn btn-ghost">Refresh</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="modelsTable" class="table" aria-describedby="modelsHelp">
+          <thead>
+            <tr><th scope="col">Name</th><th scope="col">Version</th><th scope="col">Score</th><th scope="col" class="t-actions">Actions</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <p id="modelsHelp" class="muted">Showing results from <code>enumerate()</code>.</p>
+    </section>
+
+    <!-- Health -->
+    <section id="health" aria-labelledby="health-title" style="scroll-margin-top:72px">
+      <h2 id="health-title" class="section-title">Health</h2>
+      <div id="healthPanel" class="metrics">
+        <div class="metric good" aria-live="polite"></div>
+          <div class="metric-label">Requests (1h)</div>
+          <div class="metric-value" id="hRequests">—</div>
+          <div class="metric-sub">stable</div>
+        </div>
+
+        <div class="metric good" aria-live="polite">
+          <div class="metric-label">Avg Latency</div>
+          <div class="metric-value" id="hLatency">—</div>
+          <div class="metric-sub up">+0 ms</div>
+        </div>
+
+        <div class="metric" aria-live="polite">
+          <div class="metric-label">Error Rate</div>
+          <div class="metric-value" id="hError">—</div>
+          <div class="metric-sub good">healthy</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
