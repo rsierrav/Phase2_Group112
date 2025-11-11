@@ -41,11 +41,15 @@ app.include_router(lineage.router)
 app.include_router(license.router)
 app.include_router(tracks.router)
 
+openapi_yaml: str | None = None
+
 
 @app.get("/yaml", response_class=Response, include_in_schema=False)
 def get_openapi_yaml():
-    openapi_spec = app.openapi()
-    openapi_yaml = yaml.dump(openapi_spec, default_flow_style=False)
+    global openapi_yaml
+    if openapi_yaml is None:
+        openapi_spec = app.openapi()
+        openapi_yaml = yaml.dump(openapi_spec, default_flow_style=False)
 
     return Response(content=openapi_yaml, media_type="application/yaml")
 
