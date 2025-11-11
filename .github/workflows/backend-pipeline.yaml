@@ -1,4 +1,4 @@
-name: Pipeline
+name: Deploy Backend
 
 on:
   push:
@@ -77,11 +77,17 @@ jobs:
     if: startsWith(github.ref, 'refs/heads/feature')
     needs: [test]
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v3
       - uses: aws-actions/setup-sam@v2
         with:
           use-installer: true
+      - uses: astral-sh/setup-uv@v7
+      - run: uv export --frozen --no-dev --no-editable -o requirements.txt
+        working-directory: backend/backend
       - run: sam build --template ${SAM_TEMPLATE} --use-container
 
       - name: Assume the testing pipeline user role
@@ -107,11 +113,17 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: [test]
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v3
       - uses: aws-actions/setup-sam@v2
         with:
           use-installer: true
+      - uses: astral-sh/setup-uv@v7
+      - run: uv export --frozen --no-dev --no-editable -o requirements.txt
+        working-directory: backend/backend
 
       - name: Build resources
         run: sam build --template ${SAM_TEMPLATE} --use-container
@@ -200,7 +212,9 @@ jobs:
           # trigger the integration tests here
 
   deploy-prod:
-    if: github.ref == 'refs/heads/main'
+    # Figure out environments
+    if: false
+    # if: github.ref == 'refs/heads/main'
     needs: [integration-test]
     runs-on: ubuntu-latest
     # Configure GitHub Action Environment to have a manual approval step before deployment to production
