@@ -86,9 +86,11 @@ jobs:
         with:
           use-installer: true
       - uses: astral-sh/setup-uv@v7
-      - run: uv export --frozen --no-dev --no-editable -o requirements.txt
-        working-directory: backend/backend
-      - run: sam build --config-env ci --template ${SAM_TEMPLATE} --use-container
+      - run: | 
+          mkdir -p dep_layer
+          uv export --project backend --frozen --no-dev --no-editable -o dep_layer/requirements.txt
+      - name: Build resources
+        run: sam build --config-env ci --template ${SAM_TEMPLATE} --use-container
 
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v4
@@ -131,9 +133,9 @@ jobs:
         with:
           use-installer: true
       - uses: astral-sh/setup-uv@v7
-      - run: uv export --frozen --no-dev --no-editable -o requirements.txt
-        working-directory: backend/backend
-
+      - run: |
+          mkdir -p dep_layer
+          uv export --project backend --frozen --no-dev --no-editable -o dep_layer/requirements.txt
       - name: Build resources
         run: sam build --config-env ci --template ${SAM_TEMPLATE} --use-container
 
