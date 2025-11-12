@@ -36,16 +36,7 @@ jobs:
         run: mypy --explicit-package-bases src
 
       - name: Run tests with coverage
-        run: pytest -q --cov=src --cov-report=xml
-
-      - name: Enforce minimum coverage (>=70%)
-        run: |
-          python - <<'PY'
-          import xml.etree.ElementTree as ET, sys
-          r = float(ET.parse('coverage.xml').getroot().get('line-rate'))
-          print(f"Coverage: {r*100:.1f}%")
-          sys.exit(0 if r >= 0.70 else 1)
-          PY
+        run: pytest -q --cov=src --cov-report=xml  --cov-fail-under=70
 
       - name: CLI smoke test
         run: python run.py score sample_input.txt || true
