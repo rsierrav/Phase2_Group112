@@ -212,9 +212,7 @@ jobs:
           # trigger the integration tests here
 
   deploy-prod:
-    # Figure out environments
-    if: false
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     needs: [integration-test]
     runs-on: ubuntu-latest
     # Configure GitHub Action Environment to have a manual approval step before deployment to production
