@@ -64,7 +64,7 @@ jobs:
         env:
           FEATURE_BRANCH_NAME: ${{ github.event.ref }}
         run: |
-          sam delete \
+          sam delete --config-env ci \
             --stack-name $(echo ${FEATURE_BRANCH_NAME##*/} | tr -cd '[a-zA-Z0-9-]') \
             --region ${TESTING_REGION} \
             --no-prompts
@@ -88,7 +88,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
       - run: uv export --frozen --no-dev --no-editable -o requirements.txt
         working-directory: backend/backend
-      - run: sam build --template ${SAM_TEMPLATE} --use-container
+      - run: sam build --config-env ci --template ${SAM_TEMPLATE} --use-container
 
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v4
@@ -102,7 +102,8 @@ jobs:
       - name: Deploy to feature stack in the testing account
         shell: bash
         run: |
-          sam deploy --stack-name $(echo ${GITHUB_REF##*/} | tr -cd '[a-zA-Z0-9-]') \
+          sam deploy --config-env ci \
+            --stack-name $(echo ${GITHUB_REF##*/} | tr -cd '[a-zA-Z0-9-]') \
             --capabilities CAPABILITY_IAM \
             --region ${TESTING_REGION} \
             --s3-bucket ${TESTING_ARTIFACTS_BUCKET} \
@@ -126,7 +127,7 @@ jobs:
         working-directory: backend/backend
 
       - name: Build resources
-        run: sam build --template ${SAM_TEMPLATE} --use-container
+        run: sam build --config-env ci --template ${SAM_TEMPLATE} --use-container
 
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v4
@@ -139,7 +140,7 @@ jobs:
 
       - name: Upload artifacts to testing artifact buckets
         run: |
-          sam package \
+          sam package --config-env ci \
             --s3-bucket ${TESTING_ARTIFACTS_BUCKET} \
             --region ${TESTING_REGION} \
             --output-template-file packaged-testing.yaml
@@ -160,7 +161,7 @@ jobs:
 
       - name: Upload artifacts to production artifact buckets
         run: |
-          sam package \
+          sam package --config-env ci \
             --s3-bucket ${PROD_ARTIFACTS_BUCKET} \
             --region ${PROD_REGION} \
             --output-template-file packaged-prod.yaml
@@ -194,7 +195,8 @@ jobs:
 
       - name: Deploy to testing account
         run: |
-          sam deploy --stack-name ${TESTING_STACK_NAME} \
+          sam deploy --config-env ci \
+            --stack-name ${TESTING_STACK_NAME} \
             --template packaged-testing.yaml \
             --capabilities CAPABILITY_IAM \
             --region ${TESTING_REGION} \
@@ -238,7 +240,8 @@ jobs:
 
       - name: Deploy to production account
         run: |
-          sam deploy --stack-name ${PROD_STACK_NAME} \
+          sam deploy --config-env ci \
+            --stack-name ${PROD_STACK_NAME} \
             --template packaged-prod.yaml \
             --capabilities CAPABILITY_IAM \
             --region ${PROD_REGION} \
