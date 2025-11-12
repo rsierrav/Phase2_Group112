@@ -161,7 +161,11 @@ def categorize_url(url: str) -> Optional[Dict[str, str]]:
                 name = parts[0] if parts else "unknown"
         else:
             url_parts = url.rstrip("/").split("/")
-            name = url_parts[-1] if url_parts[-1] else (url_parts[-2] if len(url_parts) > 1 else "unknown")
+            name = (
+                url_parts[-1]
+                if url_parts[-1]
+                else (url_parts[-2] if len(url_parts) > 1 else "unknown")
+            )
     except Exception:
         name = "unknown"
 
@@ -242,7 +246,9 @@ def fetch_metadata(entry: Dict[str, Any], debug: bool = False) -> Dict[str, Any]
                         for s in md["siblings"]:
                             if isinstance(s, dict) and isinstance(s.get("size"), (int, float)):
                                 size_bytes += s["size"]
-                    entry["model_size_mb"] = round(size_bytes / (1024 * 1024), 2) if size_bytes > 0 else 0.0
+                    entry["model_size_mb"] = (
+                        round(size_bytes / (1024 * 1024), 2) if size_bytes > 0 else 0.0
+                    )
                 except Exception as e:
                     entry["model_size_mb"] = 0.0
                     logging.warning(f"Error calculating model size for {url}: {e}")

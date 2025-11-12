@@ -62,7 +62,9 @@ def format_score_row(metadata: Dict[str, Any], scorer: Scorer) -> Dict[str, Any]
         "bus_factor": as_float(result.get("bus_factor"), -1),
         "bus_factor_latency": as_float(result.get("bus_factor_latency"), -1, is_latency=True),
         "performance_claims": as_float(result.get("performance_claims"), -1),
-        "performance_claims_latency": as_float(result.get("performance_claims_latency"), -1, is_latency=True),
+        "performance_claims_latency": as_float(
+            result.get("performance_claims_latency"), -1, is_latency=True
+        ),
         "license": as_float(result.get("license"), -1),
         "license_latency": as_float(result.get("license_latency"), -1, is_latency=True),
         "size_score": {
@@ -73,9 +75,13 @@ def format_score_row(metadata: Dict[str, Any], scorer: Scorer) -> Dict[str, Any]
         },
         "size_score_latency": as_float(result.get("size_score_latency"), -1, is_latency=True),
         "dataset_and_code_score": as_float(result.get("dataset_and_code_score"), -1),
-        "dataset_and_code_score_latency": as_float(result.get("dataset_and_code_score_latency"), -1, is_latency=True),
+        "dataset_and_code_score_latency": as_float(
+            result.get("dataset_and_code_score_latency"), -1, is_latency=True
+        ),
         "dataset_quality": as_float(result.get("dataset_quality"), -1),
-        "dataset_quality_latency": as_float(result.get("dataset_quality_latency"), -1, is_latency=True),
+        "dataset_quality_latency": as_float(
+            result.get("dataset_quality_latency"), -1, is_latency=True
+        ),
         "code_quality": as_float(result.get("code_quality"), -1),
         "code_quality_latency": as_float(result.get("code_quality_latency"), -1, is_latency=True),
     }

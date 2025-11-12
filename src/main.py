@@ -20,7 +20,9 @@ def process(parsed_data):
     scorer = Scorer()
 
     for entry in parsed_data:
-        logging.debug(f"Processing entry: {entry.get('url', '')} (category={entry.get('category')})")
+        logging.debug(
+            f"Processing entry: {entry.get('url', '')} (category={entry.get('category')})"
+        )
         if entry.get("category") != "MODEL":
             logging.info(f"Skipping non-MODEL entry: {entry.get('url', '')}")
             continue

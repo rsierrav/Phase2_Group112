@@ -74,7 +74,9 @@ class PerformanceClaims(Metric):
             score = 0.1
 
         self.score = min(score, 1.0)
-        logging.info(f"PerformanceClaims score={self.score:.2f} (downloads={downloads}, likes={likes})")
+        logging.info(
+            f"PerformanceClaims score={self.score:.2f} (downloads={downloads}, likes={likes})"
+        )
 
     def process_score(self, parsed_data: Dict[str, Any]) -> None:
         start_time = time.perf_counter()

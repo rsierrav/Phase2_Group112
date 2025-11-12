@@ -1,0 +1,11 @@
+# Group 112 CODEOWNERS
+* @rsierrav @rzblue @slpapaba
+backend/ @rzblue
+lambdas/ @rzblue
+src/ @rzblue
+ui/ @slpapaba
+frontend/ @slpapaba
+tests/ @rsierrav
+.github/ @rsierrav
+scripts/ @rsierrav
+docs/ @rsierrav
