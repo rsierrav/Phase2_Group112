@@ -59,13 +59,13 @@ jobs:
           role-session-name: testing-packaging
           role-duration-seconds: 3600
           role-skip-session-tagging: true
-
+      - name: Set stack name
+        run: |
+          echo STACK_NAME=$(echo "${{ github.event.ref }}" | tr -cd '[a-zA-Z0-9-]') >> ${GITHUB_ENV}        
       - name: Delete feature branch stack
-        env:
-          FEATURE_BRANCH_NAME: ${{ github.event.ref }}
         run: |
           sam delete --config-env ci \
-            --stack-name $(echo ${FEATURE_BRANCH_NAME##*/} | tr -cd '[a-zA-Z0-9-]') \
+            --stack-name ${STACK_NAME} \
             --region ${TESTING_REGION} \
             --no-prompts
 
@@ -99,16 +99,24 @@ jobs:
           role-duration-seconds: 3600
           role-skip-session-tagging: true
 
+      - name: Set stack name
+        run: |
+          echo STACK_NAME=$(echo ${GITHUB_REF##*/} | tr -cd '[a-zA-Z0-9-]') >> ${GITHUB_ENV}
       - name: Deploy to feature stack in the testing account
         shell: bash
         run: |
           sam deploy --config-env ci \
-            --stack-name $(echo ${GITHUB_REF##*/} | tr -cd '[a-zA-Z0-9-]') \
+            --stack-name ${STACK_NAME} \
             --capabilities CAPABILITY_IAM \
             --region ${TESTING_REGION} \
             --s3-bucket ${TESTING_ARTIFACTS_BUCKET} \
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE}
+
+      - name: Run tests on feature branch
+        run: |
+          BASE_URL=$(sam list endpoints --stack-name ${STACK_NAME} --output json | jq -r '.[] | select (.LogicalResourceId == "ServerlessRestApi") | .CloudEndpoint.[0]')
+          curl -fSsL "${BASE_URL}"/health
 
   build-and-package:
     if: github.ref == 'refs/heads/main'
@@ -210,8 +218,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          # trigger the integration tests here
+      - name: Ping health endpoint
+        run: |
+          BASE_URL=$(sam list endpoints --stack-name ${TESTING_STACK_NAME} --output json | jq -r '.[] | select (.LogicalResourceId == "ServerlessRestApi") | .CloudEndpoint.[0]')
+          curl -fSsL "${BASE_URL}"/health
+
 
   deploy-prod:
     if: github.ref == 'refs/heads/main'
