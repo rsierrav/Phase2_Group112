@@ -5,13 +5,15 @@ Follow these steps carefully to ensure the project runs correctly.
 
 ---
 
-## 1. Install uv
+## Environment Setup
 
-`uv` is a fast Python package installer and project manager. Install it following the [official documentation](https://docs.astral.sh/uv/getting-started/installation/).
+### 1. Install uv
+
+This project uses `uv`, a fast Python package installer and project manager. Install it following the [official documentation](https://docs.astral.sh/uv/getting-started/installation/).
 
 ---
 
-## 2. Clone the repository
+### 2. Clone the repository
 
 ```bash
 git clone https://github.com/rsierrav/Phase2_Group112.git
@@ -22,7 +24,7 @@ You may also use GitHub Desktop if you prefer a graphical workflow.
 
 ---
 
-## 3. Set up the project environment
+### 3. Set up the project environment
 
 Create a virtual environment and install all dependencies:
 
@@ -33,27 +35,26 @@ uv sync
 This command:
 - Creates a `.venv/` folder inside the project directory
 - Installs all dependencies from `pyproject.toml` or `requirements.txt`
-- The `.venv/` folder is already ignored by Git
 
 ---
 
-## 4. (Optional) Activate the virtual environment
+### 4. (Optional) Activate the virtual environment
 
-You can use `uv run` to execute commands (recommended), or manually activate the virtual environment:
+In most cases, you should use `uv run` to execute commands as it ensures the environment is configured properly. However, you can manually activate the virtual environment if that workflow is desired:
 
-### On macOS / Linux
+#### On macOS / Linux
 
 ```bash
 source .venv/bin/activate
 ```
 
-### On Windows (Git Bash)
+#### On Windows (Git Bash)
 
 ```bash
 source .venv/Scripts/activate
 ```
 
-### On Windows (PowerShell)
+#### On Windows (PowerShell)
 
 ```powershell
 .venv\Scripts\Activate.ps1
@@ -69,7 +70,52 @@ mypy .
 
 ---
 
-## 5. Developer helper scripts
+### 5. Configure VS Code
+
+1. Open the project folder in VS Code.
+2. Press **Ctrl + Shift + P → Python: Select Interpreter**, then choose the one inside `.venv`.
+3. Install these extensions:
+   - **Python** (ms-python.python)
+   - **Pylance** (ms-python.vscode-pylance)
+   - **GitHub Actions** (GitHub.vscode-github-actions)
+
+#### Optional: `.vscode/settings.json`
+
+To enable automatic formatting on save:
+
+```json
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["-q"],
+  "python.analysis.typeCheckingMode": "basic",
+  "editor.formatOnSave": true
+}
+```
+
+**Note:** On Windows, use `"${workspaceFolder}\\.venv\\Scripts\\python.exe"`
+
+---
+
+### 6. Access ECE servers
+
+If you need to connect to Purdue ECE servers:
+
+```bash
+ssh yourusername@eceprog.ecn.purdue.edu
+```
+
+When prompted for a password, include ",push" for Duo authentication:
+
+```bash
+yourPassword,push
+```
+
+---
+
+## Developer Reference
+
+### Developer helper scripts
 
 The `scripts/` directory includes shortcuts for common tasks.
 
@@ -95,34 +141,7 @@ uv run mypy .
 
 ---
 
-## 6. Configure VS Code
-
-1. Open the project folder in VS Code.
-2. Press **Ctrl + Shift + P → Python: Select Interpreter**, then choose the one inside `.venv`.
-3. Install these extensions:
-   - **Python** (ms-python.python)
-   - **Pylance** (ms-python.vscode-pylance)
-   - **GitHub Actions** (GitHub.vscode-github-actions)
-
-### Optional: `.vscode/settings.json`
-
-To enable automatic formatting on save:
-
-```json
-{
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-  "python.testing.pytestEnabled": true,
-  "python.testing.pytestArgs": ["-q"],
-  "python.analysis.typeCheckingMode": "basic",
-  "editor.formatOnSave": true
-}
-```
-
-**Note:** On Windows, use `"${workspaceFolder}\\.venv\\Scripts\\python.exe"`
-
----
-
-## 7. Run checks manually
+### Run checks manually
 
 Format code:
 
@@ -153,7 +172,7 @@ All tests should pass locally before committing.
 
 ---
 
-## 8. Adding new dependencies
+### Adding new dependencies
 
 To add a new package:
 
@@ -171,44 +190,12 @@ This updates your `pyproject.toml` and installs the package.
 
 ---
 
-## 9. Continuous Integration (CI/CD)
+### Continuous Integration (CI/CD)
 
 GitHub Actions automatically runs on every push or pull request to `main` or `develop`.
 
-**Update your CI workflow** to use `uv`:
-
-```yaml
-- name: Set up uv
-  uses: astral-sh/setup-uv@v1
-
-- name: Install dependencies
-  run: uv sync
-
-- name: Run checks
-  run: |
-    uv run black --check .
-    uv run mypy .
-    uv run pytest --cov
-```
-
 Results appear in the **Actions** tab.  
 Branch protection requires all checks to pass before merging.
-
----
-
-## 10. Access ECE servers
-
-If you need to connect to Purdue ECE servers:
-
-```bash
-ssh yourusername@eceprog.ecn.purdue.edu
-```
-
-When prompted for a password, include “,push” for Duo authentication:
-
-```bash
-yourPassword,push
-```
 
 ---
 
