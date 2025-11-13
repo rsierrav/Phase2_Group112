@@ -2,10 +2,10 @@
 * @rsierrav @rzblue @slpapaba
 backend/ @rzblue
 lambdas/ @rzblue
-src/ @rzblue
+metrics-cli/src @rzblue
 ui/ @slpapaba
 frontend/ @slpapaba
-tests/ @rsierrav
+metrics-cli/tests @rsierrav
 .github/ @rsierrav
-scripts/ @rsierrav
+metrics-cli/scripts @rsierrav
 docs/ @rsierrav
