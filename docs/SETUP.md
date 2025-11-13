@@ -5,7 +5,13 @@ Follow these steps carefully to ensure the project runs correctly.
 
 ---
 
-## 1. Clone the repository
+## 1. Install uv
+
+`uv` is a fast Python package installer and project manager. Install it following the [official documentation](https://docs.astral.sh/uv/getting-started/installation/).
+
+---
+
+## 2. Clone the repository
 
 ```bash
 git clone https://github.com/rsierrav/Phase2_Group112.git
@@ -16,18 +22,30 @@ You may also use GitHub Desktop if you prefer a graphical workflow.
 
 ---
 
-## 2. Create a virtual environment
+## 3. Set up the project environment
+
+Create a virtual environment and install all dependencies:
 
 ```bash
-python -m venv .venv
+uv sync
 ```
 
-This creates a `.venv/` folder inside the project directory.  
-It stores all Python packages locally and is already ignored by Git.
+This command:
+- Creates a `.venv/` folder inside the project directory
+- Installs all dependencies from `pyproject.toml` or `requirements.txt`
+- The `.venv/` folder is already ignored by Git
 
 ---
 
-## 3. Activate the virtual environment
+## 4. (Optional) Activate the virtual environment
+
+You can use `uv run` to execute commands (recommended), or manually activate the virtual environment:
+
+### On macOS / Linux
+
+```bash
+source .venv/bin/activate
+```
 
 ### On Windows (Git Bash)
 
@@ -41,32 +59,13 @@ source .venv/Scripts/activate
 .venv\Scripts\Activate.ps1
 ```
 
-### On macOS / Linux
+When activated, your terminal prompt will show `(.venv)` prefix. With an activated environment, you can run commands directly without the `uv run` prefix:
 
 ```bash
-source .venv/bin/activate
+pytest --cov
+black .
+mypy .
 ```
-
-When the environment is active, the terminal prompt will include:
-`(.venv) C:\Users\...\Phase2_Group112>`
-
-Always make sure `(.venv)` appears before running project commands.
-
----
-
-## 4. Install development dependencies
-
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt 2>/dev/null || true
-pip install pytest pytest-cov black mypy
-```
-
-This installs:
-
-- **pytest** – testing framework
-- **black** – code formatter
-- **mypy** – static type checker
 
 ---
 
@@ -86,6 +85,14 @@ Run scripts from the project root:
 ./scripts/test.sh
 ```
 
+Alternatively, run commands directly:
+
+```bash
+uv run pytest
+uv run black .
+uv run mypy .
+```
+
 ---
 
 ## 6. Configure VS Code
@@ -103,13 +110,15 @@ To enable automatic formatting on save:
 
 ```json
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "python.testing.pytestEnabled": true,
   "python.testing.pytestArgs": ["-q"],
   "python.analysis.typeCheckingMode": "basic",
   "editor.formatOnSave": true
 }
 ```
+
+**Note:** On Windows, use `"${workspaceFolder}\\.venv\\Scripts\\python.exe"`
 
 ---
 
@@ -118,41 +127,76 @@ To enable automatic formatting on save:
 Format code:
 
 ```bash
+uv run black .
+# or
 ./scripts/format.sh
 ```
 
 Lint and type-check:
 
 ```bash
+uv run black --check .
+uv run mypy .
+# or
 ./scripts/lint.sh
 ```
 
 Run tests:
 
 ```bash
+uv run pytest --cov
+# or
 ./scripts/test.sh
 ```
 
-All 175 tests should pass locally before committing.
+All tests should pass locally before committing.
 
 ---
 
-## 8. Continuous Integration (CI/CD)
+## 8. Adding new dependencies
+
+To add a new package:
+
+```bash
+uv add package-name
+```
+
+To add a development dependency:
+
+```bash
+uv add --dev package-name
+```
+
+This updates your `pyproject.toml` and installs the package.
+
+---
+
+## 9. Continuous Integration (CI/CD)
 
 GitHub Actions automatically runs on every push or pull request to `main` or `develop`.
 
-It performs:
+**Update your CI workflow** to use `uv`:
 
-1. **Black --check .** – verify code formatting
-2. **Mypy .** – type checking
-3. **Pytest --cov** – run tests and collect coverage
+```yaml
+- name: Set up uv
+  uses: astral-sh/setup-uv@v1
+
+- name: Install dependencies
+  run: uv sync
+
+- name: Run checks
+  run: |
+    uv run black --check .
+    uv run mypy .
+    uv run pytest --cov
+```
 
 Results appear in the **Actions** tab.  
 Branch protection requires all checks to pass before merging.
 
 ---
 
-## 9. Access ECE servers
+## 10. Access ECE servers
 
 If you need to connect to Purdue ECE servers:
 
@@ -168,4 +212,4 @@ yourPassword,push
 
 ---
 
-Reminder: Always activate the virtual environment, run tests before committing, and push changes through feature branches with pull requests.
+Reminder: Use `uv run` for commands (or activate the virtual environment with `source .venv/bin/activate`), run tests before committing, and push changes through feature branches with pull requests.

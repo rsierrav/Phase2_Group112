@@ -191,7 +191,8 @@ def process_local_files():
     subprocess.check_call([sys.executable, "-m", "src.init", "dev"], cwd=SCRIPT_DIR)
 
 
-if __name__ == "__main__":
+def main():
+    """Entry point for the metrics-cli command."""
     if len(sys.argv) < 2:
         show_usage()
 
@@ -218,3 +219,7 @@ if __name__ == "__main__":
         logging.warning(f"Unknown command {command}, defaulting to run_cli()")
         print(f"DEBUG: Falling through to run_cli() with command: {command}", file=sys.stderr)
         run_cli()
+
+
+if __name__ == "__main__":
+    main()

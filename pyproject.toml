@@ -1,32 +1,16 @@
+[tool.uv.workspace]
+members = ["backend/backend", "metrics-cli"]
+
+[dependency-groups]
+dev = [
+    "black==25.9.0",
+    "coverage>=7.10.6",
+    "flake8==7.0.0",
+    "mypy>=1.18.2",
+    "pre-commit==4.3.0",
+    "pytest==8.3.2",
+    "pytest-cov==7.0.0",
+]
+
 [tool.black]
 line-length = 100
-target-version = ["py313"]
-
-[tool.pytest.ini_options]
-testpaths = [
-    "tests"
-]
-python_files = [
-    "test_*.py"
-]
-
-[tool.coverage.run]
-source = ["src"]
-omit = ["tests/*"]
-
-[tool.coverage.report]
-show_missing = true
-
-[tool.mypy]
-python_version = "3.11"
-files = ["src"]
-explicit_package_bases = true
-warn_unused_ignores = false
-
-[[tool.mypy.overrides]]
-module = ["src.metrics.bus_factor"]
-disable_error_code = ["no-redef"]
-
-[[tool.mypy.overrides]]
-module = ["src.utils.parse_input"]
-disable_error_code = ["assignment"]
