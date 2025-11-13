@@ -24,15 +24,15 @@ jobs:
         run: uv run black --check .
 
       - name: Type check (mypy)
-        run: uv run mypy --explicit-package-bases src
+        run: uv run --exact mypy --explicit-package-bases src
         working-directory: metrics-cli
 
       - name: Run tests with coverage
-        run: uv run pytest -q --cov=src --cov-report=xml  --cov-fail-under=70
+        run: uv run --exact pytest -q --cov=src --cov-report=xml  --cov-fail-under=70
         working-directory: metrics-cli
 
       - name: CLI smoke test
-        run: uv run metrics-cli score sample_input.txt || true
+        run: uv run --exact metrics-cli score sample_input.txt || true
         working-directory: metrics-cli
 
       - uses: actions/upload-artifact@v4
