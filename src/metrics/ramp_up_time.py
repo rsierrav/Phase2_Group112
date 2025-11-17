@@ -22,7 +22,9 @@ class RampUpTime(Metric):
             if not description:
                 metadata = parsed_data.get("metadata", {})
                 card_data = metadata.get("cardData", {})
-                description = card_data.get("model_description", "") or card_data.get("description", "")
+                description = card_data.get("model_description", "") or card_data.get(
+                    "description", ""
+                )
 
         logging.debug(f"Extracted description length={len(description)}")
         return description
@@ -44,7 +46,9 @@ class RampUpTime(Metric):
             logging.debug("Quick start guide detected in description")
             return True
 
-        siblings = parsed_data.get("siblings", []) or parsed_data.get("metadata", {}).get("siblings", [])
+        siblings = parsed_data.get("siblings", []) or parsed_data.get("metadata", {}).get(
+            "siblings", []
+        )
         quick_start_files = [
             "quickstart",
             "getting_started",
@@ -87,7 +91,9 @@ class RampUpTime(Metric):
             logging.debug("Transformers tag detected - installation assumed")
             return True
 
-        siblings = parsed_data.get("siblings", []) or parsed_data.get("metadata", {}).get("siblings", [])
+        siblings = parsed_data.get("siblings", []) or parsed_data.get("metadata", {}).get(
+            "siblings", []
+        )
         install_files = [
             "requirements.txt",
             "package.json",
@@ -109,17 +115,23 @@ class RampUpTime(Metric):
         return False
 
     def has_runnable_examples(self, parsed_data: Dict[str, Any]) -> bool:
-        widget_data = parsed_data.get("widgetData", []) or parsed_data.get("metadata", {}).get("widgetData", [])
+        widget_data = parsed_data.get("widgetData", []) or parsed_data.get("metadata", {}).get(
+            "widgetData", []
+        )
         if widget_data:
             logging.debug("Runnable examples detected via widgetData")
             return True
 
-        transformers_info = parsed_data.get("transformersInfo", parsed_data.get("metadata", {}).get("transformersInfo", {}))
+        transformers_info = parsed_data.get(
+            "transformersInfo", parsed_data.get("metadata", {}).get("transformersInfo", {})
+        )
         if transformers_info.get("auto_model"):
             logging.debug("Runnable examples detected via transformersInfo.auto_model")
             return True
 
-        siblings = parsed_data.get("siblings", []) or parsed_data.get("metadata", {}).get("siblings", [])
+        siblings = parsed_data.get("siblings", []) or parsed_data.get("metadata", {}).get(
+            "siblings", []
+        )
         example_files = [".py", ".ipynb", "example", "demo", "sample"]
 
         for sibling in siblings:
@@ -144,7 +156,9 @@ class RampUpTime(Metric):
             "tensorflow",
         ]
 
-        framework_count = sum(1 for tag in tags if any(lib in tag.lower() for lib in lightweight_indicators))
+        framework_count = sum(
+            1 for tag in tags if any(lib in tag.lower() for lib in lightweight_indicators)
+        )
         if framework_count > 0:
             logging.debug(f"Minimal dependencies detected from tags: {tags}")
             return True
@@ -193,11 +207,15 @@ class RampUpTime(Metric):
         tags = parsed_data.get("tags", []) or parsed_data.get("metadata", {}).get("tags", [])
 
         known_architectures = ["bert", "distilbert", "gpt", "whisper", "roberta", "t5"]
-        is_known_architecture = any(arch in tag.lower() for tag in tags for arch in known_architectures)
+        is_known_architecture = any(
+            arch in tag.lower() for tag in tags for arch in known_architectures
+        )
         min_length = 50 if is_known_architecture else 100
 
         if not description or len(description.strip()) < min_length:
-            siblings = parsed_data.get("siblings", []) or parsed_data.get("metadata", {}).get("siblings", [])
+            siblings = parsed_data.get("siblings", []) or parsed_data.get("metadata", {}).get(
+                "siblings", []
+            )
             doc_files = ["README.md", "README.txt", "README.rst", "docs/", "documentation"]
 
             for sibling in siblings:

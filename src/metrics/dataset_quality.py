@@ -114,12 +114,19 @@ Respond with only a number between 0.0 and 1.0.
             score += 0.1
 
         siblings = data.get("siblings", [])
-        has_readme = any(s.get("rfilename", "").upper().startswith("README") for s in siblings if isinstance(s, dict))
+        has_readme = any(
+            s.get("rfilename", "").upper().startswith("README")
+            for s in siblings
+            if isinstance(s, dict)
+        )
         if has_readme:
             score += 0.1
 
         has_examples = any(
-            "example" in s.get("rfilename", "").lower() or "tutorial" in s.get("rfilename", "").lower() for s in siblings if isinstance(s, dict)
+            "example" in s.get("rfilename", "").lower()
+            or "tutorial" in s.get("rfilename", "").lower()
+            for s in siblings
+            if isinstance(s, dict)
         )
         if has_examples:
             score += 0.1

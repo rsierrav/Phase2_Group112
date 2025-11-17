@@ -34,7 +34,9 @@ class TestRunPy(unittest.TestCase):
     @patch("subprocess.check_call")
     @patch("os.path.exists")
     @patch("builtins.open", new_callable=mock_open)
-    def test_install_dependencies_create_requirements(self, mock_file, mock_exists, mock_subprocess):
+    def test_install_dependencies_create_requirements(
+        self, mock_file, mock_exists, mock_subprocess
+    ):
         mock_exists.return_value = False
         run.install_dependencies()
         mock_file.assert_called()

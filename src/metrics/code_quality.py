@@ -21,7 +21,9 @@ class code_quality(Metric):
             headers["Authorization"] = f"token {token}"
         return headers
 
-    def _fetch_repo_tree(self, repo_path: str, branch: str = "HEAD") -> Optional[List[Dict[str, Any]]]:
+    def _fetch_repo_tree(
+        self, repo_path: str, branch: str = "HEAD"
+    ) -> Optional[List[Dict[str, Any]]]:
         url = GH_TREE_API.format(repo=repo_path, branch=branch)
         try:
             logging.info(f"Fetching repo tree for {repo_path}")
@@ -161,7 +163,12 @@ class code_quality(Metric):
             ):
                 has_lint_config = True
 
-            if path.startswith("readme") or path in {"readme.md", "readme.rst", "readme.txt", "readme"} or path == "index.md" or path == "home.md":
+            if (
+                path.startswith("readme")
+                or path in {"readme.md", "readme.rst", "readme.txt", "readme"}
+                or path == "index.md"
+                or path == "home.md"
+            ):
                 has_readme = True
 
             if (
@@ -226,7 +233,13 @@ class code_quality(Metric):
         else:
             s_doc_pack = 0.0
 
-        score = w_tests * s_tests + w_ci * s_ci + w_lint * s_lint + w_py * s_py + w_doc_pack * s_doc_pack
+        score = (
+            w_tests * s_tests
+            + w_ci * s_ci
+            + w_lint * s_lint
+            + w_py * s_py
+            + w_doc_pack * s_doc_pack
+        )
 
         self.score = max(0.0, min(1.0, score))
 
