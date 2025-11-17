@@ -1,0 +1,59 @@
+[project]
+name = "metrics-cli"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+dependencies = [
+    "beautifulsoup4>=4.9.0",
+    "gitpython>=3.1.0",
+    "huggingface-hub>=0.10.0",
+    "lxml>=4.6.0",
+    "pygithub>=1.55.0",
+    "python-dateutil>=2.8.0",
+    "requests>=2.25.0",
+    "urllib3>=1.26.0",
+]
+
+[dependency-groups]
+dev = [
+    "types-requests>=2.32.4.20250913",
+]
+
+[project.scripts]
+metrics-cli = "run:main"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]
+python_files = [
+    "test_*.py"
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src"]
+explicit_package_bases = true
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = ["src.metrics.bus_factor"]
+disable_error_code = ["no-redef"]
+
+[[tool.mypy.overrides]]
+module = ["src.utils.parse_input"]
+disable_error_code = ["assignment"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["run.py", "src"]
