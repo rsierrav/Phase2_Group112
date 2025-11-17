@@ -1,13 +1,14 @@
 """Artifact creation (ingestion) endpoints."""
 
 from typing import Annotated
-from fastapi import APIRouter, HTTPException, status, Header
+from fastapi import APIRouter, HTTPException, status, Header, Depends
 
 from ..models import (
     Artifact,
     ArtifactData,
     ArtifactType,
 )
+from ..db.dynamodb import DynamoDBService, get_db_service
 
 router = APIRouter(
     prefix="/artifact",
@@ -34,6 +35,7 @@ router = APIRouter(
 async def artifact_create(
     artifact_type: ArtifactType,
     artifact_data: ArtifactData,
+    db: DynamoDBService = Depends(get_db_service),
 ) -> Artifact:
     """
     Register a new artifact. (BASELINE)
@@ -42,7 +44,12 @@ async def artifact_create(
     Artifacts may share a name with existing entries; refer to the description
     above to see how an id is formed for an artifact.
     """
-    # TODO: Implement artifact creation logic
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented"
-    )
+    try:
+        # Create the artifact in DynamoDB
+        artifact = await db.create_artifact(artifact_data, artifact_type)
+        return artifact
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create artifact: {str(e)}",
+        )
