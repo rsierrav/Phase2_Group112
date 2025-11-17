@@ -5,6 +5,7 @@ ECE 461 - Fall 2025 - Project Phase 2 - Group 112
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse, Response
 import yaml
+from fastapi.middleware.cors import CORSMiddleware
 from .routers import (
     artifacts,
     ingest,
@@ -25,6 +26,13 @@ app = FastAPI(
     version="3.4.4",
     description="API for ECE 461/Fall 2025/Project Phase 2 - Group 112",
     redirect_slashes=False,  # Disable automatic trailing slash redirects
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include all routers
