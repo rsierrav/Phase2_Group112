@@ -3,7 +3,7 @@
 import json
 import base64
 from typing import Annotated
-from fastapi import APIRouter, HTTPException, status, Query, Header, Response, Depends
+from fastapi import APIRouter, HTTPException, status, Query, Response, Depends
 
 from ..models import (
     Artifact,
@@ -120,16 +120,21 @@ async def artifacts_list(
 async def artifact_retrieve(
     artifact_type: ArtifactType,
     id: ArtifactID,
+    db: DynamoDBService = Depends(get_db_service),
 ) -> Artifact:
     """
     Interact with the artifact with this id. (BASELINE)
 
     Return this artifact.
     """
-    # TODO: Implement artifact retrieval logic
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented"
-    )
+    artifact = await db.get_artifact(id)
+
+    # TODO: what is the expected behavior if the artifact type does not match?
+    # The ID is supposed to be globally unique.
+    if artifact is None or artifact.metadata.type != artifact_type:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Artifact does not exist")
+
+    return artifact
 
 
 @router.put(
