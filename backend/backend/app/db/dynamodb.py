@@ -308,6 +308,12 @@ class DynamoDBService:
         except Exception:
             return [], None
 
+    def reset_table(self) -> None:
+        """Delete all items in the table. For testing purposes only."""
+        with ArtifactModel.batch_write() as batch:
+            for item in ArtifactModel.scan():
+                batch.delete(item)
+
 
 @lru_cache(maxsize=1)
 def get_db_service() -> DynamoDBService:

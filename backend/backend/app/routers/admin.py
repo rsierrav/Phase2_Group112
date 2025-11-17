@@ -1,7 +1,9 @@
 """Registry reset endpoint."""
 
 from typing import Annotated
-from fastapi import APIRouter, HTTPException, status, Header
+from fastapi import APIRouter, HTTPException, status, Depends
+
+from app.db.dynamodb import DynamoDBService, get_db_service
 
 router = APIRouter(
     prefix="/reset",
@@ -17,13 +19,10 @@ router = APIRouter(
         401: {"description": "You do not have permission to reset the registry."},
     },
 )
-async def registry_reset() -> dict[str, str]:
+async def registry_reset(db: DynamoDBService = Depends(get_db_service)) -> None:
     """
     Reset the registry. (BASELINE)
 
     Reset the registry to a system default state.
     """
-    # TODO: Implement registry reset logic
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented"
-    )
+    db.reset_table()
