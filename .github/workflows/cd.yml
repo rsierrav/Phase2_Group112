@@ -1,0 +1,16 @@
+name: CD
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: echo "Building Docker image..."
+      - name: Push to AWS ECR
+        run: echo "Simulating push to AWS ECR..."
+      - name: Deploy to EC2
+        run: echo "Simulating SSH and restart container..."
