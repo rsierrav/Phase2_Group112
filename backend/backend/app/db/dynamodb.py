@@ -60,6 +60,7 @@ class ArtifactModel(Model):
     artifact_type = UnicodeAttribute()
     url = UnicodeAttribute()
     download_url = UnicodeAttribute(null=True)
+    s3_object_key = UnicodeAttribute(null=True)  # S3 object key for stored artifact
     created_at = UTCDateTimeAttribute()
     updated_at = UTCDateTimeAttribute()
 
@@ -150,6 +151,7 @@ class DynamoDBService:
             artifact_type=artifact_type.value,
             url=str(artifact_data.url),
             download_url=str(artifact_data.download_url) if artifact_data.download_url else None,
+            s3_object_key=None,  # Will be updated after upload
             created_at=now,
             updated_at=now,
         )
@@ -307,6 +309,45 @@ class DynamoDBService:
             return artifacts, next_key
         except Exception:
             return [], None
+
+    async def update_artifact_storage(
+        self, artifact_id: str, s3_object_key: str, download_url: str
+    ) -> None:
+        """
+        Update artifact with S3 storage information.
+
+        Args:
+            artifact_id: The unique artifact identifier
+            s3_object_key: The S3 object key where artifact is stored
+            download_url: The presigned download URL
+
+        Raises:
+            Exception: If update fails
+        """
+        try:
+            model = ArtifactModel.get(artifact_id, "METADATA")
+            model.s3_object_key = s3_object_key
+            model.download_url = download_url
+            model.updated_at = datetime.now(timezone.utc)
+            model.save()
+        except Exception as e:
+            raise Exception(f"Failed to update artifact storage info: {str(e)}")
+
+    async def get_s3_object_key(self, artifact_id: str) -> str | None:
+        """
+        Get the S3 object key for an artifact.
+
+        Args:
+            artifact_id: The unique artifact identifier
+
+        Returns:
+            S3 object key if artifact exists and has one, None otherwise
+        """
+        try:
+            model = ArtifactModel.get(artifact_id, "METADATA")
+            return model.s3_object_key
+        except Exception:
+            return None
 
 
 @lru_cache(maxsize=1)

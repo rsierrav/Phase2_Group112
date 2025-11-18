@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     DYNAMODB_ENDPOINT_URL: str | None = None
     CREATE_TABLE: bool = False
 
+    # S3 settings
+    S3_BUCKET_NAME: str = "ece461-artifacts"
+    S3_ENDPOINT_URL: str | None = None  # For local development (e.g., LocalStack)
+    AWS_ACCESS_KEY_ID: str | None = None  # Optional, will use IAM role if not set
+    AWS_SECRET_ACCESS_KEY: str | None = None  # Optional, will use IAM role if not set
+
     # API settings
     MAX_ARTIFACTS_PER_REQUEST: int = 100
     DEFAULT_PAGE_SIZE: int = 10
