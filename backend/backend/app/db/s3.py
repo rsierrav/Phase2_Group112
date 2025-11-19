@@ -71,7 +71,7 @@ class S3Service:
 
     async def upload_artifact(
         self,
-        file_content: bytes | BinaryIO,
+        file_content: bytes | BinaryIO | str,
         artifact_id: str,
         artifact_type: str,
         name: str,
@@ -79,9 +79,12 @@ class S3Service:
     ) -> str:
         """
         Upload an artifact to S3.
+        
+        Supports streaming uploads for large files using file paths or file-like objects
+        to avoid loading entire files into memory.
 
         Args:
-            file_content: File content as bytes or file-like object
+            file_content: File content as bytes, file-like object, or path to file on disk
             artifact_id: Unique identifier for the artifact
             artifact_type: Type of artifact (model/dataset/code)
             name: Name of the artifact
@@ -97,13 +100,24 @@ class S3Service:
 
         try:
             if isinstance(file_content, bytes):
+                # Small files - upload directly from memory
                 self.s3_client.put_object(
                     Bucket=self.bucket_name,
                     Key=object_key,
                     Body=file_content,
                     ContentType=content_type,
                 )
+            elif isinstance(file_content, str):
+                # File path - stream from disk
+                with open(file_content, 'rb') as f:
+                    self.s3_client.upload_fileobj(
+                        f,
+                        self.bucket_name,
+                        object_key,
+                        ExtraArgs={"ContentType": content_type},
+                    )
             else:
+                # File-like object - stream directly
                 self.s3_client.upload_fileobj(
                     file_content,
                     self.bucket_name,
