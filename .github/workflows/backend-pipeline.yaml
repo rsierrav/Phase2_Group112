@@ -61,7 +61,8 @@ jobs:
           role-skip-session-tagging: true
       - name: Set stack name
         run: |
-          echo STACK_NAME=$(echo "${{ github.event.ref }}" | tr -cd '[a-zA-Z0-9-]') >> ${GITHUB_ENV}        
+          EVENT_REF=${{ github.event.ref }}
+          echo STACK_NAME=$(echo "${EVENT_REF##*/}" | tr -cd '[a-zA-Z0-9-]') >> ${GITHUB_ENV}
       - name: Delete feature branch stack
         run: |
           sam delete --config-env ci \
@@ -117,7 +118,7 @@ jobs:
 
       - name: Run tests on feature branch
         run: |
-          BASE_URL=$(sam list endpoints --stack-name ${STACK_NAME} --output json | jq -r '.[] | select (.LogicalResourceId == "ServerlessRestApi") | .CloudEndpoint.[0]')
+          BASE_URL=$(sam list endpoints --region ${TESTING_REGION} --stack-name ${STACK_NAME} --output json | jq -r '.[] | select (.LogicalResourceId == "ServerlessRestApi") | .CloudEndpoint.[0]')
           curl -fSsL "${BASE_URL}"/health
 
   build-and-package:
@@ -218,11 +219,14 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: [deploy-testing]
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v3
       - name: Ping health endpoint
         run: |
-          BASE_URL=$(sam list endpoints --stack-name ${TESTING_STACK_NAME} --output json | jq -r '.[] | select (.LogicalResourceId == "ServerlessRestApi") | .CloudEndpoint.[0]')
+          BASE_URL=$(sam list endpoints --region ${TESTING_REGION} --stack-name ${TESTING_STACK_NAME} --output json | jq -r '.[] | select (.LogicalResourceId == "ServerlessRestApi") | .CloudEndpoint.[0]')
           curl -fSsL "${BASE_URL}"/health
 
 
