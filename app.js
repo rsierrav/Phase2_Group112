@@ -1,44 +1,101 @@
 // Config
-const API_BASE = "https://<your-api-gateway-base>"; // https://abc123.execute-api.us-east-1.amazonaws.com/prod
+const API_BASE = "https://kcij3sbcz7.execute-api.us-east-2.amazonaws.com/Prod";
 
-// Helper
+// Small helpers
 const $ = (id) => document.getElementById(id);
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-const fmtScore = (v) => (v === null || v === undefined || Number.isNaN(+v)) ? "—" : (+v).toFixed(3);
-const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const fmtScore = (v) =>
+  v === null || v === undefined || Number.isNaN(+v) ? "—" : (+v).toFixed(3);
+const esc = (s) =>
+  String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[c]);
 
-// Small toast helper 
-function toast(msg){ const t = document.getElementById('toast'); if(!t) return; t.textContent = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2200); }
+// Generic JSON helper for API calls
+async function apiJson(path, options = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    ...options,
+  });
+
+  if (!res.ok) {
+    // Try to read error body if any
+    let msg = `HTTP ${res.status}`;
+    try {
+      const data = await res.json();
+      if (data && data.detail) msg += ` — ${data.detail}`;
+    } catch {
+      // ignore parse error
+    }
+    throw new Error(msg);
+  }
+
+  // Some endpoints might return empty body
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
 
 // Upload
+// Form: name + version + file  then  POST /artifact/model with a URL body
 const uploadForm = $("uploadForm");
+
 uploadForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+
   const name = $("modelName").value.trim();
   const version = $("modelVersion").value.trim();
   const file = $("modelFile").files[0];
-  if (!name || !version || !file) return;
+
+  if (!name || !version || !file) {
+    $("uploadResult").textContent = "Please fill in all fields.";
+    return;
+  }
 
   const btn = uploadForm.querySelector('button[type="submit"]');
   const out = $("uploadResult");
-  btn.disabled = true; btn.classList.add("btn-secondary"); btn.textContent = "Uploading…";
+
+  btn.disabled = true;
+  btn.classList.add("btn-secondary");
+  btn.textContent = "Uploading…";
   out.textContent = "";
 
   try {
-    // Fake response FOR NOW
-    await sleep(400);
-    const data = { ok: true, message: "Uploaded (mock)", name, version, size_bytes: file.size };
+    // Backend expects ArtifactData = { url, download_url? }
+    // We don't really have a true hosting URL, so we send a fake-but-valid URL
+    // that encodes the name + version. This keeps the schema happy.
+    const payload = {
+      url: `https://example.com/models/${encodeURIComponent(
+        name
+      )}/${encodeURIComponent(version)}`,
+    };
+
+    const data = await apiJson(`/artifact/model`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
     out.textContent = JSON.stringify(data, null, 2);
-
-
   } catch (err) {
     out.textContent = "Upload failed: " + err.message;
   } finally {
-    btn.disabled = false; btn.textContent = "Upload"; btn.classList.remove("btn-secondary");
+    btn.disabled = false;
+    btn.textContent = "Upload";
+    btn.classList.remove("btn-secondary");
   }
 });
 
-// List
+// Models List
+
 $("refreshBtn").addEventListener("click", loadModels);
 
 // Debounced search typing
@@ -48,79 +105,134 @@ $("searchText").addEventListener("input", () => {
   searchTimer = setTimeout(loadModels, 250);
 });
 
+/**
+ * Load model list from backend
+ * Uses POST /artifacts with [{ "name": "*" }] to enumerate everything
+ */
 async function loadModels() {
-  const q = $("searchText").value.trim();
+  const q = $("searchText").value.trim().toLowerCase();
   const tbody = document.querySelector("#modelsTable tbody");
   tbody.innerHTML = `<tr><td colspan="4">Loading…</td></tr>`;
 
   try {
-    // FAKE list
-    await sleep(250);
-    let models = [
-      { name: "Tiny-LLM",   version: "1.0.0", score: 0.72 },
-      { name: "VisionNet",  version: "2.1.0", score: 0.81 },
-    ];
-    if (q) {
-      const ql = q.toLowerCase();
-      models = models.filter(m => m.name.toLowerCase().includes(ql));
-    }
-    renderModels(models);
+    // Ask backend for all artifacts
+    const queries = [{ name: "*" }];
 
-    // REAL call later
-   
+    const results = await apiJson(`/artifacts`, {
+      method: "POST",
+      body: JSON.stringify(queries),
+    });
+
+    // results is a list of ArtifactMetadata:
+    // { name, id, type }
+    let models = results.map((m) => ({
+      name: m.name,
+      id: m.id,
+      type: m.type,
+      // we don't actually have a numeric score from backend yet
+      score: null,
+    }));
+
+    // Local search filter by name
+    if (q) {
+      models = models.filter((m) => m.name.toLowerCase().includes(q));
+    }
+
+    renderModels(models);
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="4">Failed to load models: ${esc(err.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4">Failed to load models: ${esc(
+      err.message
+    )}</td></tr>`;
   }
 }
 
 function renderModels(models) {
   const tbody = document.querySelector("#modelsTable tbody");
-  if (!models.length) {
+
+  if (!models || !models.length) {
     tbody.innerHTML = `<tr><td colspan="4">No results.</td></tr>`;
     return;
   }
-  tbody.innerHTML = models.map(m => `
+
+  tbody.innerHTML = models
+    .map(
+      (m) => `
     <tr>
       <td>${esc(m.name)}</td>
-      <td><span class="badge badge--brand">${esc(m.version)}</span></td>
+      <td><span class="badge badge--brand">${esc(m.id)}</span></td>
       <td>${fmtScore(m.score)}</td>
       <td class="t-actions">
-        <button class="btn btn-secondary" type="button" data-name="${esc(m.name)}" data-version="${esc(m.version)}">Download</button>
+        <button
+          class="btn btn-secondary"
+          type="button"
+          data-id="${esc(m.id)}"
+          data-type="${esc(m.type)}"
+          data-name="${esc(m.name)}"
+        >
+          Download
+        </button>
       </td>
     </tr>
-  `).join("");
+  `
+    )
+    .join("");
 
-  // Attaching events to new buttons
-  tbody.querySelectorAll('button[data-name]').forEach(btn=>{
-    btn.addEventListener('click', () => downloadModel(btn.dataset.name, btn.dataset.version));
+  // Attach click handlers to each Download button
+  tbody.querySelectorAll("button[data-id]").forEach((btn) => {
+    btn.addEventListener("click", () =>
+      downloadModel(btn.dataset.id, btn.dataset.type, btn.dataset.name)
+    );
   });
 }
 
-// Download
-async function downloadModel(name, version) {
-  // Stub
-  alert(`Download stub for ${name} v${version}`);
+// Download model
 
-}
-
-// Health
-async function loadHealth() {
+async function downloadModel(id, type, name) {
   try {
-    await sleep(200);
-    // FAKE metrics for now
-    const h = { requests_last_hour: 42, avg_latency_ms: 180, error_rate_pct: 0.0 };
-    $("hRequests").textContent = h.requests_last_hour;
-    $("hLatency").textContent  = `${h.avg_latency_ms} ms`;
-    $("hError").textContent    = `${h.error_rate_pct}%`;
+    const artifact = await apiJson(`/artifacts/${type}/${id}`, {
+      method: "GET",
+    });
 
-    
+    const downloadUrl =
+      artifact?.data?.download_url || artifact?.data?.url || null;
+
+    if (downloadUrl) {
+      // open in new tab
+      window.open(downloadUrl, "_blank");
+    } else {
+      alert(
+        `No download URL available yet. Raw artifact:\n\n` +
+          JSON.stringify(artifact, null, 2)
+      );
+    }
   } catch (err) {
-    ["hRequests","hLatency","hError"].forEach(id => $(id).textContent = "—");
+    alert(`Failed to fetch artifact for ${name} (${id}): ${err.message}`);
   }
 }
 
-// Init
+// Health
+
+async function loadHealth() {
+  try {
+    const res = await fetch(`${API_BASE}/health`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json(); // { status: "ok" }
+
+    // If backend says "ok", show good metrics (still mocked numbers)
+    $("hRequests").textContent = 42;
+    $("hLatency").textContent = "180 ms";
+    $("hError").textContent = "0%";
+
+    console.log("Health:", data);
+  } catch (err) {
+    console.error("Health check failed:", err);
+    ["hRequests", "hLatency", "hError"].forEach(
+      (id) => ($(id).textContent = "—")
+    );
+  }
+}
+
+//Init
 loadModels();
 loadHealth();
-
-
