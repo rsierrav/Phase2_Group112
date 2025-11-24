@@ -5,7 +5,15 @@ Follow these steps carefully to ensure the project runs correctly.
 
 ---
 
-## 1. Clone the repository
+## Environment Setup
+
+### 1. Install uv
+
+This project uses `uv`, a fast Python package installer and project manager. Install it following the [official documentation](https://docs.astral.sh/uv/getting-started/installation/).
+
+---
+
+### 2. Clone the repository
 
 ```bash
 git clone https://github.com/rsierrav/Phase2_Group112.git
@@ -16,61 +24,98 @@ You may also use GitHub Desktop if you prefer a graphical workflow.
 
 ---
 
-## 2. Create a virtual environment
+### 3. Set up the project environment
+
+Create a virtual environment and install all dependencies:
 
 ```bash
-python -m venv .venv
+uv sync
 ```
 
-This creates a `.venv/` folder inside the project directory.  
-It stores all Python packages locally and is already ignored by Git.
+This command:
+- Creates a `.venv/` folder inside the project directory
+- Installs all dependencies from `pyproject.toml` or `requirements.txt`
 
 ---
 
-## 3. Activate the virtual environment
+### 4. (Optional) Activate the virtual environment
 
-### On Windows (Git Bash)
+In most cases, you should use `uv run` to execute commands as it ensures the environment is configured properly. However, you can manually activate the virtual environment if that workflow is desired:
 
-```bash
-source .venv/Scripts/activate
-```
-
-### On Windows (PowerShell)
-
-```powershell
-.venv\Scripts\Activate.ps1
-```
-
-### On macOS / Linux
+#### On macOS / Linux
 
 ```bash
 source .venv/bin/activate
 ```
 
-When the environment is active, the terminal prompt will include:
-`(.venv) C:\Users\...\Phase2_Group112>`
-
-Always make sure `(.venv)` appears before running project commands.
-
----
-
-## 4. Install development dependencies
+#### On Windows (Git Bash)
 
 ```bash
-pip install --upgrade pip
-pip install -r requirements.txt 2>/dev/null || true
-pip install pytest pytest-cov black mypy
+source .venv/Scripts/activate
 ```
 
-This installs:
+#### On Windows (PowerShell)
 
-- **pytest** – testing framework
-- **black** – code formatter
-- **mypy** – static type checker
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+When activated, your terminal prompt will show `(.venv)` prefix. With an activated environment, you can run commands directly without the `uv run` prefix:
+
+```bash
+pytest --cov
+black .
+mypy .
+```
 
 ---
 
-## 5. Developer helper scripts
+### 5. Configure VS Code
+
+1. Open the project folder in VS Code.
+2. Press **Ctrl + Shift + P → Python: Select Interpreter**, then choose the one inside `.venv`.
+3. Install these extensions:
+   - **Python** (ms-python.python)
+   - **Pylance** (ms-python.vscode-pylance)
+   - **GitHub Actions** (GitHub.vscode-github-actions)
+
+#### Optional: `.vscode/settings.json`
+
+To enable automatic formatting on save:
+
+```json
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["-q"],
+  "python.analysis.typeCheckingMode": "basic",
+  "editor.formatOnSave": true
+}
+```
+
+**Note:** On Windows, use `"${workspaceFolder}\\.venv\\Scripts\\python.exe"`
+
+---
+
+### 6. Access ECE servers
+
+If you need to connect to Purdue ECE servers:
+
+```bash
+ssh yourusername@eceprog.ecn.purdue.edu
+```
+
+When prompted for a password, include ",push" for Duo authentication:
+
+```bash
+yourPassword,push
+```
+
+---
+
+## Developer Reference
+
+### Developer helper scripts
 
 The `scripts/` directory includes shortcuts for common tasks.
 
@@ -86,86 +131,72 @@ Run scripts from the project root:
 ./scripts/test.sh
 ```
 
----
+Alternatively, run commands directly:
 
-## 6. Configure VS Code
-
-1. Open the project folder in VS Code.
-2. Press **Ctrl + Shift + P → Python: Select Interpreter**, then choose the one inside `.venv`.
-3. Install these extensions:
-   - **Python** (ms-python.python)
-   - **Pylance** (ms-python.vscode-pylance)
-   - **GitHub Actions** (GitHub.vscode-github-actions)
-
-### Optional: `.vscode/settings.json`
-
-To enable automatic formatting on save:
-
-```json
-{
-  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
-  "python.testing.pytestEnabled": true,
-  "python.testing.pytestArgs": ["-q"],
-  "python.analysis.typeCheckingMode": "basic",
-  "editor.formatOnSave": true
-}
+```bash
+uv run pytest
+uv run black .
+uv run mypy .
 ```
 
 ---
 
-## 7. Run checks manually
+### Run checks manually
 
 Format code:
 
 ```bash
+uv run black .
+# or
 ./scripts/format.sh
 ```
 
 Lint and type-check:
 
 ```bash
+uv run black --check .
+uv run mypy .
+# or
 ./scripts/lint.sh
 ```
 
 Run tests:
 
 ```bash
+uv run pytest --cov
+# or
 ./scripts/test.sh
 ```
 
-All 175 tests should pass locally before committing.
+All tests should pass locally before committing.
 
 ---
 
-## 8. Continuous Integration (CI/CD)
+### Adding new dependencies
+
+To add a new package:
+
+```bash
+uv add package-name
+```
+
+To add a development dependency:
+
+```bash
+uv add --dev package-name
+```
+
+This updates your `pyproject.toml` and installs the package.
+
+---
+
+### Continuous Integration (CI/CD)
 
 GitHub Actions automatically runs on every push or pull request to `main` or `develop`.
-
-It performs:
-
-1. **Black --check .** – verify code formatting
-2. **Mypy .** – type checking
-3. **Pytest --cov** – run tests and collect coverage
 
 Results appear in the **Actions** tab.  
 Branch protection requires all checks to pass before merging.
 
 ---
 
-## 9. Access ECE servers
-
-If you need to connect to Purdue ECE servers:
-
-```bash
-ssh yourusername@eceprog.ecn.purdue.edu
-```
-
-When prompted for a password, include “,push” for Duo authentication:
-
-```bash
-yourPassword,push
-```
-
----
-
-Reminder: Always activate the virtual environment, run tests before committing, and push changes through feature branches with pull requests.
+Reminder: Use `uv run` for commands (or activate the virtual environment with `source .venv/bin/activate`), run tests before committing, and push changes through feature branches with pull requests.
