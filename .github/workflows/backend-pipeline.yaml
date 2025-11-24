@@ -224,6 +224,17 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v3
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+      - name: Assume the testing pipeline user role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.TESTING_REGION }}
+          role-to-assume: ${{ env.TESTING_PIPELINE_EXECUTION_ROLE }}
+          role-session-name: integration-testing
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
       - name: Ping health endpoint
         run: |
           BASE_URL=$(sam list endpoints --region ${TESTING_REGION} --stack-name ${TESTING_STACK_NAME} --output json | jq -r '.[] | select (.LogicalResourceId == "ServerlessRestApi") | .CloudEndpoint.[0]')
