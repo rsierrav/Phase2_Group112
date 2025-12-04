@@ -22,6 +22,7 @@ async def get_optional_auth_token(
 ) -> AuthenticationToken | None:
     return x_authorization
 
+
 # DynamoDB dependency for endpoints that need the artifacts table
 _dynamodb = boto3.resource("dynamodb")
 

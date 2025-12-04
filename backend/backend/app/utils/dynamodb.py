@@ -57,9 +57,7 @@ def parse_pagination_token(offset: Optional[EnumerateOffset]) -> Optional[Dict[s
     return offset.key if hasattr(offset, "key") else None  # type: ignore[attr-defined]
 
 
-def encode_pagination_token(
-    last_evaluated_key: Optional[Dict[str, Any]]
-) -> Optional[str]:
+def encode_pagination_token(last_evaluated_key: Optional[Dict[str, Any]]) -> Optional[str]:
     """
     Convert a LastEvaluatedKey dict into an opaque string token.
     For now, we use a simple JSON representation.
