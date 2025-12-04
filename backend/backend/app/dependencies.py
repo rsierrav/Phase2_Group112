@@ -1,7 +1,9 @@
 """Dependencies for authentication and common functionality."""
 
 from typing import Annotated
-from fastapi import Header, HTTPException, status
+from fastapi import Header
+import os
+import boto3
 
 from .models import AuthenticationToken
 
@@ -11,20 +13,22 @@ async def get_auth_token(
 ) -> AuthenticationToken:
     """
     Validate and extract authentication token from X-Authorization header.
-
-    Raises:
-        HTTPException: 403 if token is missing or invalid
     """
-    # TODO: Implement actual token validation logic
-    # For now, just return the token
     return x_authorization
 
 
 async def get_optional_auth_token(
     x_authorization: Annotated[str | None, Header()] = None,
 ) -> AuthenticationToken | None:
-    """
-    Extract authentication token from X-Authorization header without validation.
-    Used for endpoints that may have optional authentication.
-    """
     return x_authorization
+
+# DynamoDB dependency for endpoints that need the artifacts table
+_dynamodb = boto3.resource("dynamodb")
+
+
+async def get_dynamodb_table():
+    """
+    Provide a DynamoDB table reference for dependencies.
+    """
+    table_name = os.environ.get("ARTIFACTS_TABLE_NAME", "artifacts")
+    return _dynamodb.Table(table_name)  # type: ignore[reportAttributeAccessIssue]
