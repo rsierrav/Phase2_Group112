@@ -1,7 +1,7 @@
 """Artifact management endpoints."""
 
 from typing import Annotated
-from fastapi import APIRouter, HTTPException, status, Query, Header, Response
+from fastapi import APIRouter, HTTPException, status, Query, Header, Response, Depends
 
 from ..models import (
     Artifact,
@@ -10,6 +10,13 @@ from ..models import (
     ArtifactType,
     ArtifactID,
     EnumerateOffset,
+)
+from ..dependencies import get_dynamodb_table
+from ..utils.dynamodb import (
+    query_artifacts_by_name,
+    parse_pagination_token,
+    encode_pagination_token,
+    format_artifact_metadata,
 )
 
 router = APIRouter(
@@ -23,18 +30,18 @@ router = APIRouter(
     response_model=list[ArtifactMetadata],
     responses={
         200: {"description": "List of artifacts"},
-        400: {
-            "description": "There is missing field(s) in the artifact_query or it is formed improperly, or is invalid."
-        },
+        400: {"description": "Missing or invalid artifact_type or artifact_id."},
         413: {"description": "Too many artifacts returned."},
     },
 )
 async def artifacts_list(
     queries: list[ArtifactQuery],
     response: Response,
+    x_authorization: Annotated[str, Header(alias="X-Authorization")],
     offset: Annotated[
         EnumerateOffset | None, Query(description="Provide this for pagination")
     ] = None,
+    table=Depends(get_dynamodb_table),
 ) -> list[ArtifactMetadata]:
     """
     Get the artifacts from the registry. (BASELINE)
@@ -45,11 +52,90 @@ async def artifacts_list(
 
     The response is paginated; the response header includes the offset to use in the next query.
     """
-    # TODO: Implement artifact search logic
-    # response.headers["offset"] = "next_offset_value"
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented"
-    )
+    # Validate authentication token
+    if not x_authorization:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Authentication failed due to invalid or missing AuthenticationToken.",
+        )
+
+    # Validate queries
+    if not queries or len(queries) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one artifact query must be provided.",
+        )
+
+    # Parse pagination token
+    last_evaluated_key = parse_pagination_token(offset)
+
+    # Set a reasonable limit per page
+    PAGE_SIZE = 100
+    MAX_RESULTS = 1000
+
+    all_artifacts: list[dict] = []
+    next_key = last_evaluated_key
+
+    try:
+        # Process each query
+        for query in queries:
+            if not query.name:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Artifact name is required in query.",
+                )
+
+            # Extract artifact types if provided
+            artifact_types = None
+            if query.types:
+                artifact_types = [t.value for t in query.types]
+
+            # Query DynamoDB
+            items, next_key = query_artifacts_by_name(
+                table=table,
+                name=query.name,
+                artifact_types=artifact_types,
+                limit=PAGE_SIZE,
+                last_evaluated_key=next_key,
+            )
+
+            # Add items to results
+            all_artifacts.extend(items)
+
+            # Check if we've hit the maximum result limit
+            if len(all_artifacts) >= MAX_RESULTS:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail="Too many artifacts returned. Please refine your query or use pagination.",
+                )
+
+            # If we have a next key and haven't filled the page, continue
+            # Otherwise, break to return current results
+            if not next_key or len(all_artifacts) >= PAGE_SIZE:
+                break
+
+        # Format artifacts to match ArtifactMetadata schema
+        formatted_artifacts = [
+            ArtifactMetadata(**format_artifact_metadata(item)) for item in all_artifacts
+        ]
+        # Set pagination header if there are more results
+        if next_key:
+            next_offset = encode_pagination_token(next_key)
+            if next_offset:
+                response.headers["offset"] = next_offset
+
+        return formatted_artifacts
+
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        # Log the error and return 500
+        print(f"Error querying artifacts: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while querying artifacts.",
+        )
 
 
 @router.get(
@@ -57,9 +143,7 @@ async def artifacts_list(
     response_model=Artifact,
     responses={
         200: {"description": "Return the artifact. url is required."},
-        400: {
-            "description": "There is missing field(s) in the artifact_type or artifact_id or it is formed improperly, or is invalid."
-        },
+        400: {"description": "Missing or invalid artifact_type or artifact_id."},
         404: {"description": "Artifact does not exist."},
     },
 )
@@ -72,7 +156,6 @@ async def artifact_retrieve(
 
     Return this artifact.
     """
-    # TODO: Implement artifact retrieval logic
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented"
     )
@@ -83,9 +166,7 @@ async def artifact_retrieve(
     status_code=status.HTTP_200_OK,
     responses={
         200: {"description": "Artifact is updated."},
-        400: {
-            "description": "There is missing field(s) in the artifact_type or artifact_id or it is formed improperly, or is invalid."
-        },
+        400: {"description": "Missing or invalid artifact_type or artifact_id."},
         404: {"description": "Artifact does not exist."},
     },
 )
@@ -100,7 +181,6 @@ async def artifact_update(
     The name and id must match.
     The artifact source (from artifact_data) will replace the previous contents.
     """
-    # TODO: Implement artifact update logic
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented"
     )
@@ -111,9 +191,7 @@ async def artifact_update(
     status_code=status.HTTP_200_OK,
     responses={
         200: {"description": "Artifact is deleted."},
-        400: {
-            "description": "There is missing field(s) in the artifact_type or artifact_id or invalid"
-        },
+        400: {"description": "Missing or invalid artifact_type or artifact_id."},
         404: {"description": "Artifact does not exist."},
     },
 )
@@ -126,7 +204,6 @@ async def artifact_delete(
 
     Delete only the artifact that matches "id". (id is a unique identifier for an artifact)
     """
-    # TODO: Implement artifact deletion logic
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented"
     )
