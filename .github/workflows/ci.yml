@@ -28,7 +28,7 @@ jobs:
         working-directory: metrics-cli
 
       - name: Run tests with coverage
-        run: uv run --exact pytest -q --cov=src --cov-report=xml  --cov-fail-under=70
+        run: uv run --exact pytest -q --cov=src --cov-report=xml --cov-fail-under=70
         working-directory: metrics-cli
 
       - name: CLI smoke test
