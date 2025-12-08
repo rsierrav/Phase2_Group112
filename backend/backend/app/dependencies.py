@@ -24,11 +24,7 @@ async def get_optional_auth_token(
 
 
 # DynamoDB dependency for endpoints that need the artifacts table.
-AWS_REGION = (
-    os.getenv("AWS_REGION")
-    or os.getenv("AWS_DEFAULT_REGION")
-    or "us-east-1"
-)
+AWS_REGION = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "us-east-1"
 
 _dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
 
