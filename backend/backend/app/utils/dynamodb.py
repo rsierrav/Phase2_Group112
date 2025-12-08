@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
 from boto3.dynamodb.conditions import Attr
-from mypy_boto3_dynamodb.service_resource import Table  # type: ignore[import]
 from ..models import EnumerateOffset
+
+Table = Any
 
 
 def query_artifacts_by_name(
