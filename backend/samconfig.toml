@@ -17,8 +17,9 @@ lint = true
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
-s3_prefix = "backend"
+s3_prefix = "phase2-backend"
 image_repositories = []
+stack_name = "phase2-backend"
 
 [default.package.parameters]
 resolve_s3 = true
