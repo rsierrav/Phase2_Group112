@@ -21,7 +21,7 @@ Resources:
   ArtifactsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: artifacts
+      TableName: !Sub "${AWS::StackName}-artifacts"
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
