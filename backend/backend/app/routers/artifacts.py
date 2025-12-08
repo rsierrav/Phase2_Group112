@@ -39,7 +39,9 @@ async def artifacts_list(
     queries: list[ArtifactQuery],
     response: Response,
     x_authorization: Annotated[str, Header(alias="X-Authorization")],
-    offset: Annotated[EnumerateOffset | None, Query(description="Provide this for pagination")] = None,
+    offset: Annotated[
+        EnumerateOffset | None, Query(description="Provide this for pagination")
+    ] = None,
     table=Depends(get_dynamodb_table),
 ) -> list[ArtifactMetadata]:
     """
@@ -114,7 +116,9 @@ async def artifacts_list(
                 break
 
         # Format artifacts to match ArtifactMetadata schema
-        formatted_artifacts = [ArtifactMetadata(**format_artifact_metadata(item)) for item in all_artifacts]
+        formatted_artifacts = [
+            ArtifactMetadata(**format_artifact_metadata(item)) for item in all_artifacts
+        ]
         # Set pagination header if there are more results
         if next_key:
             next_offset = encode_pagination_token(next_key)
@@ -141,7 +145,9 @@ async def artifacts_list(
     responses={
         200: {"description": "Return the artifact. url is required."},
         400: {"description": "Missing or invalid artifact_type or artifact_id."},
-        403: {"description": "Authentication failed due to invalid or missing AuthenticationToken."},
+        403: {
+            "description": "Authentication failed due to invalid or missing AuthenticationToken."
+        },
         404: {"description": "Artifact does not exist."},
         500: {"description": "The artifact storage encountered an error."},
     },
@@ -229,7 +235,9 @@ async def artifact_update(
     The name and id must match.
     The artifact source (from artifact_data) will replace the previous contents.
     """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented")
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented"
+    )
 
 
 @router.delete(
@@ -250,4 +258,6 @@ async def artifact_delete(
 
     Delete only the artifact that matches "id". (id is a unique identifier for an artifact)
     """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented")
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented"
+    )

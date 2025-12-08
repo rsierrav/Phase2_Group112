@@ -26,7 +26,9 @@ router = APIRouter(
     status_code=status.HTTP_201_CREATED,
     response_model=Artifact,
     responses={
-        201: {"description": ("Success. Check the id in the returned metadata for the official ID.")},
+        201: {
+            "description": ("Success. Check the id in the returned metadata for the official ID.")
+        },
         202: {
             "description": (
                 "Artifact ingest accepted but the rating pipeline deferred the "
@@ -37,8 +39,15 @@ router = APIRouter(
                 "rating result exists."
             )
         },
-        400: {"description": ("There is missing field(s) in the artifact_data or it is formed " "improperly (must include a single url).")},
-        403: {"description": "Authentication failed due to invalid or missing AuthenticationToken."},
+        400: {
+            "description": (
+                "There is missing field(s) in the artifact_data or it is formed "
+                "improperly (must include a single url)."
+            )
+        },
+        403: {
+            "description": "Authentication failed due to invalid or missing AuthenticationToken."
+        },
         409: {"description": "Artifact exists already."},
         424: {"description": "Artifact is not registered due to the disqualified rating."},
     },
@@ -66,7 +75,10 @@ async def artifact_create(
     if not parsed.scheme or not parsed.netloc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=("There is missing field(s) in the artifact_data or it is formed " "improperly (must include a single url)."),
+            detail=(
+                "There is missing field(s) in the artifact_data or it is formed "
+                "improperly (must include a single url)."
+            ),
         )
 
     name = parsed.path.rstrip("/").split("/")[-1] or "artifact"
