@@ -47,18 +47,8 @@ async def artifacts_list(
     """
     Get the artifacts from the registry. (BASELINE)
 
-    Search for artifacts satisfying the indicated query.
-    If you want to enumerate all artifacts, provide an array with a single
-    artifact_query whose name is "*".
-
-    The response is paginated; the response header includes the offset to use in the next query.
+    Baseline does not require auth; X-Authorization is ignored if present.
     """
-    # Validate authentication token
-    if not x_authorization:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Authentication failed due to invalid or missing AuthenticationToken.",
-        )
 
     # Validate queries
     if not queries or len(queries) == 0:
@@ -160,14 +150,8 @@ async def artifact_retrieve(
 ) -> Artifact:
     """
     Interact with the artifact with this id. (BASELINE)
-
-    Return this artifact with metadata and data.url / data.download_url.
+    Baseline does not require auth; X-Authorization is ignored if present.
     """
-    if not x_authorization:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Authentication failed due to invalid or missing AuthenticationToken.",
-        )
 
     # Look up item in DynamoDB
     try:
