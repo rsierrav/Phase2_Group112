@@ -38,7 +38,7 @@ router = APIRouter(
 async def artifacts_list(
     queries: list[ArtifactQuery],
     response: Response,
-    x_authorization: Annotated[str, Header(alias="X-Authorization")],
+    x_authorization: Annotated[str | None, Header(alias="X-Authorization")] = None,
     offset: Annotated[
         EnumerateOffset | None, Query(description="Provide this for pagination")
     ] = None,
@@ -155,7 +155,7 @@ async def artifacts_list(
 async def artifact_retrieve(
     artifact_type: ArtifactType,
     id: ArtifactID,
-    x_authorization: Annotated[str, Header(alias="X-Authorization")],
+    x_authorization: Annotated[str | None, Header(alias="X-Authorization")] = None,
     table=Depends(get_dynamodb_table),
 ) -> Artifact:
     """

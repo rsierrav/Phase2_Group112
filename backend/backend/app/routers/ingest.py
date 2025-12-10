@@ -1,6 +1,6 @@
 """Artifact creation (ingestion) endpoints."""
 
-from typing import Annotated
+from typing import Annotated, Optional
 from uuid import uuid4
 from urllib.parse import urlparse
 
@@ -55,7 +55,7 @@ router = APIRouter(
 async def artifact_create(
     artifact_type: ArtifactType,
     artifact_data: ArtifactData,
-    x_authorization: Annotated[str, Header(alias="X-Authorization")],
+    x_authorization: Annotated[Optional[str], Header(alias="X-Authorization")] = None,
     table=Depends(get_dynamodb_table),
 ) -> Artifact:
     """
