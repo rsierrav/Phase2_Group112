@@ -1,7 +1,9 @@
 """Registry reset endpoint."""
 
 from typing import Annotated
-from fastapi import APIRouter, HTTPException, status, Header
+from fastapi import APIRouter, HTTPException, status, Header, Depends
+
+from ..dependencies import get_dynamodb_table
 
 router = APIRouter(
     prefix="/reset",
@@ -17,13 +19,42 @@ router = APIRouter(
         401: {"description": "You do not have permission to reset the registry."},
     },
 )
-async def registry_reset() -> dict[str, str]:
+async def registry_reset(
+    x_authorization: Annotated[str | None, Header(alias="X-Authorization")] = None,
+    table=Depends(get_dynamodb_table),
+) -> dict[str, str]:
     """
     Reset the registry. (BASELINE)
 
     Reset the registry to a system default state.
     """
-    # TODO: Implement registry reset logic
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented"
-    )
+    if not x_authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="You do not have permission to reset the registry.",
+        )
+
+    try:
+        scan_kwargs: dict = {}
+        while True:
+            resp = table.scan(**scan_kwargs)
+            items = resp.get("Items", [])
+
+            if items:
+                with table.batch_writer() as batch:
+                    for item in items:
+                        batch.delete_item(Key={"id": item["id"]})
+
+            last_key = resp.get("LastEvaluatedKey")
+            if not last_key:
+                break
+            scan_kwargs["ExclusiveStartKey"] = last_key
+
+    except Exception as exc:  # noqa: BLE001
+        print(f"Error resetting registry: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to reset the registry.",
+        )
+
+    return {"status": "reset"}
