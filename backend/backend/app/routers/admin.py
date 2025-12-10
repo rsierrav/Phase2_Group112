@@ -1,7 +1,6 @@
 """Registry reset endpoint."""
 
-from typing import Annotated
-from fastapi import APIRouter, HTTPException, status, Header, Depends
+from fastapi import APIRouter, HTTPException, status, Depends
 
 from ..dependencies import get_dynamodb_table
 
@@ -20,7 +19,6 @@ router = APIRouter(
     },
 )
 async def registry_reset(
-    x_authorization: Annotated[str | None, Header(alias="X-Authorization")] = None,
     table=Depends(get_dynamodb_table),
 ) -> dict[str, str]:
     """
@@ -28,12 +26,6 @@ async def registry_reset(
 
     Reset the registry to a system default state.
     """
-    if not x_authorization:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="You do not have permission to reset the registry.",
-        )
-
     try:
         scan_kwargs: dict = {}
         while True:

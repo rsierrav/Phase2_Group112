@@ -61,15 +61,8 @@ async def artifact_create(
     """
     Register a new artifact. (BASELINE)
 
-    Register a new artifact by providing a downloadable source url.
-    Artifacts may share a name with existing entries; refer to the description
-    above to see how an id is formed for an artifact.
+    Baseline does not require auth; X-Authorization is ignored if present.
     """
-    if not x_authorization:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Authentication failed due to invalid or missing AuthenticationToken.",
-        )
 
     parsed = urlparse(str(artifact_data.url))
     if not parsed.scheme or not parsed.netloc:
