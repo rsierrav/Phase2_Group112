@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
+import json
 
 from boto3.dynamodb.conditions import Attr
 from ..models import EnumerateOffset
@@ -46,27 +47,33 @@ def query_artifacts_by_name(
     return items, next_key
 
 
-def parse_pagination_token(offset: Optional[EnumerateOffset]) -> Optional[Dict[str, Any]]:
+def parse_pagination_token(
+    offset: Optional[EnumerateOffset],
+) -> Optional[Dict[str, Any]]:
     """
     Convert an offset (opaque pagination token) into a DynamoDB LastEvaluatedKey dict.
-    For now, if offset is None, we simply start from the beginning.
+
+    We expect offset to be a JSON string produced by encode_pagination_token.
+    If offset is None or invalid, start from the beginning.
     """
     if offset is None:
         return None
-    # If EnumerateOffset already wraps the key dict, just return it.
-    # Adjust this if your EnumerateOffset type is different.
-    return offset.key if hasattr(offset, "key") else None  # type: ignore[attr-defined]
+
+    try:
+        return json.loads(offset)
+    except Exception:
+        # If the token is malformed, just ignore it and start from the beginning.
+        return None
 
 
-def encode_pagination_token(last_evaluated_key: Optional[Dict[str, Any]]) -> Optional[str]:
+def encode_pagination_token(
+    last_evaluated_key: Optional[Dict[str, Any]],
+) -> Optional[str]:
     """
     Convert a LastEvaluatedKey dict into an opaque string token.
-    For now, we use a simple JSON representation.
     """
     if last_evaluated_key is None:
         return None
-
-    import json
 
     return json.dumps(last_evaluated_key)
 
@@ -80,8 +87,4 @@ def format_artifact_metadata(item: Dict[str, Any]) -> Dict[str, Any]:
         "id": item.get("id"),
         "name": item.get("name"),
         "type": item.get("type"),
-        "owner": item.get("owner"),
-        "created_at": item.get("created_at"),
-        "updated_at": item.get("updated_at"),
-        # include any other fields your ArtifactMetadata model expects
     }

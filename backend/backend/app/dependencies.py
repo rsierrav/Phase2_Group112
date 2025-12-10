@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import Header
 import os
 import boto3
+from boto3.resources.base import ServiceResource
 
 from .models import AuthenticationToken
 
@@ -23,10 +24,13 @@ async def get_optional_auth_token(
     return x_authorization
 
 
-# DynamoDB dependency for endpoints that need the artifacts table.
-AWS_REGION = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "us-east-1"
+def _create_dynamodb_resource() -> ServiceResource:
+    """Create a DynamoDB resource with a default region for local/dev."""
+    region = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "us-east-1"
+    return boto3.resource("dynamodb", region_name=region)
 
-_dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
+
+_dynamodb = _create_dynamodb_resource()
 
 
 async def get_dynamodb_table():

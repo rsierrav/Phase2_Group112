@@ -3,11 +3,9 @@ name: Deploy Backend
 on:
   push:
     branches:
-      - 'main'
-      - 'feature**'
+      - "main"
+      - "feature**"
   delete:
-    branches:
-      - 'feature**'
 
 env:
   SAM_TEMPLATE: template.yaml
@@ -87,7 +85,7 @@ jobs:
         with:
           use-installer: true
       - uses: astral-sh/setup-uv@v7
-      - run: | 
+      - run: |
           mkdir -p dep_layer
           uv export --project backend --frozen --no-dev --no-editable -o dep_layer/requirements.txt
       - name: Build resources
@@ -114,7 +112,6 @@ jobs:
             --region ${TESTING_REGION} \
             --s3-bucket ${TESTING_ARTIFACTS_BUCKET} \
             --no-fail-on-empty-changeset \
-            --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE}
 
       - name: Run tests on feature branch
         run: |
@@ -239,7 +236,6 @@ jobs:
         run: |
           BASE_URL=$(sam list endpoints --region ${TESTING_REGION} --stack-name ${TESTING_STACK_NAME} --output json | jq -r '.[] | select (.LogicalResourceId == "ServerlessRestApi") | .CloudEndpoint.[0]')
           curl -fSsL "${BASE_URL}"/health
-
 
   deploy-prod:
     if: github.ref == 'refs/heads/main'
