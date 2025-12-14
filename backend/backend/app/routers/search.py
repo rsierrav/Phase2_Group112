@@ -110,10 +110,10 @@ def _readme_for_url(url: str) -> str:
     return _README_CACHE[url]
 
 
-def _compile_regex(pattern: str) -> re.Pattern:
+def _compile_regex(pattern: str) -> tuple[re.Pattern, str]:
     """
     Compile a regex string.
-    Supports both:
+    Supports:
       - Python regex: '^foo$'
       - JS-style: '/^foo$/i' or '/^foo$/' (flags optional; supported: i, m, s)
     Also strips redundant surrounding quotes: '"^foo$"' or "'^foo$'".
@@ -121,18 +121,17 @@ def _compile_regex(pattern: str) -> re.Pattern:
     flags = 0
     pat = pattern.strip()
 
-    # Strip surrounding quotes repeatedly (handles '"^foo$"' and even '""^foo$""')
+    # Strip surrounding quotes repeatedly
     while len(pat) >= 2 and ((pat[0] == pat[-1] == '"') or (pat[0] == pat[-1] == "'")):
         pat = pat[1:-1].strip()
 
-    # JS-style /pattern/flags handling (flags are optional)
+    # JS-style /pattern/flags (flags optional)
     if len(pat) >= 2 and pat[0] == "/":
         last = pat.rfind("/")
         if last > 0:
             maybe_pat = pat[1:last]
             maybe_flags = pat[last + 1 :]  # noqa: E203
 
-            # Treat as JS-style if flags are empty OR purely alphabetic
             if maybe_flags == "" or maybe_flags.isalpha():
                 pat = maybe_pat
                 if "i" in maybe_flags:
@@ -143,7 +142,7 @@ def _compile_regex(pattern: str) -> re.Pattern:
                     flags |= re.DOTALL
 
     try:
-        return re.compile(pat, flags)
+        return re.compile(pat, flags), pat
     except re.error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -151,14 +150,9 @@ def _compile_regex(pattern: str) -> re.Pattern:
         )
 
 
-def _name_matches(rx: re.Pattern, name: str) -> bool:
-    """
-    Autograder-friendly behavior:
-    - If pattern is anchored (^...$), require full string match for names.
-    - Otherwise, allow substring search.
-    """
-    pat = rx.pattern or ""
-    if pat.startswith("^") and pat.endswith("$"):
+def _name_matches(rx: re.Pattern, normalized_pattern: str, name: str) -> bool:
+    # If anchored, require full match for names
+    if normalized_pattern.startswith("^") and normalized_pattern.endswith("$"):
         return rx.fullmatch(name) is not None
     return rx.search(name) is not None
 
@@ -188,7 +182,7 @@ async def artifact_by_regex_post(
             detail="There is missing field(s) in the artifact_regex or it is formed improperly, or is invalid",
         )
 
-    rx = _compile_regex(body["regex"])
+    rx, normalized = _compile_regex(body["regex"])
 
     hits_by_id: dict[str, ArtifactMetadata] = {}
 
@@ -212,7 +206,7 @@ async def artifact_by_regex_post(
             art_id_str = str(art_id)
             art_type_str = str(art_type)
 
-            if _name_matches(rx, name):
+            if _name_matches(rx, normalized, name):
                 hits_by_id.setdefault(
                     art_id_str, ArtifactMetadata(name=name, id=art_id_str, type=art_type_str)
                 )
