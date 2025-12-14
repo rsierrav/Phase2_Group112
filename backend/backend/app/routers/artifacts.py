@@ -236,12 +236,43 @@ async def artifact_update(
 async def artifact_delete(
     artifact_type: ArtifactType,
     id: ArtifactID,
+    table=Depends(get_dynamodb_table),
 ) -> dict[str, str]:
     """
     Delete this artifact. (NON-BASELINE)
 
     Delete only the artifact that matches "id". (id is a unique identifier for an artifact)
     """
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented"
-    )
+    # First check if artifact exists and type matches
+    try:
+        response = table.get_item(Key={"id": id})
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="The artifact storage encountered an error.",
+        )
+
+    item = response.get("Item")
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Artifact does not exist.",
+        )
+
+    # Check type matches
+    if item.get("type") != artifact_type.value:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="artifact_type does not match stored artifact type.",
+        )
+
+    # Delete the artifact
+    try:
+        table.delete_item(Key={"id": id})
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="The artifact storage encountered an error while deleting.",
+        )
+
+    return {"message": "Artifact deleted successfully"}
