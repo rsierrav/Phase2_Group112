@@ -12,6 +12,7 @@ from .routers import (
     rating,
     cost,
     search,
+    by_name,
     audit,
     lineage,
     license,
@@ -37,6 +38,7 @@ app.add_middleware(
 
 # Include all routers
 app.include_router(search.router)
+app.include_router(by_name.router)  # ADD THIS LINE
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
