@@ -54,7 +54,7 @@ router = APIRouter(
 )
 async def artifact_create(
     artifact_type: ArtifactType,
-    artifact_data: ArtifactData,
+    artifact: Artifact,
     x_authorization: Annotated[Optional[str], Header(alias="X-Authorization")] = None,
     table=Depends(get_dynamodb_table),
 ) -> Artifact:
@@ -64,7 +64,7 @@ async def artifact_create(
     Baseline does not require auth; X-Authorization is ignored if present.
     """
 
-    parsed = urlparse(str(artifact_data.url))
+    parsed = urlparse(str(artifact.data.url))
     if not parsed.scheme or not parsed.netloc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -82,7 +82,7 @@ async def artifact_create(
         "id": artifact_id,
         "name": name,
         "type": artifact_type.value,
-        "url": str(artifact_data.url),
+        "url": str(artifact.data.url),
     }
 
     try:
@@ -100,8 +100,8 @@ async def artifact_create(
         type=artifact_type,
     )
     data = ArtifactData(
-        url=artifact_data.url,
-        download_url=artifact_data.download_url or artifact_data.url,
+        url=artifact.data.url,
+        download_url=artifact.data.download_url or artifact.data.url,
     )
 
     return Artifact(metadata=metadata, data=data)

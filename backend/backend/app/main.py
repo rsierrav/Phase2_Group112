@@ -23,7 +23,7 @@ from .routers import (
 
 app = FastAPI(
     title="ECE 461 - Fall 2025 - Project Phase 2 - Group 112",
-    version="3.4.4",
+    version="3.4.7",
     description="API for ECE 461/Fall 2025/Project Phase 2 - Group 112",
     redirect_slashes=False,  # Disable automatic trailing slash redirects
 )
@@ -36,18 +36,18 @@ app.add_middleware(
 )
 
 # Include all routers
+app.include_router(search.router)
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(artifacts.router)
-app.include_router(ingest.router)
 app.include_router(rating.router)
 app.include_router(cost.router)
-app.include_router(search.router)
 app.include_router(audit.router)
 app.include_router(lineage.router)
 app.include_router(license.router)
 app.include_router(tracks.router)
+app.include_router(ingest.router)
 
 openapi_yaml: str | None = None
 

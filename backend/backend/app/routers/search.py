@@ -1,66 +1,68 @@
 """Artifact search endpoints."""
 
-from typing import Annotated
-from fastapi import APIRouter, HTTPException, status, Header
+import re
 
-from ..models import (
-    ArtifactMetadata,
-    ArtifactName,
-    ArtifactRegEx,
-)
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 
-router = APIRouter(
-    prefix="/artifact",
-    tags=["search"],
-)
+from ..dependencies import get_dynamodb_table
+
+router = APIRouter(prefix="/artifact", tags=["search"])
 
 
-@router.get(
-    "/byName/{name}",
-    response_model=list[ArtifactMetadata],
-    responses={
-        200: {"description": "Return artifact metadata entries that match the provided name."},
-        400: {
-            "description": "There is missing field(s) in the artifact_name or it is formed improperly, or is invalid."
-        },
-        404: {"description": "No such artifact."},
-    },
-)
-async def artifact_by_name_get(
-    name: ArtifactName,
-) -> list[ArtifactMetadata]:
-    """
-    List artifact metadata for this name. (NON-BASELINE)
-
-    Return metadata for each artifact matching this name.
-    """
-    # TODO: Implement search by name logic
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented"
-    )
+class ArtifactSearchHit(BaseModel):
+    name: str
+    id: str
+    type: str
 
 
 @router.post(
     "/byRegEx",
-    response_model=list[ArtifactMetadata],
+    response_model=list[ArtifactSearchHit],
     responses={
         200: {"description": "Return a list of artifacts."},
-        400: {
-            "description": "There is missing field(s) in the artifact_regex or it is formed improperly, or is invalid"
-        },
+        400: {"description": "Invalid regex or malformed request."},
         404: {"description": "No artifact found under this regex."},
     },
 )
-async def artifact_by_regex_get(
-    regex_query: ArtifactRegEx,
-) -> list[ArtifactMetadata]:
-    """
-    Get any artifacts fitting the regular expression (BASELINE).
+async def artifact_by_regex_post(
+    body: dict,
+    table=Depends(get_dynamodb_table),
+) -> list[ArtifactSearchHit]:
 
-    Search for an artifact using regular expression over artifact names
-    and READMEs. This is similar to search by name.
-    """
-    # TODO: Implement regex search logic
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Endpoint not yet implemented"
-    )
+    if "regex" not in body or not isinstance(body["regex"], str):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid request body")
+
+    pattern = body["regex"]
+
+    try:
+        rx = re.compile(pattern)
+    except re.error as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid regex: {e}")
+
+    hits: list[ArtifactSearchHit] = []
+    scan_kwargs = {}
+    while True:
+        resp = table.scan(**scan_kwargs)
+        items = resp.get("Items", [])
+
+        for item in items:
+            name = item.get("name")
+            art_id = item.get("id")
+            art_type = item.get("type")
+
+            if isinstance(name, str) and rx.search(name):
+                if art_id is not None and art_type is not None:
+                    hits.append(ArtifactSearchHit(name=name, id=str(art_id), type=str(art_type)))
+
+        last_key = resp.get("LastEvaluatedKey")
+        if not last_key:
+            break
+        scan_kwargs["ExclusiveStartKey"] = last_key
+
+    if not hits:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No artifact found under this regex."
+        )
+
+    return hits
