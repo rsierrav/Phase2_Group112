@@ -1,7 +1,7 @@
 # Trustworthy Model Registry — Phase 2 (Group 112)
 
 This repository continues the Trustworthy Model Registry project for the **Software Engineering (ECE 30861 / CSCI 450)** course.  
-It extends the Phase 1 command-line tool built by **Group 111** into a **serverless AWS-hosted system** with CI/CD, a web UI, and live performance metrics.
+It extends the Phase 1 command-line tool built by **Group 111** into a **serverless AWS-hosted system** with CI/CD and a web UI.
 
 ---
 
@@ -11,11 +11,11 @@ The registry evaluates and hosts machine-learning models and datasets for **qual
 
 **Phase 2 goals**
 
-- Transition from CLI → REST API + Dashboard
-- Implement CRUD, Ingest, and Enumerate endpoints
-- Display CloudWatch performance metrics (p50/p95/p99 latency)
-- Automate tests + deployments through GitHub Actions
-- Follow the **Performance Track** for Deliverable 2
+- Transition from CLI to REST API + Web UI
+- Implement baseline CRUD, ingest, and enumeration endpoints
+- Automate testing and deployment using GitHub Actions
+- Deploy a serverless backend on AWS
+- **Attempt** the Performance Track for Deliverable 2
 
 ---
 
@@ -24,10 +24,10 @@ The registry evaluates and hosts machine-learning models and datasets for **qual
 | Component                    | Purpose                             |
 | ---------------------------- | ----------------------------------- |
 | **AWS Lambda + API Gateway** | Serverless compute + REST endpoints |
-| **AWS S3 + DynamoDB**        | Artifact + metadata storage         |
-| **CloudWatch + CloudTrail**  | Observability + logging             |
-| **GitHub Actions**           | CI/CD pipeline                      |
-| **pytest · mypy · black**    | Testing · type-checking · linting   |
+| **AWS S3 + DynamoDB**        | Artifact and metadata storage       |
+| **CloudWatch**               | Logging and observability           |
+| **GitHub Actions**           | CI pipeline and build automation    |
+| **pytest · mypy · black**    | Testing, type-checking, linting     |
 | **VS Code + Bash**           | Development environment             |
 
 ---
@@ -36,38 +36,38 @@ The registry evaluates and hosts machine-learning models and datasets for **qual
 
 | Member                     | Role                      | Focus                                                    |
 | -------------------------- | ------------------------- | -------------------------------------------------------- |
-| **Rosa Sierra Villanueva** | Project Manager · Tester  | Testing · Validation · Documentation · Team Coordination |
-| **Ryan Blue**              | Backend & DevOps Engineer | AWS Lambda · API Gateway · DynamoDB · CI/CD Integration  |
-| **Sarah Papabathini**      | UI Engineer               | Upload + Enumerate Dashboard · CloudWatch Metrics        |
+| **Rosa Sierra Villanueva** | Project Manager · Backend | Backend implementation, testing, CI/CD, documentation    |
+| **Ryan Blue**              | Backend & DevOps Engineer | Initial AWS setup, backend scaffolding, CI configuration |
+| **Sarah Papabathini**      | UI Engineer               | Web UI implementation and accessibility compliance       |
 
 ---
 
 ## Continuous Integration
 
-Every push or PR to `main` or `develop` triggers GitHub Actions:
+Pull requests to `main` trigger GitHub Actions checks:
 
-1. **Black --check** → formatting
-2. **Mypy** → type check
-3. **Pytest** → unit + integration tests
-4. **Coverage report** uploaded as artifact
+1. **Black --check** for formatting
+2. **Mypy** for static type checking (metrics CLI)
+3. **Pytest** with coverage enforcement
+4. CLI smoke test
 
-Branch protection rules require passing CI and one Code Owner review before merging.
+CI checks must pass before merging. Due to time constraints near submission, some merges were completed with reduced peer review while still enforcing CI validation.
 
 ---
 
 ## Phase 2 Enhancements
 
-- Converted CLI to serverless AWS architecture
-- Added automated CI/CD pipeline
-- Added Code Owners and PR templates
-- Introduced structured JSON logging + CloudWatch metrics
-- Targeted Performance Track (throughput + latency optimizations)
+- Migrated Phase 1 CLI into a serverless AWS backend
+- Implemented baseline API endpoints required by the specification
+- Added CI workflows and deployment automation via AWS SAM
+- Added a Web UI with verified WCAG 2.1 AA accessibility compliance
+- Attempted Performance Track (full benchmarking not completed)
 
 ---
 
 ## Developer Setup
 
-For detailed local setup instructions (Python venv, VS Code config, scripts, and CI notes),  
+For detailed local setup instructions (Python environment, scripts, and CI notes),  
 see [`docs/SETUP.md`](https://github.com/rsierrav/Phase2_Group112/blob/main/docs/SETUP.md).
 
 ---
@@ -75,4 +75,4 @@ see [`docs/SETUP.md`](https://github.com/rsierrav/Phase2_Group112/blob/main/docs
 ## License & Acknowledgment
 
 Developed for educational use in Purdue University’s Software Engineering course.  
-Based on Group 111’s Phase 1 implementation by Erik Perez, Tristan Gooding, Heh Kle, and Justin Akridge.
+Based on Group 111’s Phase 1 implementation.
