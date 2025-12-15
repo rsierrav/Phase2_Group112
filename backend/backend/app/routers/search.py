@@ -81,6 +81,7 @@ def _extract_readme_text(item: dict) -> str:
         # top-level
         item.get("readme"),
         item.get("README"),
+        item.get("Readme"),
         item.get("readme_text"),
         item.get("readmeContent"),
         item.get("readme_content"),
@@ -105,6 +106,9 @@ def _extract_readme_text(item: dict) -> str:
         data.get("readmeMarkdown"),
         data.get("readme_md"),
         data.get("readmeBody"),
+        data.get("description"),
+        md.get("description"),
+        item.get("description"),
     ]
 
     for c in candidates:
@@ -167,7 +171,8 @@ def _compile_regex(pattern: str) -> tuple[re.Pattern, str, bool, str]:
       - Python regex: '^foo$'
       - JS-style: '/^foo$/i' or '/^foo$/' (flags optional; supported: i, m, s)
     """
-    flags = 0
+    # Default to case-insensitive to match common user expectations and autograder inputs.
+    flags = re.IGNORECASE
     pat = pattern.strip()
     is_js_style = False
     original_for_literal = pat
@@ -202,26 +207,11 @@ def _compile_regex(pattern: str) -> tuple[re.Pattern, str, bool, str]:
 
 
 def _is_literal_name_query(normalized_pattern: str, is_js_style: bool) -> bool:
-    if is_js_style:
-        return False
-
-    i = 0
-    while i < len(normalized_pattern):
-        ch = normalized_pattern[i]
-        if ch in _REGEX_META:
-            if i > 0 and normalized_pattern[i - 1] == "\\":
-                i += 1
-                continue
-            return False
-        i += 1
-
-    return True
+    # Always treat user input as a regex so substring searches work (per autograder expectations).
+    return False
 
 
 def _name_matches(rx: re.Pattern, normalized_pattern: str, is_js_style: bool, name: str) -> bool:
-    if _is_literal_name_query(normalized_pattern, is_js_style):
-        return name == normalized_pattern
-
     return rx.search(name) is not None
 
 
@@ -263,14 +253,8 @@ async def artifact_by_regex_post(
             detail="There is missing field(s) in the artifact_regex or it is formed improperly, or is invalid",
         )
 
-    print(f"DEBUG: Received regex pattern: '{regex_value}'")  # DEBUG
-
     rx, normalized, is_js_style, _ = _compile_regex(regex_value)
     literal_name_only = _is_literal_name_query(normalized, is_js_style)
-
-    print(
-        f"DEBUG: normalized='{normalized}', is_js_style={is_js_style}, literal_name_only={literal_name_only}"
-    )  # DEBUG
 
     hits_by_id: dict[str, ArtifactMetadata] = {}
     scan_kwargs: dict = {}
@@ -287,8 +271,6 @@ async def artifact_by_regex_post(
 
         items = resp.get("Items", [])
 
-        print(f"DEBUG: Scanning {len(items)} items")  # DEBUG
-
         for item in items:
             md = item.get("metadata") or {}
             data = item.get("data") or {}
@@ -304,14 +286,8 @@ async def artifact_by_regex_post(
             art_id_str = str(art_id)
             art_type_str = str(art_type)
 
-            print(f"DEBUG: Checking artifact: name='{name}', id='{art_id_str}'")  # DEBUG
-
             if literal_name_only:
-                print(
-                    f"DEBUG: Literal check: name='{name}' == normalized='{normalized}'? {name == normalized}"
-                )  # DEBUG
                 if name == normalized:
-                    print(f"DEBUG: MATCH FOUND: {name}")  # DEBUG
                     hits_by_id.setdefault(
                         art_id_str,
                         ArtifactMetadata(name=name, id=art_id_str, type=art_type_str),

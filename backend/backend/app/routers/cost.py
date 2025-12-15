@@ -60,7 +60,8 @@ async def artifact_cost(
             detail="Artifact does not exist.",
         )
 
-    if item.get("type") != artifact_type.value:
+    md = item.get("metadata") or {}
+    if (item.get("type") or md.get("type")) != artifact_type.value:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="artifact_type does not match stored artifact type.",

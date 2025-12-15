@@ -170,8 +170,11 @@ async def artifact_retrieve(
             detail="Artifact does not exist.",
         )
 
+    md = item.get("metadata") or {}
+    data = item.get("data") or {}
+
     # Ensure the stored type matches the requested type
-    stored_type = item.get("type")
+    stored_type = item.get("type") or md.get("type")
     if stored_type != artifact_type.value:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -183,12 +186,12 @@ async def artifact_retrieve(
 
     # Build metadata from stored item
     metadata = ArtifactMetadata(
-        id=item["id"],
-        name=item.get("name", "artifact"),
+        id=item.get("id") or md.get("id") or id,
+        name=md.get("name") or item.get("name", "artifact"),
         type=artifact_type,
     )
 
-    url = item.get("url")
+    url = data.get("url") or item.get("url")
     if not url:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -197,7 +200,10 @@ async def artifact_retrieve(
 
     data = ArtifactData(
         url=url,
-        download_url=item.get("download_url") or url,
+        download_url=data.get("download_url")
+        or md.get("download_url")
+        or item.get("download_url")
+        or url,
     )
 
     return Artifact(metadata=metadata, data=data)
@@ -263,8 +269,10 @@ async def artifact_delete(
             detail="Artifact does not exist.",
         )
 
+    md = item.get("metadata") or {}
     # Check type matches
-    if item.get("type") != artifact_type.value:
+    stored_type = item.get("type") or md.get("type")
+    if stored_type != artifact_type.value:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="artifact_type does not match stored artifact type.",
