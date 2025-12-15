@@ -75,8 +75,6 @@ async def artifact_cost(
             standalone_cost=float(base_cost), total_cost=float(base_cost)
         )
     else:
-        cost_detail = ArtifactCostDetail(
-            standalone_cost=float(base_cost), total_cost=float(base_cost)
-        )
+        cost_detail = ArtifactCostDetail(**{"total_cost": float(base_cost)})
 
     return {id: cost_detail}
