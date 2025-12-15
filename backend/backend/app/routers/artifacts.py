@@ -171,10 +171,14 @@ async def artifact_retrieve(
         )
 
     # Ensure the stored type matches the requested type
-    if item.get("type") != artifact_type.value:
+    stored_type = item.get("type")
+    if stored_type != artifact_type.value:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="artifact_type does not match stored artifact type.",
+            detail=(
+                f"artifact_type does not match stored artifact type. "
+                f"Requested: {artifact_type.value}, Stored: {stored_type}"
+            ),
         )
 
     # Build metadata from stored item
@@ -193,7 +197,7 @@ async def artifact_retrieve(
 
     data = ArtifactData(
         url=url,
-        download_url=item.get("download_url", url),
+        download_url=item.get("download_url") or url,
     )
 
     return Artifact(metadata=metadata, data=data)

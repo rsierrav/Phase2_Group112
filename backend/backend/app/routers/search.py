@@ -22,10 +22,9 @@ class ArtifactMetadata(BaseModel):
 
 
 _README_CACHE: dict[str, str] = {}
-_MAX_NETWORK_README_FETCHES = 10  # prevent slow/timeouts
+_MAX_NETWORK_README_FETCHES = 10
 
 
-# Regex metacharacters: if none present (and not JS /.../flags), autograder expects exact-name behavior
 _REGEX_META = set(r".^$*+?{}[]\|()")
 
 
@@ -171,8 +170,7 @@ def _compile_regex(pattern: str) -> tuple[re.Pattern, str, bool, str]:
     flags = 0
     pat = pattern.strip()
     is_js_style = False
-    original_for_literal = pat  # Keep original for literal comparison
-
+    original_for_literal = pat
     # For JS-style regex
     if len(pat) >= 2 and pat[0] == "/":
         last = pat.rfind("/")
@@ -183,7 +181,7 @@ def _compile_regex(pattern: str) -> tuple[re.Pattern, str, bool, str]:
             if maybe_flags == "" or maybe_flags.isalpha():
                 is_js_style = True
                 pat = maybe_pat
-                original_for_literal = pat  # JS-style pattern without slashes
+                original_for_literal = pat
                 if "i" in maybe_flags:
                     flags |= re.IGNORECASE
                 if "m" in maybe_flags:
@@ -191,10 +189,8 @@ def _compile_regex(pattern: str) -> tuple[re.Pattern, str, bool, str]:
                 if "s" in maybe_flags:
                     flags |= re.DOTALL
 
-    # Only strip quotes for non-JS patterns
     elif len(pat) >= 2 and ((pat[0] == pat[-1] == '"') or (pat[0] == pat[-1] == "'")):
         pat = pat[1:-1].strip()
-        # original_for_literal already has the quotes
 
     try:
         return re.compile(pat, flags), pat, is_js_style, original_for_literal
@@ -206,18 +202,14 @@ def _compile_regex(pattern: str) -> tuple[re.Pattern, str, bool, str]:
 
 
 def _is_literal_name_query(normalized_pattern: str, is_js_style: bool) -> bool:
-    # Autograder expects: "bert" => exact name only (not README substring matches)
     if is_js_style:
         return False
 
-    # Check for any regex metacharacter that isn't escaped
     i = 0
     while i < len(normalized_pattern):
         ch = normalized_pattern[i]
         if ch in _REGEX_META:
-            # Check if it's escaped (previous character is a backslash)
             if i > 0 and normalized_pattern[i - 1] == "\\":
-                # Skip the escaped character
                 i += 1
                 continue
             return False
@@ -226,17 +218,10 @@ def _is_literal_name_query(normalized_pattern: str, is_js_style: bool) -> bool:
     return True
 
 
-def _name_matches(rx: re.Pattern, normalized_pattern: str, name: str) -> bool:
-    # If it's a literal pattern, do exact match
-    # Check if it's literal first (important!)
-    if _is_literal_name_query(normalized_pattern, False):
+def _name_matches(rx: re.Pattern, normalized_pattern: str, is_js_style: bool, name: str) -> bool:
+    if _is_literal_name_query(normalized_pattern, is_js_style):
         return name == normalized_pattern
 
-    # For anchored patterns, use fullmatch
-    if normalized_pattern.startswith("^") and normalized_pattern.endswith("$"):
-        return rx.fullmatch(name) is not None
-
-    # For other patterns, use search
     return rx.search(name) is not None
 
 
@@ -259,7 +244,6 @@ async def artifact_by_regex_post(
     x_authorization: Optional[str] = Header(default=None, alias="X-Authorization"),
     table=Depends(get_dynamodb_table),
 ) -> list[ArtifactMetadata]:
-    # CRITICAL FIX: Handle empty regex properly
     if "regex" not in body:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -273,7 +257,6 @@ async def artifact_by_regex_post(
             detail="There is missing field(s) in the artifact_regex or it is formed improperly, or is invalid",
         )
 
-    # Check if it's an empty string after trimming
     if not regex_value.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -323,8 +306,6 @@ async def artifact_by_regex_post(
 
             print(f"DEBUG: Checking artifact: name='{name}', id='{art_id_str}'")  # DEBUG
 
-            # 1) Literal pattern => EXACT NAME ONLY (autograder exact-match behavior)
-            # CRITICAL: For literal patterns, ONLY check name, NOT README
             if literal_name_only:
                 print(
                     f"DEBUG: Literal check: name='{name}' == normalized='{normalized}'? {name == normalized}"
@@ -337,15 +318,13 @@ async def artifact_by_regex_post(
                     )
                 continue
 
-            # 2) Regex name match
-            if _name_matches(rx, normalized, name):
+            if _name_matches(rx, normalized, is_js_style, name):
                 hits_by_id.setdefault(
                     art_id_str,
                     ArtifactMetadata(name=name, id=art_id_str, type=art_type_str),
                 )
                 continue
 
-            # 3) Regex README match (local first) - ONLY for non-literal patterns
             stored_readme = _extract_readme_text(item)
             if stored_readme and rx.search(stored_readme):
                 hits_by_id.setdefault(
@@ -354,7 +333,6 @@ async def artifact_by_regex_post(
                 )
                 continue
 
-            # 4) Fallback to network README fetch (limited) - ONLY for non-literal patterns
             if (
                 network_fetches < _MAX_NETWORK_README_FETCHES
                 and isinstance(url, str)
@@ -379,5 +357,4 @@ async def artifact_by_regex_post(
             detail="No artifact found under this regex.",
         )
 
-    # Sort by name, then id
     return sorted(hits_by_id.values(), key=lambda h: (h.name, h.id))
